@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "pinkgraph"
+version = "0.1.0"
+description = "The library that uses AI agents to enable building and searching in generalized knowledge graphs."
+authors = ["PinkDot AI"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
