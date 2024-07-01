@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 
-def main():
+def main() -> None:
     """
     The (initial) main function.
     With an example docstring.
