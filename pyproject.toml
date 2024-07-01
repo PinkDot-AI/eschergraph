@@ -17,17 +17,57 @@ pre-commit = "^3.7.1"
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-# Ruff configs from the docs
+[tool.ruff]
+preview = true
+exclude = [
+    ".git",
+    "build",
+    "__pycache__",
+]
+line-length = 88
+indent-width = 2
+target-version = "py310"
+
 [tool.ruff.lint]
-select = ["ALL"]
-ignore = ["W191", "E111", "E114", "E117", "D206", "D300", "Q000", "Q001", "Q002", "Q003", "COM812", "COM819", "ISC001", "ISC002"]
+ignore = [
+    # Unnecessary collection call
+    "C408",
+    # Unnecessary map usage
+    "C417",
+    # Object names too complex
+    "C901",
+    # Local variable is assigned to but never used
+    "F841",
+    # Raise with from clause inside except block
+    "B904",
+    # Zip without explicit strict parameter
+    "B905",
+    # Missing docstring in public package
+    "D104",
+    # Missing docstring in public module
+    "D100"
+]
+select = [
+    "B9",
+    "C",
+    "D",
+    "F",
+    "W",
+    "YTT",
+    "ASYNC",
+    "E225",
+    "E227",
+    "E228",
+]
 
-# Allow fix for all enabled rules (when `--fix`) is provided.
-fixable = ["ALL"]
-unfixable = []
+[tool.ruff.lint.mccabe]
+max-complexity = 18
 
-# Allow unused variables when underscore-prefixed.
-dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+# Indicate here when a ruff lint rule should be ignored in a file
 
 [tool.ruff.format]
 docstring-code-format = true
