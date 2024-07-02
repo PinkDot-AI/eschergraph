@@ -45,5 +45,5 @@ repos:
   hooks:
   - id: mypy
     files: pinkgraph/
-    additional_dependencies: [attrs]
+    additional_dependencies: [attrs, jinja2]
     args: [--config=pyproject.toml]
