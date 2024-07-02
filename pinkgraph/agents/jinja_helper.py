@@ -1,4 +1,3 @@
-# Function has been copied from: https://github.com/ArjanCodes/examples/blob/main/2024/tuesday_tips/jinja2/jinja_helper.py
 from __future__ import annotations
 
 from jinja2 import Environment
@@ -9,6 +8,8 @@ from jinja2 import Template
 
 def process_template(template_file: str, data: dict[str, str]) -> str:
   """Process the jinja template into a string.
+
+  Function has been copied from: https://github.com/ArjanCodes/examples/blob/main/2024/tuesday_tips/jinja2/jinja_helper.py
 
   Args:
     template_file (str): The name of the jinja prompt template.
