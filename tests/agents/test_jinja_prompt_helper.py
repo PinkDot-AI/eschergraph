@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from assertpy import assert_that
+
+from pinkgraph.agents.jinja_helper import extract_variables
 from pinkgraph.agents.jinja_helper import process_template
 
 string_template: str = """Add the properties as described in the execution plan to each of the entities exactly as listed.
@@ -19,3 +22,13 @@ def test_templating_function() -> None:
   assert process_template(
     template_file=template_name, data={"execution_plan": execution_plan}
   ) == string_template.format(execution_plan=execution_plan)
+
+
+def test_extract_variables() -> None:
+  prompt_unformatted: str = process_template(
+    template_file="elaboration_plan.jinja", data={}
+  )
+  print(prompt_unformatted)
+  assert_that(
+    extract_variables(prompt_unformatted)
+  ).does_not_contain_duplicates().contains_only("context", "graph")
