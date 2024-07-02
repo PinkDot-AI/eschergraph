@@ -29,17 +29,7 @@ def process_template(template_file: str, data: dict[str, str]) -> str:
     autoescape=select_autoescape(),
   )
 
-  # Check if the baseloader is None
-  if not jinja_env.loader:
-    raise PromptFormattingException(
-      "Something went wrong formatting the prompt template."
-    )
-  else:
-    loader: BaseLoader = jinja_env.loader
-
-  # Get the template as plain text
-  plain_template: str = loader.get_source(jinja_env, template_file)[0]
-  template_variables: list[Any] = extract_variables(plain_template)
+  template_variables: list[Any] = extract_variables(template_file, jinja_env)
 
   # Check if all variables in template have been provided as data
   if not set(template_variables) == set(data.keys()):
@@ -53,14 +43,26 @@ def process_template(template_file: str, data: dict[str, str]) -> str:
   return prompt
 
 
-def extract_variables(template_string: str) -> list[Any]:
+def extract_variables(template_file: str, jinja_env: Environment) -> list[Any]:
   """Extract all variables in a Jinja template in string format.
 
   Args:
-    template_string (str): the jinja template as a string.
+    template_file (str): the name of the jinja prompt template.
+    jinja_env (Environment): the jinja Environment.
 
   Returns:
     A list of all the identified variables in the string template.
   """
+  # Check if the baseloader is None
+  if not jinja_env.loader:
+    raise PromptFormattingException(
+      "Something went wrong formatting the prompt template."
+    )
+  else:
+    loader: BaseLoader = jinja_env.loader
+
+  # Get the template as plain text
+  plain_template: str = loader.get_source(jinja_env, template_file)[0]
+
   variable_pattern: str = r"\{\{ *([\w_]+) *\}\}"
-  return re.findall(variable_pattern, template_string)
+  return re.findall(variable_pattern, plain_template)
