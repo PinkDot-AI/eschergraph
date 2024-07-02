@@ -82,7 +82,7 @@ warn_unused_ignores = true
 
 # Getting these passing should be easy
 strict_equality = true
-strict_concatenate = true
+extra_checks = true
 
 # Strongly recommend enabling this one as soon as you can
 check_untyped_defs = true
