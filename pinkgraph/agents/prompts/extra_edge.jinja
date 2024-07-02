@@ -1,0 +1,17 @@
+Add exactly all the relationships described in the execution plan to the graph with function calls.
+
+The execution plan:
+{{ execution_plan }}
+
+For example,
+- [Tim Cook] -> [works at] -> [Apple]
+- [Paris] -> [is located in] -> [France]
+- [Google] -> [is headquartered in] -> [Mountain View, California]
+
+Results in the following function calls:
+- add_edge(from_name="Tim Cook", to_name="Apple", relation="works at")
+- add_edge(from_name="Paris", to_name="France", relation="is located in")
+- add_edge(from_name="Google", to_name="Mountain View, California", relation="is headquartered in")
+
+Make sure to add each described relation as an edge to the graph with a function call.
+Lives may depend on it!!! Mistakes are extremely costly for me and my career!
