@@ -44,6 +44,6 @@ repos:
   rev: 'v1.10.0'
   hooks:
   - id: mypy
-    files: pinkgraph/
+    files: (pinkgraph/*|tests/*)
     additional_dependencies: [attrs, jinja2, openai, tenacity]
     args: [--config=pyproject.toml]
