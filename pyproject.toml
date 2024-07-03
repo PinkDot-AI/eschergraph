@@ -5,6 +5,7 @@ description = "The library that uses AI agents to enable building and searching 
 authors = ["PinkDot AI"]
 license = "MIT"
 readme = "README.md"
+packages = [{ include = "pinkgraph" }]
 
 [tool.poetry.dependencies]
 python = "^3.9"
@@ -19,9 +20,23 @@ pytest = "^8.2.2"
 assertpy = "^1.1"
 coverage = "^7.5.4"
 
+# Inspired by the graphrag project
+[tool.poetry_dynamic_versioning]
+enable = true
+style = "pep440"
+vcs = "git"
+bump = true
+format-jinja = """
+    {%- if distance == 0 -%}
+        {{ serialize_pep440(base, stage, revision) }}
+    {%- else -%}
+        {{ serialize_pep440(base, stage, revision, dev=distance) }}
+    {%- endif -%}
+"""
+
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core>=1.0.0", "poetry_dynamic_versioning>=1.0.0,<2.0.0"]
+build-backend = "poetry_dynamic_versioning.backend"
 
 [tool.ruff]
 preview = true
