@@ -5,17 +5,55 @@ description = "The library that uses AI agents to enable building and searching 
 authors = ["PinkDot AI"]
 license = "MIT"
 readme = "README.md"
+packages = [{ include = "pinkgraph" }]
 
 [tool.poetry.dependencies]
 python = "^3.9"
 attrs = "^23.2.0"
+jinja2 = "^3.1.4"
+tenacity = "^8.4.2"
+openai = "^1.35.7"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.7.1"
+pytest = "^8.2.2"
+assertpy = "^1.1"
+coverage = "^7.5.4"
+
+# Inspired by the graphrag project
+semversioner = "^2.0.5"
+poethepoet = "^0.27.0"
+[tool.poetry_dynamic_versioning]
+enable = true
+style = "pep440"
+vcs = "git"
+bump = true
+format-jinja = """
+    {%- if distance == 0 -%}
+        {{ serialize_pep440(base, stage, revision) }}
+    {%- else -%}
+        {{ serialize_pep440(base, stage, revision, dev=distance) }}
+    {%- endif -%}
+"""
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core>=1.0.0", "poetry_dynamic_versioning>=1.0.0,<2.0.0"]
+build-backend = "poetry_dynamic_versioning.backend"
+
+# A task runner for the semver releases
+# Could also be used for tests, or to generate coverage reports
+[tool.poe.tasks]
+_semversioner_release = "semversioner release"
+_semversioner_changelog = "semversioner changelog > CHANGELOG.md"
+_semversioner_update_toml_version = "update-toml --path tool.poetry.version --value \"$(semversioner current-version)\" pyproject.toml"
+
+[[tool.poe.tasks.release]]
+sequence = [
+    '_semversioner_release',
+    '_semversioner_changelog',
+    '_semversioner_update_toml_version',
+]
+ignore_fail = 'return_non_zero'
 
 [tool.ruff]
 preview = true
@@ -59,6 +97,9 @@ select = [
     "E227",
     "E228",
 ]
+[tool.ruff.lint.extend-per-file-ignores]
+# Ignore all docstrings in tests
+"tests/*" = ["D"]
 
 [tool.ruff.lint.mccabe]
 max-complexity = 18
@@ -82,7 +123,7 @@ warn_unused_ignores = true
 
 # Getting these passing should be easy
 strict_equality = true
-strict_concatenate = true
+extra_checks = true
 
 # Strongly recommend enabling this one as soon as you can
 check_untyped_defs = true

@@ -1,0 +1,20 @@
+You need to expand the existing knowledge graph based on the new context that is provided.
+It is your task to devise an extensive execution plan for doing this.
+
+Please specify the following steps:
+1. Extracting the entities
+2. Indicating the importance of the entity in the provided text as: small, medium or large
+3. Adding relevant properties to each of the entities
+4. Identifying relationships between the entities
+
+Especially the relationships between the entities are important, so take extra care in identifying these.
+In addition, please specify these relationships in the following format.
+- [ENTITY_1] -> [RELATIONSHIP] -> [ENTITY_2]
+
+For example,
+- [Tim Cook] -> [works at] -> [Apple]
+- [Paris] -> [is located in] -> [France]
+- [Google] -> [is headquartered in] -> [Mountain View, California]
+
+The text: {{ context }}
+The current graph: {{ graph }}
