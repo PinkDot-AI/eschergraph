@@ -38,9 +38,8 @@ def process_template(template_file: str, data: dict[str, str]) -> str:
     )
 
   template: Template = jinja_env.get_template(template_file)
-  prompt: str = template.render(**data)
 
-  return prompt
+  return template.render(**data)
 
 
 def extract_variables(template_file: str, jinja_env: Environment) -> list[Any]:
