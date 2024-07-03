@@ -21,6 +21,8 @@ assertpy = "^1.1"
 coverage = "^7.5.4"
 
 # Inspired by the graphrag project
+semversioner = "^2.0.5"
+poethepoet = "^0.27.0"
 [tool.poetry_dynamic_versioning]
 enable = true
 style = "pep440"
@@ -37,6 +39,21 @@ format-jinja = """
 [build-system]
 requires = ["poetry-core>=1.0.0", "poetry_dynamic_versioning>=1.0.0,<2.0.0"]
 build-backend = "poetry_dynamic_versioning.backend"
+
+# A task runner for the semver releases
+# Could also be used for tests, or to generate coverage reports
+[tool.poe.tasks]
+_semversioner_release = "semversioner release"
+_semversioner_changelog = "semversioner changelog > CHANGELOG.md"
+_semversioner_update_toml_version = "update-toml --path tool.poetry.version --value \"$(semversioner current-version)\" pyproject.toml"
+
+[[tool.poe.tasks.release]]
+sequence = [
+    '_semversioner_release',
+    '_semversioner_changelog',
+    '_semversioner_update_toml_version',
+]
+ignore_fail = 'return_non_zero'
 
 [tool.ruff]
 preview = true
