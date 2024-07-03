@@ -12,7 +12,11 @@ from pinkgraph.agents.tools import Tool
 
 @define
 class FunctionCall:
-  """The function call as returned by the model."""
+  """The function call as returned by the model.
+
+  The arguments are a JSON representation of the arguments that need to be
+  supplied to the function. They still need to be validated.
+  """
 
   name: str
   arguments: dict[str, Any]
@@ -33,7 +37,7 @@ class Model(ABC):
   tokens: list[TokenUsage] = field(factory=list)
 
   @abstractmethod
-  def get_plain_response(self, prompt: str) -> str:
+  def get_plain_response(self, prompt: str) -> str | None:
     """Get a plain text response from an LLM.
 
     Args:
