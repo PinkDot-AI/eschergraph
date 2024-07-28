@@ -1,14 +1,19 @@
 from __future__ import annotations
 
 from typing import Optional
+from typing import TYPE_CHECKING
 
 from attrs import define
 from attrs import field
 
 from eschergraph.graph.base import EscherBase
 
+# To prevent circular imports
+if TYPE_CHECKING:
+  from eschergraph.graph.edge import Edge
 
-@define
+
+@define(hash=True)
 class Node(EscherBase):
   """A node in the graph.
 
@@ -22,6 +27,7 @@ class Node(EscherBase):
   """The level at which the node occurs. Level 0 refers to directly extracted entities, and levels
   above that are aggregated communities."""
   community: Optional[Node] = None
-  properties: list[str] = field(factory=list)
-  child_nodes: list[Node] = field(factory=list)
-  report: list[dict[str, str]] = field(factory=list)
+  properties: list[str] = field(factory=list, hash=False)
+  child_nodes: list[Node] = field(factory=list, hash=False)
+  edges: set[Edge] = field(factory=set, hash=False)
+  report: list[dict[str, str]] = field(factory=list, hash=False)
