@@ -8,7 +8,7 @@ from attrs import field
 
 from eschergraph.graph.base import EscherBase
 
-# To prevent circular imports
+# To prevent circular import errors
 if TYPE_CHECKING:
   from eschergraph.graph.edge import Edge
 
