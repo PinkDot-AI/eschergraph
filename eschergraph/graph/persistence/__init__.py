@@ -1,3 +1,3 @@
 from __future__ import annotations
 
-from eschergraph.graph.persistence.base import EscherBase as EscherBase
+from eschergraph.graph.persistence.metadata import Metadata as Metadata

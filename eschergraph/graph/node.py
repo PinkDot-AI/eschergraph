@@ -5,8 +5,7 @@ from typing import Optional
 from attrs import define
 from attrs import field
 
-from eschergraph.graph.metadata import Metadata
-from eschergraph.graph.persistence import EscherBase
+from eschergraph.graph.base import EscherBase
 
 
 @define
@@ -23,7 +22,6 @@ class Node(EscherBase):
   """The level at which the node occurs. Level 0 refers to directly extracted entities, and levels
   above that are aggregated communities."""
   community: Optional[Node] = None
-  metadata: set[Metadata] = field(factory=set)
   properties: list[str] = field(factory=list)
   child_nodes: list[Node] = field(factory=list)
   report: list[dict[str, str]] = field(factory=list)
