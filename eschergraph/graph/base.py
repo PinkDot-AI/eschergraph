@@ -18,4 +18,4 @@ class EscherBase:
   id: UUID = field(factory=uuid4)
   persisted: bool = field(default=False)
   loaded: bool = field(default=True)
-  metadata: set[Metadata] = field(factory=set)
+  metadata: set[Metadata] = field(factory=set, hash=False)

@@ -11,7 +11,7 @@ from eschergraph.graph.node import Node
 class Edge(EscherBase):
   """The edge in an EscherGraph.
 
-  Although, we specify from and to nodes. Edges are actually undirectional
+  Although, we specify from and to nodes, edges are actually undirectional
   as they are richly descriptive. This is also reflected in the equals method.
   """
 
