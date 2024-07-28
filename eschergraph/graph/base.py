@@ -6,6 +6,8 @@ from uuid import uuid4
 from attrs import define
 from attrs import field
 
+from eschergraph.graph.persistence.metadata import Metadata
+
 
 # TODO: add a hash method for checking if an object should be updated / refreshed
 # TODO: add a way to check whether attributes are correct before being persisted (invariants)
@@ -16,3 +18,4 @@ class EscherBase:
   id: UUID = field(factory=uuid4)
   persisted: bool = field(default=False)
   loaded: bool = field(default=True)
+  metadata: set[Metadata] = field(factory=set)
