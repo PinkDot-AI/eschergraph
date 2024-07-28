@@ -38,6 +38,7 @@ class OpenAIModel(Enum):
 
   GPT_3: str = "gpt-3.5-turbo"
   GPT_4o: str = "gpt-4o"
+  GPT_4o_MINI: str = "gpt-4o-mini"
 
 
 @define
