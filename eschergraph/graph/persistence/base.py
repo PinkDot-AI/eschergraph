@@ -8,6 +8,7 @@ from attrs import field
 
 
 # TODO: add a hash method for checking if an object should be updated / refreshed
+# TODO: add a way to check whether attributes are correct before being persisted (invariants)
 @define
 class EscherBase:
   """The base class for objects in the package that need to be persisted."""
