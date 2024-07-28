@@ -9,7 +9,7 @@ from jinja2 import FileSystemLoader
 from jinja2 import select_autoescape
 from jinja2 import Template
 
-from pinkgraph.exceptions import PromptFormattingException
+from eschergraph.exceptions import PromptFormattingException
 
 
 def process_template(template_file: str, data: dict[str, str]) -> str:

@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "pinkgraph"
+name = "eschergraph"
 version = "0.1.0"
 description = "The library that uses AI agents to enable building and searching in generalized knowledge graphs."
 authors = ["PinkDot AI"]

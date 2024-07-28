@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from pinkgraph.agents.tools import Tool
+from eschergraph.agents.tools import Tool
 
 
 class ExternalFactor(Protocol):
