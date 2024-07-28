@@ -7,7 +7,7 @@ from typing import Any
 from attrs import define
 from attrs import field
 
-from pinkgraph.agents.tools import Tool
+from eschergraph.agents.tools import Tool
 
 
 @define

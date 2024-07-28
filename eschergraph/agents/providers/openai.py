@@ -20,12 +20,12 @@ from tenacity import retry
 from tenacity import stop_after_attempt
 from tenacity import wait_random_exponential
 
-from pinkgraph.agents.llm import FunctionCall
-from pinkgraph.agents.llm import Model
-from pinkgraph.agents.llm import TokenUsage
-from pinkgraph.agents.tools import Function
-from pinkgraph.agents.tools import Tool
-from pinkgraph.exceptions import ExternalProviderException
+from eschergraph.agents.llm import FunctionCall
+from eschergraph.agents.llm import Model
+from eschergraph.agents.llm import TokenUsage
+from eschergraph.agents.tools import Function
+from eschergraph.agents.tools import Tool
+from eschergraph.exceptions import ExternalProviderException
 
 SYSTEM_MESSAGE: str = """
 You are an agent that will use tools to parse all the data

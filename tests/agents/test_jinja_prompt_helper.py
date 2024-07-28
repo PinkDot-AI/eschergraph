@@ -6,9 +6,9 @@ from jinja2 import Environment
 from jinja2 import FileSystemLoader
 from jinja2 import select_autoescape
 
-from pinkgraph.agents.jinja_helper import extract_variables
-from pinkgraph.agents.jinja_helper import process_template
-from pinkgraph.exceptions import PromptFormattingException
+from eschergraph.agents.jinja_helper import extract_variables
+from eschergraph.agents.jinja_helper import process_template
+from eschergraph.exceptions import PromptFormattingException
 
 property_template: str = """Add the properties as described in the execution plan to each of the entities exactly as listed.
 
