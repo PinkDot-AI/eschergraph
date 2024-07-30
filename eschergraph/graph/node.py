@@ -15,7 +15,6 @@ from eschergraph.graph.base import LoadState
 if TYPE_CHECKING:
   from eschergraph.graph.edge import Edge
   from eschergraph.graph.persistence import Repository
-  from eschergraph.graph.persistence import Metadata
 
 # TODO: add a factory method to return the default Repository
 
@@ -46,9 +45,6 @@ class Node(EscherBase):
   _report: Optional[list[dict[str, str]]] = field(
     default=None, metadata={"group": LoadState.FULL}
   )
-  _loadstate: LoadState = field(default=LoadState.REFERENCE)
-  """The attribute that keeps track of the loading state of a Node."""
-  repository: Repository = field(kw_only=True)
 
   @property
   def name(self) -> str:
@@ -166,56 +162,6 @@ class Node(EscherBase):
       raise DataLoadingException("The node report has not been loaded.")
 
     return self._report
-
-  @property
-  def metadata(self) -> set[Metadata]:
-    """The getter for the node metadata.
-
-    Returns:
-      The node's metadata.
-    """
-    self._check_loadstate(attr_name="_metadata")
-
-    if not isinstance(self._metadata, set):
-      raise DataLoadingException("The node metadata has not been loaded.")
-
-    return self._metadata
-
-  @property
-  def loadstate(self) -> LoadState:
-    """The getter for the loadstate of the node.
-
-    Returns:
-      The node's loadstate.
-    """
-    return self._loadstate
-
-  @loadstate.setter
-  def loadstate(self, loadstate: LoadState) -> None:
-    """The setter for the loadstate of the node.
-
-    We use a custom setter because we need to make sure that the value of the loadstate
-    reflects that attributes that are loaded. In addition, the loadstate cannot yet decrease
-    as we are not yet removing attributes on a class.
-
-    Args:
-      loadstate (LoadState): The loadstate to set and the state in which the node should
-      be loaded.
-    """
-    # Do nothing if this decreases the loadstate
-    if loadstate.value <= self._loadstate.value:
-      return
-
-    self.repository.load(self, loadstate=loadstate)
-    self._loadstate = loadstate
-
-  def _check_loadstate(self, attr_name: str) -> None:
-    required_loadstate: LoadState = fields_dict(Node)[attr_name].metadata["group"]
-
-    # Load more instance data from the repository if load state is too small
-    if self.loadstate.value < required_loadstate.value:
-      self.repository.load(self, loadstate=required_loadstate)
-      self._loadstate = required_loadstate
 
   @classmethod
   def create_node(
