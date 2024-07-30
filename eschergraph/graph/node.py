@@ -10,13 +10,13 @@ from attrs import fields_dict
 from eschergraph.exceptions import DataLoadingException
 from eschergraph.graph.base import EscherBase
 from eschergraph.graph.base import LoadState
-from eschergraph.graph.persistence import NodeRepository
+from eschergraph.graph.persistence import Repository
 
 # To prevent circular import errors
 if TYPE_CHECKING:
   from eschergraph.graph.edge import Edge
 
-# TODO: add a factory method to return the default NodeRepository
+# TODO: add a factory method to return the default Repository
 
 
 @define
@@ -47,7 +47,7 @@ class Node(EscherBase):
   )
   loadstate: LoadState = field(default=LoadState.REFERENCE)
   """The attribute that keeps track of the loading state of a Node."""
-  repository: NodeRepository = field(kw_only=True)
+  repository: Repository = field(kw_only=True)
 
   @property
   def name(self) -> str:
@@ -186,7 +186,7 @@ class Node(EscherBase):
     name: str,
     description: str,
     level: int,
-    repository: NodeRepository,
+    repository: Repository,
     properties: Optional[list[str]] = None,
   ) -> Node:
     """The method that allows for the creation of a new node.
@@ -198,7 +198,7 @@ class Node(EscherBase):
       name (str): The name of the node.
       description (str): The node description.
       level (int): The level of the node.
-      repository (NodeRepository): The repository that will store the node.
+      repository (Repository): The repository that will store the node.
       properties (Optional[list[str]]): The optional properties for the node.
 
     Returns:
