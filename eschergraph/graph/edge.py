@@ -25,7 +25,7 @@ class Edge(EscherBase):
   frm: Node = field(kw_only=True)
   to: Node = field(kw_only=True)
   _description: Optional[str] = field(kw_only=True, metadata={"group": LoadState.CORE})
-  loadstate: LoadState = field(default=LoadState.REFERENCE)
+  _loadstate: LoadState = field(default=LoadState.REFERENCE)
   repository: Repository = field(kw_only=True)
 
   # TODO: add all the properties and update this in the equals method
