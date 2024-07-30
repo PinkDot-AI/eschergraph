@@ -3,34 +3,34 @@ from __future__ import annotations
 from abc import ABC
 from abc import abstractmethod
 
+from eschergraph.graph.base import EscherBase
 from eschergraph.graph.base import LoadState
 from eschergraph.graph.node import Node
 
 
-class NodeRepository(ABC):
-  """An abstract base class for a a node repository."""
+# Potentially change the EscherBase type hint to Node | Edge for readability!
+class Repository(ABC):
+  """An abstract base class for an EscherGraph repository."""
 
   @abstractmethod
-  def load(self, node: Node, loadstate: LoadState = LoadState.CORE) -> Node:
-    """Load the attributes of a node that belong to the specified loading state.
+  def load(self, object: EscherBase, loadstate: LoadState = LoadState.CORE) -> None:
+    """Load the attributes of an EscherGraph object that belong to the specified loading state.
+
+    The attributes are loaded on the specified object and nothing is returned.
 
     Args:
-      node (Node): The node for which the attributes need to be loaded.
+      object (EscherBase): The object for which the attributes need to be loaded.
       loadstate (LoadState): The state that needs to be loaded. The default
         is CORE.
-
-    Returns:
-      The specified node with the attributes from the load state loaded.
-
     """
     raise NotImplementedError
 
   @abstractmethod
-  def save(self, node: Node) -> None:
-    """Save (persist) the node to the data storage.
+  def save(self, object: EscherBase) -> None:
+    """Save (persist) the EscherGraph object to the data storage.
 
     Args:
-      node (Node): The node to save.
+      object (EscherBase): The object to save.
     """
     raise NotImplementedError
 
