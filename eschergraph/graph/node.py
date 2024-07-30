@@ -10,6 +10,7 @@ from attrs import fields_dict
 from eschergraph.exceptions import DataLoadingException
 from eschergraph.graph.base import EscherBase
 from eschergraph.graph.base import LoadState
+from eschergraph.graph.persistence import Metadata
 from eschergraph.graph.persistence import Repository
 
 # To prevent circular import errors
@@ -165,6 +166,20 @@ class Node(EscherBase):
       raise DataLoadingException("The node report has not been loaded.")
 
     return self._report
+
+  @property
+  def metadata(self) -> set[Metadata]:
+    """The getter for the node metadata.
+
+    Returns:
+      The node's metadata.
+    """
+    self._check_loadstate(attr_name="_metadata")
+
+    if not isinstance(self._metadata, set):
+      raise DataLoadingException("The node metadata has not been loaded.")
+
+    return self._metadata
 
   def _check_loadstate(self, attr_name: str) -> None:
     """Check if the attribute has been loaded by the current loadstate.
