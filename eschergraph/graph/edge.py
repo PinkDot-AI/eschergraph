@@ -1,14 +1,17 @@
 from __future__ import annotations
 
 from typing import Optional
+from typing import TYPE_CHECKING
 
 from attrs import define
 from attrs import field
 
 from eschergraph.graph.base import EscherBase
 from eschergraph.graph.base import LoadState
-from eschergraph.graph.node import Node
-from eschergraph.graph.persistence import Repository
+
+# Prevent circular import errors
+if TYPE_CHECKING:
+  from eschergraph.graph.node import Node
 
 
 @define(hash=True)
@@ -25,8 +28,6 @@ class Edge(EscherBase):
   frm: Node = field(kw_only=True)
   to: Node = field(kw_only=True)
   _description: Optional[str] = field(kw_only=True, metadata={"group": LoadState.CORE})
-  _loadstate: LoadState = field(default=LoadState.REFERENCE)
-  repository: Repository = field(kw_only=True)
 
   # TODO: add all the properties and update this in the equals method
   def __eq__(self, other: object) -> bool:
