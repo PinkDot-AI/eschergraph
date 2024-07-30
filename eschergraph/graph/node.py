@@ -210,13 +210,6 @@ class Node(EscherBase):
     self._loadstate = loadstate
 
   def _check_loadstate(self, attr_name: str) -> None:
-    """Check if the attribute has been loaded by the current loadstate.
-
-    If not enough has been loaded, then load more instance data from the repository.
-
-    Args:
-      attr_name (str): The name of the attribute that starts with an underscore.
-    """
     required_loadstate: LoadState = fields_dict(Node)[attr_name].metadata["group"]
 
     # Load more instance data from the repository if load state is too small
