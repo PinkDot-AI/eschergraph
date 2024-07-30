@@ -16,8 +16,6 @@ if TYPE_CHECKING:
   from eschergraph.graph.edge import Edge
   from eschergraph.graph.persistence import Repository
 
-# TODO: add a factory method to return the default Repository
-
 
 @define
 class Node(EscherBase):
