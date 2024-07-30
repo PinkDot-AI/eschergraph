@@ -2,13 +2,16 @@ from __future__ import annotations
 
 from enum import Enum
 from typing import Optional
+from typing import TYPE_CHECKING
 from uuid import UUID
 from uuid import uuid4
 
 from attrs import define
 from attrs import field
 
-from eschergraph.graph.persistence.metadata import Metadata
+# To prevent circular import errors
+if TYPE_CHECKING:
+  from eschergraph.graph.persistence import Metadata
 
 
 class LoadState(Enum):

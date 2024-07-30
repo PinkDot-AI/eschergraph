@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+from typing import Optional
+
 from attrs import define
 from attrs import field
 
 from eschergraph.graph.base import EscherBase
+from eschergraph.graph.base import LoadState
 from eschergraph.graph.node import Node
+from eschergraph.graph.persistence import Repository
 
 
 @define(hash=True)
@@ -13,12 +17,18 @@ class Edge(EscherBase):
 
   Although, we specify from and to nodes, edges are actually undirectional
   as they are richly descriptive. This is also reflected in the equals method.
+
+  Note that the loadstate for an Edge is directly passed on to the two nodes that are
+  connected by the edge.
   """
 
   frm: Node = field(kw_only=True)
   to: Node = field(kw_only=True)
-  description: str = field(kw_only=True)
+  _description: Optional[str] = field(kw_only=True, metadata={"group": LoadState.CORE})
+  loadstate: LoadState = field(default=LoadState.REFERENCE)
+  repository: Repository = field(kw_only=True)
 
+  # TODO: add all the properties and update this in the equals method
   def __eq__(self, other: object) -> bool:
     """The equals method for two nodes.
 
@@ -31,9 +41,9 @@ class Edge(EscherBase):
       True if equal and false otherwise.
     """
     if isinstance(other, Edge):
-      return {self.frm, self.to} == {
-        other.frm,
-        other.to,
-      } and self.description == other.description
+      return {self.frm.id, self.to.id} == {
+        other.frm.id,
+        other.to.id,
+      } and self._description == other._description
 
     return False
