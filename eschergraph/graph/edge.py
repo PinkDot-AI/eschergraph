@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from attrs import define
 from attrs import field
 
+from eschergraph.exceptions import DataLoadingException
 from eschergraph.graph.base import EscherBase
 from eschergraph.graph.base import LoadState
 
@@ -27,9 +28,22 @@ class Edge(EscherBase):
 
   frm: Node = field(kw_only=True)
   to: Node = field(kw_only=True)
-  _description: Optional[str] = field(kw_only=True, metadata={"group": LoadState.CORE})
+  _description: Optional[str] = field(default=None, metadata={"group": LoadState.CORE})
 
-  # TODO: add all the properties and update this in the equals method
+  @property
+  def description(self) -> str:
+    """The getter for the rich description of an edge.
+
+    Returns:
+      The edge's description that defines the relation.
+    """
+    self._check_loadstate(attr_name="_description")
+
+    if not self._description:
+      raise DataLoadingException("The edge description has not been loaded.")
+
+    return self._description
+
   def __eq__(self, other: object) -> bool:
     """The equals method for two nodes.
 
@@ -45,6 +59,6 @@ class Edge(EscherBase):
       return {self.frm.id, self.to.id} == {
         other.frm.id,
         other.to.id,
-      } and self._description == other._description
+      } and self.description == other.description
 
     return False
