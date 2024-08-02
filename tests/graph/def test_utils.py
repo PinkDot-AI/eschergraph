@@ -1,10 +1,23 @@
 from __future__ import annotations
 
+import pytest
+
 from eschergraph.graph.base import EscherBase
 from eschergraph.graph.loading import LoadState
 from eschergraph.graph.persistence import Repository
 from eschergraph.graph.utils import _extract_property_type
 from eschergraph.graph.utils import loading_getter_setter
+
+
+@pytest.fixture(scope="function")
+def base_repository(mock_repository: Repository) -> Repository:
+  # Set the metadata equal to an empty set
+  def load_side_effect(base: EscherBase, loadstate: LoadState) -> None:
+    base._metadata = set()
+
+  mock_repository.load.side_effect = load_side_effect  # type: ignore
+
+  return mock_repository
 
 
 def test_extract_property_type_string() -> None:
@@ -21,13 +34,8 @@ def test_extract_property_type_string() -> None:
 class ExtendedBase(EscherBase): ...
 
 
-def test_check_loadstate_metadata(mock_repository: Repository) -> None:
-  # Set the metadata equal to an empty set
-  def load_side_effect(base: EscherBase, loadstate: LoadState) -> None:
-    base._metadata = set()
-
-  mock_repository.load.side_effect = load_side_effect  # type: ignore
-  base: EscherBase = ExtendedBase(repository=mock_repository)
+def test_check_loadstate_metadata(base_repository: Repository) -> None:
+  base: EscherBase = ExtendedBase(repository=base_repository)
 
   assert isinstance(base.metadata, set)
   assert base.loadstate == LoadState.CORE
