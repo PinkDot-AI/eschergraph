@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from enum import Enum
 from typing import Optional
 from typing import TYPE_CHECKING
 from uuid import UUID
@@ -10,25 +9,13 @@ from attrs import define
 from attrs import field
 from attrs import fields_dict
 
-from eschergraph.exceptions import DataLoadingException
+from eschergraph.graph.loading import LoadState
+from eschergraph.graph.persistence import Metadata
+from eschergraph.graph.persistence import Repository
 
 # To prevent circular import errors
 if TYPE_CHECKING:
-  from eschergraph.graph.persistence import Metadata
   from eschergraph.graph.persistence import Repository
-
-
-class LoadState(Enum):
-  """The enum class that contains the load states for an Eschergraph object.
-
-  The integer values indicate the loading hierarchy. A load state includes also
-  all the states with a lower value.
-  """
-
-  REFERENCE = 0
-  CORE = 1
-  CONNECTED = 2
-  FULL = 3
 
 
 @define
@@ -42,6 +29,9 @@ class EscherBase:
   _loadstate: LoadState = field(default=LoadState.REFERENCE)
   """The attribute that keeps track of the loading state of a Node."""
   repository: Repository = field(kw_only=True)
+
+  # Type annotation for the dynamically added properties in the child classes
+  metadata: set[Metadata] = field(init=False)
 
   def _check_loadstate(self, attr_name: str) -> None:
     """Check if the attribute has been loaded by the current loadstate.
@@ -59,20 +49,6 @@ class EscherBase:
     if self.loadstate.value < required_loadstate.value:
       self.repository.load(self, loadstate=required_loadstate)
       self._loadstate = required_loadstate
-
-  @property
-  def metadata(self) -> set[Metadata]:
-    """The getter for the EscherGraph object metadata.
-
-    Returns:
-      The object's metadata.
-    """
-    self._check_loadstate(attr_name="_metadata")
-
-    if not isinstance(self._metadata, set):
-      raise DataLoadingException("The metadata has not been loaded.")
-
-    return self._metadata
 
   @property
   def loadstate(self) -> LoadState:

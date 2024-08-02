@@ -6,15 +6,16 @@ from typing import TYPE_CHECKING
 from attrs import define
 from attrs import field
 
-from eschergraph.exceptions import DataLoadingException
 from eschergraph.graph.base import EscherBase
-from eschergraph.graph.base import LoadState
+from eschergraph.graph.loading import LoadState
+from eschergraph.graph.utils import loading_getter_setter
 
 # Prevent circular import errors
 if TYPE_CHECKING:
   from eschergraph.graph.node import Node
 
 
+@loading_getter_setter
 @define(hash=True)
 class Edge(EscherBase):
   """The edge in an EscherGraph.
@@ -30,19 +31,8 @@ class Edge(EscherBase):
   to: Node = field(kw_only=True)
   _description: Optional[str] = field(default=None, metadata={"group": LoadState.CORE})
 
-  @property
-  def description(self) -> str:
-    """The getter for the rich description of an edge.
-
-    Returns:
-      The edge's description that defines the relation.
-    """
-    self._check_loadstate(attr_name="_description")
-
-    if not self._description:
-      raise DataLoadingException("The edge description has not been loaded.")
-
-    return self._description
+  # The type annotation for the dynamically added property
+  description: str = field(init=False)
 
   def __eq__(self, other: object) -> bool:
     """The equals method for two nodes.

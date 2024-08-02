@@ -18,3 +18,7 @@ class ExternalProviderException(BaseEscherGraphException):
 
 class DataLoadingException(BaseEscherGraphException):
   """Raised when some data on the EscherGraph objects has not been loaded as expected."""
+
+
+class NodeDoesNotExistException(BaseEscherGraphException):
+  """The specified node has not been found."""
