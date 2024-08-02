@@ -16,7 +16,7 @@ from eschergraph.graph.base import EscherBase
 from eschergraph.graph.community import Community as Community
 from eschergraph.graph.loading import LoadState
 from eschergraph.graph.persistence.metadata import Metadata as Metadata
-# Classes need to be imported for discovery for creating getters and setters
+# Custom graph atttribute classes need to be imported for discovery for creating getters and setters
 
 T = TypeVar("T", bound=EscherBase)
 
@@ -107,7 +107,7 @@ def _parse_future_annotations(annotation: str) -> type:
     class_type = getattr(builtins, class_name, None)
 
   if class_type and isinstance(class_type, type):
-    return type(class_type)
+    return class_type  # type: ignore
   else:
     raise RuntimeError()
 
