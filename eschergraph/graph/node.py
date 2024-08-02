@@ -5,11 +5,11 @@ from typing import TYPE_CHECKING
 
 from attrs import define
 from attrs import field
-from attrs import fields_dict
 
-from eschergraph.exceptions import DataLoadingException
 from eschergraph.graph.base import EscherBase
-from eschergraph.graph.base import LoadState
+from eschergraph.graph.community import Community
+from eschergraph.graph.loading import LoadState
+from eschergraph.graph.utils import loading_getter_setter
 
 # To prevent circular import errors
 if TYPE_CHECKING:
@@ -17,6 +17,7 @@ if TYPE_CHECKING:
   from eschergraph.graph.persistence import Repository
 
 
+@loading_getter_setter
 @define
 class Node(EscherBase):
   """A node in the graph.
@@ -36,7 +37,9 @@ class Node(EscherBase):
   _edges: Optional[set[Edge]] = field(
     default=None, metadata={"group": LoadState.CONNECTED}
   )
-  _community: Optional[Node] = field(default=None, metadata={"group": LoadState.FULL})
+  _community: Optional[Community] = field(
+    default=None, metadata={"group": LoadState.FULL}
+  )
   _child_nodes: Optional[list[Node]] = field(
     default=None, metadata={"group": LoadState.FULL}
   )
@@ -44,122 +47,15 @@ class Node(EscherBase):
     default=None, metadata={"group": LoadState.FULL}
   )
 
-  @property
-  def name(self) -> str:
-    """The getter for the node name.
-
-    Returns:
-      The node's name.
-    """
-    self._check_loadstate(attr_name="_name")
-
-    if not self._name:
-      raise DataLoadingException("Node name has not been loaded.")
-
-    return self._name
-
-  @property
-  def description(self) -> str:
-    """The getter for the node description.
-
-    Returns:
-      The node's description.
-    """
-    self._check_loadstate(attr_name="_description")
-
-    if not self._description:
-      raise DataLoadingException("Node description has not been loaded.")
-
-    return self._description
-
-  @property
-  def level(self) -> int:
-    """The getter for the node level.
-
-    The level indicates how close the node is to extraction from the source text.
-    Level 0 indicates that the node has been extracted from the source text.
-    Level 1 would correspond to the direct community of this node and so on.
-
-    Returns:
-      The node's level.
-    """
-    self._check_loadstate(attr_name="_level")
-
-    if not self._level:
-      raise DataLoadingException("Node level has not been loaded.")
-
-    return self._level
-
-  @property
-  def properties(self) -> list[str]:
-    """The getter for the node properties.
-
-    Returns:
-      The node's properties.
-    """
-    self._check_loadstate(attr_name="_properties")
-
-    if not isinstance(self._properties, list):
-      raise DataLoadingException("Node properties have not been loaded.")
-
-    return self._properties
-
-  @property
-  def edges(self) -> set[Edge]:
-    """The getter for the node edges.
-
-    Returns:
-      The node's edges.
-    """
-    self._check_loadstate(attr_name="edges")
-
-    if not isinstance(self._edges, set):
-      raise DataLoadingException("Node edges have not been loaded.")
-
-    return self._edges
-
-  @property
-  def community(self) -> Optional[Node]:
-    """The getter for the node community.
-
-    Returns:
-      The node's community or None if the node is not in a community.
-    """
-    self._check_loadstate(attr_name="_community")
-
-    # Different check as node cannot have a community (top-layer)
-    if not self.loadstate == fields_dict(Node)["_community"].metadata["group"]:
-      raise DataLoadingException("The node community has not been loaded.")
-
-    return self._community
-
-  @property
-  def child_nodes(self) -> list[Node]:
-    """The getter for the child nodes.
-
-    Returns:
-      The node's children.
-    """
-    self._check_loadstate(attr_name="_child_nodes")
-
-    if not isinstance(self._child_nodes, list):
-      raise DataLoadingException("The child nodes have not been loaded.")
-
-    return self._child_nodes
-
-  @property
-  def report(self) -> list[dict[str, str]]:
-    """The getter for the node report.
-
-    Returns:
-      The node's report.
-    """
-    self._check_loadstate(attr_name="_report")
-
-    if not isinstance(self._report, list):
-      raise DataLoadingException("The node report has not been loaded.")
-
-    return self._report
+  # Type annotations for the dynamically added properties
+  name: str = field(init=False)
+  description: str = field(init=False)
+  level: int = field(init=False)
+  properties: list[str] = field(init=False)
+  edges: set[Edge] = field(init=False)
+  community: Community = field(init=False)
+  child_nodes: list[Node] = field(init=False)
+  report: list[dict[str, str]] = field(init=False)
 
   @classmethod
   def create_node(
