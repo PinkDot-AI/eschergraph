@@ -53,6 +53,10 @@ class SimpleRepository(Repository):
     if not save_location:
       save_location = DEFAULT_SAVE_LOCATION
 
+      # Create the default directory if it does not exist
+      if not os.path.isdir(DEFAULT_SAVE_LOCATION):
+        os.makedirs(name=DEFAULT_SAVE_LOCATION)
+
     self.name = name
     self.save_location = save_location
 
