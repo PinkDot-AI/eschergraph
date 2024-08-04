@@ -9,6 +9,7 @@ from attrs import field
 from eschergraph.graph.base import EscherBase
 from eschergraph.graph.community import Community
 from eschergraph.graph.loading import LoadState
+from eschergraph.graph.persistence import Metadata
 from eschergraph.graph.utils import loading_getter_setter
 
 # To prevent circular import errors
@@ -65,6 +66,7 @@ class Node(EscherBase):
     level: int,
     repository: Repository,
     properties: Optional[list[str]] = None,
+    metadata: Optional[set[Metadata]] = None,
   ) -> Node:
     """The method that allows for the creation of a new node.
 
@@ -77,6 +79,7 @@ class Node(EscherBase):
       level (int): The level of the node.
       repository (Repository): The repository that will store the node.
       properties (Optional[list[str]]): The optional properties for the node.
+      metadata (Optional[set[Metadata]]): The optional metadata for the node.
 
     Returns:
       The node that has been created.
@@ -86,6 +89,7 @@ class Node(EscherBase):
       description=description,
       level=level,
       properties=properties if properties else [],
+      metadata=metadata if metadata else set(),
       repository=repository,
       edges=set(),
       child_nodes=[],
