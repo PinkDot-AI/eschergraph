@@ -22,3 +22,7 @@ class DataLoadingException(BaseEscherGraphException):
 
 class NodeDoesNotExistException(BaseEscherGraphException):
   """The specified node has not been found."""
+
+
+class EdgeCreationException(BaseEscherGraphException):
+  """When an edge is created between a node and itself."""

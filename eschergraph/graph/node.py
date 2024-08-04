@@ -59,7 +59,7 @@ class Node(EscherBase):
   report: list[dict[str, str]] = field(init=False)
 
   @classmethod
-  def create_node(
+  def create(
     cls,
     name: str,
     description: str,
