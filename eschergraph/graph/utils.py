@@ -121,6 +121,9 @@ def _extract_inner_type(annotation: str) -> str:
   Returns:
     The first string in the optional block.
   """
+  if not annotation or "Optional" not in annotation:
+    return ""
+
   parsed_annotation: Expression = parse(annotation, mode="eval")
   # Extract the inner type
   inner_type: Any = parsed_annotation.body.slice  # type: ignore
