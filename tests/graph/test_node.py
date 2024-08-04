@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import random
 from typing import Any
+from unittest.mock import call
 from unittest.mock import Mock
 
 import pytest
@@ -85,3 +87,33 @@ def test_setters(mock_repository: Mock, property_parameters: tuple[str, Any]) ->
   assert node.loadstate == desired_loadstate
   mock_repository.load.assert_called_once()
   mock_repository.load.assert_called_with(node, loadstate=desired_loadstate)
+
+
+# A test that checks whether the loadstate logic is correct and can only be increased
+@pytest.mark.repeat(5)
+def test_check_loadstate_logic(mock_repository: Mock) -> None:
+  def load_side_effect(node: Node, loadstate: LoadState) -> None:
+    for attr_name, value in property_parameters:
+      setattr(node, "_" + attr_name, value)
+
+  mock_repository.load.side_effect = load_side_effect
+  node: Node = Node(repository=mock_repository)
+
+  # Keeping track of the test evolution
+  max_loadstate: LoadState = LoadState.REFERENCE
+  calls: list[Any] = []
+
+  # Make 20 random getter calls
+  for _ in range(20):
+    idx: int = random.randint(0, len(property_parameters) - 1)
+    attr_name, _ = property_parameters[idx]
+    Node.__dict__[attr_name].fget(node)
+    needed_loadstate: LoadState = fields_dict(Node)["_" + attr_name].metadata["group"]
+
+    # If more needs to be loaded
+    if needed_loadstate.value > max_loadstate.value:
+      max_loadstate = needed_loadstate
+      calls.append(call(node, loadstate=needed_loadstate))
+
+  assert node.loadstate == max_loadstate
+  mock_repository.load.assert_has_calls(calls)

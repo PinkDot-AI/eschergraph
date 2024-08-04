@@ -19,10 +19,10 @@ pre-commit = "^3.7.1"
 pytest = "^8.2.2"
 assertpy = "^1.1"
 coverage = "^7.5.4"
-
-# Inspired by the graphrag project
 semversioner = "^2.0.5"
 poethepoet = "^0.27.0"
+pytest-repeat = "^0.9.3"
+
 [tool.poetry_dynamic_versioning]
 enable = true
 style = "pep440"
