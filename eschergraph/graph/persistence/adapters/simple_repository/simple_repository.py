@@ -1,11 +1,16 @@
 from __future__ import annotations
 
+import os
+import pickle
+from typing import Optional
 from uuid import UUID
 
 from attrs import define
 from attrs import field
 from attrs import fields_dict
 
+from eschergraph.config import DEFAULT_GRAPH_NAME
+from eschergraph.config import DEFAULT_SAVE_LOCATION
 from eschergraph.exceptions import NodeDoesNotExistException
 from eschergraph.graph.base import EscherBase
 from eschergraph.graph.community import Community
@@ -13,8 +18,9 @@ from eschergraph.graph.edge import Edge
 from eschergraph.graph.loading import LoadState
 from eschergraph.graph.node import Node
 from eschergraph.graph.persistence.adapters.simple_repository.models import EdgeModel
-from eschergraph.graph.persistence.adapters.simple_repository.models import GraphModel
 from eschergraph.graph.persistence.adapters.simple_repository.models import NodeModel
+from eschergraph.graph.persistence.exceptions import DirectoryDoesNotExistException
+from eschergraph.graph.persistence.exceptions import FilesMissingException
 from eschergraph.graph.persistence.exceptions import PersistenceException
 from eschergraph.graph.persistence.metadata import Metadata
 from eschergraph.graph.persistence.repository import Repository
@@ -26,10 +32,68 @@ from eschergraph.graph.persistence.repository import Repository
 class SimpleRepository(Repository):
   """The repository implementation that stores the graph in pickled Python objects."""
 
-  graph: GraphModel
-  nodes: dict[UUID, NodeModel] = field(factory=dict)
-  edges: dict[UUID, EdgeModel] = field(factory=dict)
-  node_name_index: dict[str, UUID] = field(factory=dict)
+  name: str = field(default=None)
+  save_location: str = field(default=None)
+  nodes: dict[UUID, NodeModel] = field(init=False)
+  edges: dict[UUID, EdgeModel] = field(init=False)
+  node_name_index: dict[str, UUID] = field(init=False)
+
+  def __init__(
+    self, name: Optional[str] = None, save_location: Optional[str] = None
+  ) -> None:
+    """The init method for the SimpleRepository.
+
+    Args:
+      name (Optional[str]): The graph's name.
+      save_location (Optional[str]): The save location.
+
+    """
+    if not name:
+      name = DEFAULT_GRAPH_NAME
+    if not save_location:
+      save_location = DEFAULT_SAVE_LOCATION
+
+    self.name = name
+    self.save_location = save_location
+
+    if not os.path.isdir(save_location):
+      raise DirectoryDoesNotExistException(
+        f"The specified save location: {save_location} does not exist"
+      )
+
+    filenames: dict[str, str] = self._filenames(save_location, name)
+
+    # Check if this is a new graph
+    if (
+      not os.path.isfile(filenames["nodes"])
+      and not os.path.isfile(filenames["edges"])
+      and not os.path.isfile(filenames["node_name_index"])
+    ):
+      self.nodes = dict()
+      self.edges = dict()
+      self.node_name_index = dict()
+      return
+
+    # If some files are missing
+    if (
+      not os.path.isfile(filenames["nodes"])
+      or not os.path.isfile(filenames["edges"])
+      or not os.path.isfile(filenames["node_name_index"])
+    ):
+      raise FilesMissingException("Some files are missing or corrupted.")
+
+    for key, value in filenames.items():
+      with open(value, "rb") as file:
+        setattr(self, key, pickle.load(file))
+
+  @staticmethod
+  def _filenames(save_location: str, name: str) -> dict[str, str]:
+    base_filename: str = save_location + "/" + name
+    return {
+      "nodes": base_filename + "-nodes.pkl",
+      "edges": base_filename + "-edges.pkl",
+      "node_name_index": base_filename + "-nnindex.pkl",
+    }
 
   def load(self, object: EscherBase, loadstate: LoadState = LoadState.CORE) -> None:
     """Load the EscherBase object attributes to a certain loadstate.
@@ -125,7 +189,6 @@ class SimpleRepository(Repository):
     """
     ...
 
-  # TODO: add the loadstate for a node
   def get_node_by_name(self, name: str, loadstate: LoadState = LoadState.CORE) -> Node:
     """Get a node by name.
 
@@ -150,4 +213,7 @@ class SimpleRepository(Repository):
     This is not needed for all sorts of repositories as databases
     manage this internally.
     """
-    ...
+    filenames: dict[str, str] = self._filenames(self.save_location, self.name)
+    for key, value in filenames.items():
+      with open(value, "wb") as file:
+        pickle.dump(getattr(self, key), file)

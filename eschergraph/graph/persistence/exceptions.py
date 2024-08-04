@@ -5,3 +5,11 @@ from eschergraph.exceptions import BaseEscherGraphException
 
 class PersistenceException(BaseEscherGraphException):
   """The base class for all EscherGraph exceptions that relate to persistence."""
+
+
+class DirectoryDoesNotExistException(PersistenceException):
+  """The specified directory does not exist."""
+
+
+class FilesMissingException(PersistenceException):
+  """Some files are missing or corrupted."""
