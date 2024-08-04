@@ -54,7 +54,7 @@ property_parameters: list[tuple[str, Any]] = [
 def test_getters(mock_repository: Mock, property_parameters: tuple[str, Any]) -> None:
   attr_name, value = property_parameters
 
-  # set the attribute equal to a value to mock the loading
+  # Set the attribute equal to a value to mock the loading
   def load_side_effect(node: Node, loadstate: LoadState) -> None:
     setattr(node, "_" + attr_name, value)
 
@@ -75,7 +75,7 @@ def test_getters(mock_repository: Mock, property_parameters: tuple[str, Any]) ->
 def test_setters(mock_repository: Mock, property_parameters: tuple[str, Any]) -> None:
   attr_name, value = property_parameters
 
-  # set the attribute equal to a value to mock the loading
+  # Set the attribute equal to a value to mock the loading
   def load_side_effect(node: Node, loadstate: LoadState) -> None:
     setattr(node, "_" + attr_name, value)
 

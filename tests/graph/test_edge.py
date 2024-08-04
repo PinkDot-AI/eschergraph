@@ -9,6 +9,7 @@ from attrs import fields_dict
 from eschergraph.exceptions import EdgeCreationException
 from eschergraph.graph import Edge
 from eschergraph.graph import Node
+from eschergraph.graph.base import EscherBase
 from eschergraph.graph.loading import LoadState
 
 
@@ -87,7 +88,7 @@ def test_getters(mock_repository: Mock, property_parameters: tuple[str, Any]) ->
 
   attr_name, value = property_parameters
 
-  # set the attribute equal to a value to mock the loading
+  # Set the attribute equal to a value to mock the loading
   def load_side_effect(edge: Edge, loadstate: LoadState) -> None:
     setattr(edge, "_" + attr_name, value)
 
@@ -111,7 +112,7 @@ def test_setters(mock_repository: Mock, property_parameters: tuple[str, Any]) ->
 
   attr_name, value = property_parameters
 
-  # set the attribute equal to a value to mock the loading
+  # Set the attribute equal to a value to mock the loading
   def load_side_effect(edge: Edge, loadstate: LoadState) -> None:
     setattr(edge, "_" + attr_name, value)
 
@@ -126,3 +127,34 @@ def test_setters(mock_repository: Mock, property_parameters: tuple[str, Any]) ->
   assert edge.loadstate == desired_loadstate
   mock_repository.load.assert_called_once()
   mock_repository.load.assert_called_with(edge, loadstate=desired_loadstate)
+
+
+def test_loading_node_through_edge(mock_repository: Mock) -> None:
+  # Set the attribute equal to a value to mock the loading
+  def load_side_effect(object: EscherBase, loadstate: LoadState) -> None:
+    if isinstance(object, Edge):
+      object._description = "This is an edge description."
+    elif isinstance(object, Node):
+      object._name = "node_name"
+      object._edges = set()
+
+  mock_repository.load.side_effect = load_side_effect
+
+  frm: Node = Node(repository=mock_repository)
+  to: Node = Node(repository=mock_repository)
+  edge: Edge = Edge(frm=frm, to=to, repository=mock_repository)
+
+  assert not frm._name
+  assert not isinstance(frm._edges, set)
+  assert not edge._description
+
+  edge.loadstate = LoadState.CORE
+  assert edge._description
+  assert not frm._name
+  assert not isinstance(frm._edges, set)
+
+  assert frm.name
+  assert frm.loadstate == LoadState.CORE
+  assert isinstance(frm.edges, set)
+  assert frm.loadstate == LoadState.CONNECTED  # type: ignore
+  assert to.loadstate == LoadState.REFERENCE
