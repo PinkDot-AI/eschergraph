@@ -33,11 +33,3 @@ class EdgeModel(TypedDict):
   to: UUID
   description: str
   metadata: set[MetadataModel]
-
-
-class GraphModel(TypedDict):
-  """The persistent data model for a graph."""
-
-  id: UUID
-  name: str
-  save_location: str
