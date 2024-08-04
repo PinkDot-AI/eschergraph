@@ -17,8 +17,8 @@ def test_initialize(mock_repository: Mock) -> None:
   assert Node(repository=mock_repository).id
 
 
-def test_create_node(mock_repository: Mock) -> None:
-  node: Node = Node.create_node(
+def test_create(mock_repository: Mock) -> None:
+  node: Node = Node.create(
     name="test_node",
     description="A node for testing",
     level=0,
@@ -31,6 +31,9 @@ def test_create_node(mock_repository: Mock) -> None:
   assert node.report == []
   assert node.child_nodes == []
   assert node.loadstate == LoadState.FULL
+
+  # No loading is conducted for a new node
+  mock_repository.load.assert_not_called()
 
 
 # Test all the added getters and setters

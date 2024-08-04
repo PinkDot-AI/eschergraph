@@ -6,8 +6,10 @@ from typing import TYPE_CHECKING
 from attrs import define
 from attrs import field
 
+from eschergraph.exceptions import EdgeCreationException
 from eschergraph.graph.base import EscherBase
 from eschergraph.graph.loading import LoadState
+from eschergraph.graph.persistence import Repository
 from eschergraph.graph.utils import loading_getter_setter
 
 # Prevent circular import errors
@@ -16,7 +18,7 @@ if TYPE_CHECKING:
 
 
 @loading_getter_setter
-@define(hash=True)
+@define
 class Edge(EscherBase):
   """The edge in an EscherGraph.
 
@@ -33,6 +35,36 @@ class Edge(EscherBase):
 
   # The type annotation for the dynamically added property
   description: str = field(init=False)
+
+  @classmethod
+  def create(
+    cls, frm: Node, to: Node, description: str, repository: Repository
+  ) -> Edge:
+    """The method that allows for the creation of a new edge.
+
+    Note that edges do have a to and from method, but they
+    are undirectional. This is also reflected in the equals method.
+
+    Args:
+      frm (Node): The from node in the edge.
+      to (Node): The to node in the edge.
+      description (str): A rich description of the relation.
+      repository (Repository): The repository used for persistence.
+
+    Returns:
+      A new edge.
+    """
+    if frm.id == to.id:
+      raise EdgeCreationException(
+        "An edge should be created between two different nodes."
+      )
+    return cls(
+      frm=frm,
+      to=to,
+      description=description,
+      repository=repository,
+      loadstate=LoadState.FULL,
+    )
 
   def __eq__(self, other: object) -> bool:
     """The equals method for two nodes.
