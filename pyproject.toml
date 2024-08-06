@@ -123,6 +123,8 @@ warn_unused_configs = true
 warn_redundant_casts = true
 warn_unused_ignores = true
 
+ignore_missing_imports = true
+
 # Getting these passing should be easy
 strict_equality = true
 extra_checks = true

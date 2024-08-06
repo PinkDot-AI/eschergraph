@@ -1,20 +1,19 @@
 from __future__ import annotations
 
-import chromadb  # type: ignore
+import chromadb
+from chromadb import Collection
+from chromadb import QueryResult
+from chromadb.api import ClientAPI
 
 from eschergraph.graph.persistence.vector_db.vector_db import VectorDB
 
 
 class ChromaDB(VectorDB):
-  """This is the ChromaDB implementation."""
+  """The ChromaDB vector database implementation."""
 
   def __init__(self) -> None:
     """Initialize the ChromaDB client."""
-    self.client = chromadb.Client()
-
-  def connect(self) -> None:
-    """Connect to ChromaDB. Currently a placeholder function."""
-    pass
+    self.client: ClientAPI = chromadb.Client()
 
   def create_collection(self, name: str) -> None:
     """Create a new collection in ChromaDB.
@@ -22,9 +21,9 @@ class ChromaDB(VectorDB):
     Args:
         name (str): The name of the collection to be created.
     """
-    self.collection = self.client.create_collection(name=name)
+    self.collection: Collection = self.client.create_collection(name=name)
 
-  def input_documents(
+  def insert(
     self,
     embeddings: list[list[float]],
     documents: list[str],
@@ -35,13 +34,13 @@ class ChromaDB(VectorDB):
     """Input documents into a ChromaDB collection.
 
     Args:
-        embeddings (list[list[float]]): List of embeddings for the documents.
-        documents (list[str]): List of documents to be added.
-        ids (list[str]): List of IDs corresponding to each document.
-        metadata (list[dict]): List of metadata dictionaries for each document.
-        collection_name (str): Name of the collection to add documents to.
+      embeddings (list[list[float]]): List of embeddings for the documents.
+      documents (list[str]): List of documents to be added.
+      ids (list[str]): List of IDs corresponding to each document.
+      metadata (list[dict]): List of metadata dictionaries for each document.
+      collection_name (str): Name of the collection to add documents to.
     """
-    collection = self.client.get_collection(name=collection_name)
+    collection: Collection = self.client.get_collection(name=collection_name)
     collection.add(
       documents=documents,
       ids=ids,
@@ -67,12 +66,12 @@ class ChromaDB(VectorDB):
     Returns:
         dict: Search results containing the documents.
     """
-    collection = self.client.get_collection(name=collection_name)
-    results: dict[str, str] = collection.query(
+    collection: Collection = self.client.get_collection(name=collection_name)
+    result: QueryResult = collection.query(
       query_embeddings=[embedding],
       n_results=top_n,
       where=metadata,
       include=["documents"],
     )
 
-    return results
+    return result  # type: ignore

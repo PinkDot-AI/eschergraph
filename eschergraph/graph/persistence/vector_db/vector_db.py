@@ -5,24 +5,19 @@ from abc import abstractmethod
 
 
 class VectorDB(ABC):
-  """This is the Abstrcat class for all vector DB implementations."""
-
-  @abstractmethod
-  def connect(self) -> None:
-    """Possible conntection class."""
-    pass
+  """The abstract base class for a vector database."""
 
   @abstractmethod
   def create_collection(self, name: str) -> None:
     """Crete a collection with a given name.
 
-    Parameters:
-    name (str) name for the collection.
+    Args:
+      name (str): Collection's name.
     """
-    pass
+    raise NotImplementedError
 
   @abstractmethod
-  def input_documents(
+  def insert(
     self,
     embeddings: list[list[float]],
     documents: list[str],
@@ -32,13 +27,14 @@ class VectorDB(ABC):
   ) -> None:
     """Store documents with their embeddings, ids, and metadata.
 
-    Parameters:
-    embedding (List[List[float]]): List of embeddings for the documents.
-    document (List[str]): List of document texts.
-    ids (List[int]): List of document IDs.
-    metadata (List[Dict[str, Any]]): List of metadata dictionaries.
+    Args:
+      embeddings (list[list[float]]): List of embeddings for the documents.
+      documents (list[str]): List of document texts.
+      ids (list[int]): List of document IDs.
+      metadata (list[Dict[str, Any]]): List of metadata dictionaries.
+      collection_name (str): The name of the collection.
     """
-    pass
+    raise NotImplementedError
 
   @abstractmethod
   def search(
@@ -50,12 +46,13 @@ class VectorDB(ABC):
   ) -> dict[str, str]:
     """Search for the top_n documents that are most similar to the given embedding.
 
-    Parameters:
-    embedding (List[float]): Embedding of the query document.
-    top_n (int): Number of top documents to retrieve.
-    metadata (Dict[str, Any]): Metadata to filter the search results.
+    Args:
+      embedding (list[float]): Embedding of the query document.
+      top_n (int): Number of top documents to retrieve.
+      metadata (dict[str, Any]): Metadata to filter the search results.
+      collection_name (str): The name of the collection.
 
     Returns:
-    List[Dict[str, Any]]: List of documents that match the query.
+      Dictionary with results that match the que
     """
-    pass
+    raise NotImplementedError
