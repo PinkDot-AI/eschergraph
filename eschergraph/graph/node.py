@@ -91,6 +91,7 @@ class Node(EscherBase):
       properties=properties if properties else [],
       metadata=metadata if metadata else set(),
       repository=repository,
+      community=Community(),
       edges=set(),
       child_nodes=[],
       report=[],

@@ -9,6 +9,7 @@ from attrs import field
 from eschergraph.exceptions import EdgeCreationException
 from eschergraph.graph.base import EscherBase
 from eschergraph.graph.loading import LoadState
+from eschergraph.graph.persistence import Metadata
 from eschergraph.graph.persistence import Repository
 from eschergraph.graph.utils import loading_getter_setter
 
@@ -38,7 +39,12 @@ class Edge(EscherBase):
 
   @classmethod
   def create(
-    cls, frm: Node, to: Node, description: str, repository: Repository
+    cls,
+    frm: Node,
+    to: Node,
+    description: str,
+    repository: Repository,
+    metadata: Optional[set[Metadata]] = None,
   ) -> Edge:
     """The method that allows for the creation of a new edge.
 
@@ -50,6 +56,7 @@ class Edge(EscherBase):
       to (Node): The to node in the edge.
       description (str): A rich description of the relation.
       repository (Repository): The repository used for persistence.
+      metadata (Optional[set[Metadata]]): The optional metadata for the edge.
 
     Returns:
       A new edge.
@@ -63,6 +70,7 @@ class Edge(EscherBase):
       to=to,
       description=description,
       repository=repository,
+      metadata=metadata if metadata else set(),
       loadstate=LoadState.FULL,
     )
 
