@@ -78,3 +78,13 @@ class EscherBase:
 
     self.repository.load(self, loadstate=loadstate)
     self._loadstate = loadstate
+
+  def __hash__(self) -> int:
+    """The hash method for an EscherBase object.
+
+    It only uses the id.
+
+    Returns:
+      The integer hash value.
+    """
+    return hash(self.id)

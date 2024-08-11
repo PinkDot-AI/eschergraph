@@ -11,7 +11,7 @@ if TYPE_CHECKING:
   from eschergraph.graph.node import Node
 
 
-# Potentially change the EscherBase type hint to Node | Edge for readability!
+# TODO: potentially add a refresh method (that takes into account the loadingstate)
 class Repository(ABC):
   """An abstract base class for an EscherGraph repository."""
 

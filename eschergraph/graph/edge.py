@@ -65,7 +65,7 @@ class Edge(EscherBase):
       raise EdgeCreationException(
         "An edge should be created between two different nodes."
       )
-    return cls(
+    edge: Edge = cls(
       frm=frm,
       to=to,
       description=description,
@@ -73,6 +73,12 @@ class Edge(EscherBase):
       metadata=metadata if metadata else set(),
       loadstate=LoadState.FULL,
     )
+
+    # Add the edge to the nodes
+    frm.edges.add(edge)
+    to.edges.add(edge)
+
+    return edge
 
   def __eq__(self, other: object) -> bool:
     """The equals method for two nodes.
@@ -92,3 +98,11 @@ class Edge(EscherBase):
       } and self.description == other.description
 
     return False
+
+  def __hash__(self) -> int:
+    """The hash function for an edge.
+
+    Returns:
+     The integer hash value for an edge.
+    """
+    return hash((self.id, self.frm.id, self.to.id, self.description))
