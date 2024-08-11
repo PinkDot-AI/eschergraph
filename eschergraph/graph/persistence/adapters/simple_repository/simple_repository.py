@@ -214,7 +214,11 @@ class SimpleRepository(Repository):
 
   def _add_edge(self, edge: Edge) -> None:
     # Persisting an edge (only used for creation, and updating the metadata and description)
-    ...
+    # The from node has already been persisted
+
+    # Persist the edge attributes (not the referenced nodes)
+
+    self._add_node(node=edge.to)
 
   def get_node_by_name(self, name: str, loadstate: LoadState = LoadState.CORE) -> Node:
     """Get a node by name.
