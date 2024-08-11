@@ -77,11 +77,43 @@ def create_simple_extracted_graph(
 
   # Start by simulating a document
   document_id: UUID = uuid4()
-  num_chunks: int = random.randint(3, 200)
+  num_chunks: int = random.randint(3, 20)
 
   for i in range(num_chunks):
     metadata: Metadata = Metadata(document_id=document_id, chunk_id=i)
 
     num_nodes: int = random.randint(1, 15)
+    for _ in range(num_nodes):
+      node_data: Node = create_basic_node(repository=repository)
+
+      nodes.append(
+        graph.add_node(
+          name=node_data.name,
+          description=node_data.description,
+          level=node_data.level,
+          metadata=metadata,
+          properties=node_data.properties,
+        )
+      )
+
+    num_edges: int = random.randint(3, 30)
+    valid_pairs: list[tuple[int, int]] = [
+      (a, b) for a in range(num_nodes) for b in range(a, num_nodes) if a != b
+    ]
+
+    for _ in range(min(num_edges, len(valid_pairs))):
+      pair: tuple[int, int] = random.choice(valid_pairs)
+      valid_pairs.remove(pair)
+
+      edge_data: Edge = create_edge(frm=nodes[pair[0]], to=nodes[pair[1]])
+
+      edges.append(
+        graph.add_edge(
+          frm=nodes[pair[0]],
+          to=nodes[pair[1]],
+          description=edge_data.description,
+          metadata=metadata,
+        )
+      )
 
   return graph, nodes, edges
