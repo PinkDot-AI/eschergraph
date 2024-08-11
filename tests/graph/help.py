@@ -117,3 +117,6 @@ def create_simple_extracted_graph(
       )
 
   return graph, nodes, edges
+
+
+create_simple_extracted_graph()

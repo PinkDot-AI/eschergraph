@@ -25,7 +25,9 @@ from eschergraph.graph.persistence.exceptions import PersistenceException
 from eschergraph.graph.persistence.metadata import Metadata
 from eschergraph.graph.persistence.repository import Repository
 
-# TODO: logic for loading from a file (for when the file does not yet exist)
+# TODO: node name index in current form could cause problems as we do not
+# yet merge all nodes with a duplicate name?!? Do we only do this on the
+# higher community level?
 
 
 @define
@@ -182,6 +184,11 @@ class SimpleRepository(Repository):
         attributes.append(name)
     return attributes
 
+  # Order for adding nodes and edges (also add the references (or update them)):
+  # From node
+  # Edge
+  # To node
+  # This logic can be a bit complex
   def add(self, object: EscherBase) -> None:
     """Add the node to the persistent storage.
 
@@ -191,6 +198,22 @@ class SimpleRepository(Repository):
     Args:
       object (EscherBase): The node or edge to add / update.
     """
+    if isinstance(object, Node):
+      self._add_node(node=object)
+    elif isinstance(object, Edge):
+      # Edges are always stored and persisted through the from node
+      # Note that it also need to be added to the to node through this call
+      self._add_node(node=object.frm)
+
+  def _add_node(self, node: Node) -> None:
+    # Check if the node already exists
+    if not node.id in self.nodes:
+      if not node.loadstate == LoadState.FULL:
+        raise PersistenceException("A newly created node should be fully loaded.")
+    ...
+
+  def _add_edge(self, edge: Edge) -> None:
+    # Persisting an edge (only used for creation, and updating the metadata and description)
     ...
 
   def get_node_by_name(self, name: str, loadstate: LoadState = LoadState.CORE) -> Node:
