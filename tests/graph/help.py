@@ -3,11 +3,13 @@ from __future__ import annotations
 import random
 from typing import Optional
 from unittest.mock import MagicMock
+from uuid import UUID
 from uuid import uuid4
 
 from faker import Faker
 
 from eschergraph.graph import Edge
+from eschergraph.graph import Graph
 from eschergraph.graph import Node
 from eschergraph.graph.persistence import Metadata
 from eschergraph.graph.persistence import Repository
@@ -60,3 +62,26 @@ def create_edge(frm: Node, to: Node, repository: Optional[Repository] = None) ->
     description=faker.text(max_nb_chars=80),
     metadata={Metadata(document_id=uuid4(), chunk_id=random.randint(1, 120))},
   )
+
+
+def create_simple_extracted_graph(
+  repository: Optional[Repository] = None,
+) -> tuple[Graph, list[Node], list[Edge]]:
+  # The mock repository as default, does not make much sense for this function
+  if not repository:
+    repository = MagicMock(spec=Repository)
+
+  graph: Graph = Graph(name="test_graph", repository=repository)
+  nodes: list[Node] = []
+  edges: list[Edge] = []
+
+  # Start by simulating a document
+  document_id: UUID = uuid4()
+  num_chunks: int = random.randint(3, 200)
+
+  for i in range(num_chunks):
+    metadata: Metadata = Metadata(document_id=document_id, chunk_id=i)
+
+    num_nodes: int = random.randint(1, 15)
+
+  return graph, nodes, edges
