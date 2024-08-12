@@ -6,9 +6,13 @@ import pytest
 
 from eschergraph.config import DEFAULT_GRAPH_NAME
 from eschergraph.config import DEFAULT_SAVE_LOCATION
+from eschergraph.graph import Node
+from eschergraph.graph.persistence import Metadata
 from eschergraph.graph.persistence.adapters.simple_repository import SimpleRepository
+from eschergraph.graph.persistence.adapters.simple_repository.models import NodeModel
 from eschergraph.graph.persistence.exceptions import DirectoryDoesNotExistException
 from eschergraph.graph.persistence.exceptions import FilesMissingException
+from tests.graph.help import create_basic_node
 
 
 def test_filenames_function_default() -> None:
@@ -59,3 +63,14 @@ def test_init_files_corrupted(saved_graph_dir: Path, file_indexes: tuple[int]) -
 
   with pytest.raises(FilesMissingException):
     SimpleRepository(name="default", save_location=saved_graph_dir.as_posix())
+
+
+def test_node_to_node_model() -> None:
+  node: Node = create_basic_node()
+  node_model: NodeModel = SimpleRepository._new_node_to_node_model(node)
+
+  assert node_model["name"] == node.name
+  assert node_model["description"] == node.description
+  assert node_model["properties"] == node.properties
+  assert node_model["level"] == node.level
+  assert {Metadata(**md) for md in node_model["metadata"]} == node.metadata

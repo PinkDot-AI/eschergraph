@@ -217,9 +217,7 @@ class SimpleRepository(Repository):
 
   @staticmethod
   def _new_node_to_node_model(node: Node) -> NodeModel:
-    edge_models: set[EdgeModel] = set()
-
-    node_model: NodeModel = {
+    return {
       "name": node.name,
       "description": node.description,
       "level": node.level,
@@ -227,10 +225,8 @@ class SimpleRepository(Repository):
       "edges": {edge.id for edge in node.edges},
       "community": node.community.node.id if node.community.node else None,
       "report": [],
-      "metadata": {cast(MetadataModel, asdict(md)) for md in node.metadata},
+      "metadata": [cast(MetadataModel, asdict(md)) for md in node.metadata],
     }
-
-    return node_model
 
   def _add_edge(self, edge: Edge) -> None:
     # Persisting an edge (only used for creation, and updating the metadata and description)
