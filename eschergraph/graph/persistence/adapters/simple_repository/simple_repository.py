@@ -25,9 +25,7 @@ from eschergraph.graph.persistence.exceptions import PersistenceException
 from eschergraph.graph.persistence.metadata import Metadata
 from eschergraph.graph.persistence.repository import Repository
 
-# TODO: node name index in current form could cause problems as we do not
-# yet merge all nodes with a duplicate name?!? Do we only do this on the
-# higher community level?
+# TODO: add logic for a duplicate node name
 
 
 @define

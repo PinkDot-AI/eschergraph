@@ -12,6 +12,7 @@ if TYPE_CHECKING:
 
 
 # TODO: potentially add a refresh method (that takes into account the loadingstate)
+# TODO: reconsider the logic for a node name as node duplication can occur
 class Repository(ABC):
   """An abstract base class for an EscherGraph repository."""
 
@@ -39,6 +40,7 @@ class Repository(ABC):
     """
     raise NotImplementedError
 
+  # Reconsider this method
   @abstractmethod
   def get_node_by_name(self, name: str, loadstate: LoadState = LoadState.CORE) -> Node:
     """Get a node by name.
