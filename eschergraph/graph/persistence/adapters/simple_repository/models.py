@@ -22,7 +22,7 @@ class NodeModel(TypedDict):
   edges: set[UUID]
   community: Optional[UUID]
   report: list[dict[str, str]]
-  metadata: set[MetadataModel]
+  metadata: list[MetadataModel]
 
 
 class EdgeModel(TypedDict):
@@ -31,4 +31,4 @@ class EdgeModel(TypedDict):
   frm: UUID
   to: UUID
   description: str
-  metadata: set[MetadataModel]
+  metadata: list[MetadataModel]
