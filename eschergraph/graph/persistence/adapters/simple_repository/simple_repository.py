@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import os
 import pickle
+from typing import cast
 from typing import Optional
 from uuid import UUID
 
+from attrs import asdict
 from attrs import define
 from attrs import field
 from attrs import fields_dict
@@ -18,6 +20,9 @@ from eschergraph.graph.edge import Edge
 from eschergraph.graph.loading import LoadState
 from eschergraph.graph.node import Node
 from eschergraph.graph.persistence.adapters.simple_repository.models import EdgeModel
+from eschergraph.graph.persistence.adapters.simple_repository.models import (
+  MetadataModel,
+)
 from eschergraph.graph.persistence.adapters.simple_repository.models import NodeModel
 from eschergraph.graph.persistence.exceptions import DirectoryDoesNotExistException
 from eschergraph.graph.persistence.exceptions import FilesMissingException
@@ -138,12 +143,12 @@ class SimpleRepository(Repository):
         # Add a reference to the edges
         node._edges = {
           Edge(
-            id=edge["id"],
-            frm=Node(id=edge["frm"], repository=node.repository),
-            to=Node(id=edge["to"], repository=node.repository),
+            id=edge_id,
+            frm=Node(id=self.edges[edge_id]["frm"], repository=node.repository),
+            to=Node(id=self.edges[edge_id]["to"], repository=node.repository),
             repository=node.repository,
           )
-          for edge in nodeModel["edges"]
+          for edge_id in nodeModel["edges"]
         }
       else:
         setattr(node, "_" + attr, nodeModel[attr])  # type: ignore
@@ -209,6 +214,23 @@ class SimpleRepository(Repository):
       if not node.loadstate == LoadState.FULL:
         raise PersistenceException("A newly created node should be fully loaded.")
     ...
+
+  @staticmethod
+  def _new_node_to_node_model(node: Node) -> NodeModel:
+    edge_models: set[EdgeModel] = set()
+
+    node_model: NodeModel = {
+      "name": node.name,
+      "description": node.description,
+      "level": node.level,
+      "properties": node.properties,
+      "edges": {edge.id for edge in node.edges},
+      "community": node.community.node.id if node.community.node else None,
+      "report": [],
+      "metadata": {cast(MetadataModel, asdict(md)) for md in node.metadata},
+    }
+
+    return node_model
 
   def _add_edge(self, edge: Edge) -> None:
     # Persisting an edge (only used for creation, and updating the metadata and description)
