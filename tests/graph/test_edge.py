@@ -13,17 +13,28 @@ from eschergraph.graph.base import EscherBase
 from eschergraph.graph.loading import LoadState
 
 
-def test_create(mock_repository: Mock) -> None:
+@pytest.fixture(scope="function")
+def edges_mock_repository(mock_repository: Mock) -> Mock:
+  # Set the edges on the node equal to an empty set to mock the loading
+  def load_side_effect(node: Node, loadstate: LoadState) -> None:
+    node._edges = set()
+
+  mock_repository.load.side_effect = load_side_effect
+
+  return mock_repository
+
+
+def test_create(edges_mock_repository: Mock) -> None:
   edge: Edge = Edge.create(
-    frm=Node(repository=mock_repository),
-    to=Node(repository=mock_repository),
-    repository=mock_repository,
+    frm=Node(repository=edges_mock_repository),
+    to=Node(repository=edges_mock_repository),
+    repository=edges_mock_repository,
     description="This is the description.",
   )
   assert edge.id
 
-  # No loading is conducted for a new edge
-  mock_repository.load.assert_not_called()
+  # The edges are loaded for each node
+  edges_mock_repository.load.call_count == 2
 
 
 def test_create_exception(mock_repository: Mock) -> None:
@@ -38,32 +49,32 @@ def test_create_exception(mock_repository: Mock) -> None:
     )
 
 
-def test_edge_equality(mock_repository: Mock) -> None:
-  node1: Node = Node(repository=mock_repository)
-  node2: Node = Node(repository=mock_repository)
-  node3: Node = Node(repository=mock_repository)
-  node4: Node = Node(repository=mock_repository)
+def test_edge_equality(edges_mock_repository: Mock) -> None:
+  node1: Node = Node(repository=edges_mock_repository)
+  node2: Node = Node(repository=edges_mock_repository)
+  node3: Node = Node(repository=edges_mock_repository)
+  node4: Node = Node(repository=edges_mock_repository)
 
   edge1: Edge = Edge.create(
-    frm=node1, to=node2, description="This is an edge", repository=mock_repository
+    frm=node1, to=node2, description="This is an edge", repository=edges_mock_repository
   )
   edge2: Edge = Edge.create(
-    frm=node1, to=node2, description="This is an edge", repository=mock_repository
+    frm=node1, to=node2, description="This is an edge", repository=edges_mock_repository
   )
   edge3: Edge = Edge.create(
-    frm=node2, to=node1, description="This is an edge", repository=mock_repository
+    frm=node2, to=node1, description="This is an edge", repository=edges_mock_repository
   )
   edge4: Edge = Edge.create(
-    frm=node3, to=node4, description="This is an edge", repository=mock_repository
+    frm=node3, to=node4, description="This is an edge", repository=edges_mock_repository
   )
   edge5: Edge = Edge.create(
-    frm=node2, to=node4, description="This is an edge", repository=mock_repository
+    frm=node2, to=node4, description="This is an edge", repository=edges_mock_repository
   )
   edge6: Edge = Edge.create(
     frm=node1,
     to=node2,
     description="This is a different edge",
-    repository=mock_repository,
+    repository=edges_mock_repository,
   )
 
   assert edge1 == edge1
