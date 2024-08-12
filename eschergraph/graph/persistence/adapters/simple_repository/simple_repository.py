@@ -187,11 +187,20 @@ class SimpleRepository(Repository):
         attributes.append(name)
     return attributes
 
+  @staticmethod
+  def _select_attributes_to_add(object: EscherBase) -> list[str]:
+    attributes: list[str] = []
+    for name, attr in fields_dict(object.__class__).items():
+      if "group" not in attr.metadata:
+        continue
+      if attr.metadata["group"].value <= object.loadstate.value:
+        attributes.append(name)
+    return attributes
+
   # Order for adding nodes and edges (also add the references (or update them)):
   # From node
   # Edge
   # To node
-  # This logic can be a bit complex
   def add(self, object: EscherBase) -> None:
     """Add the node to the persistent storage.
 
@@ -204,8 +213,6 @@ class SimpleRepository(Repository):
     if isinstance(object, Node):
       self._add_node(node=object)
     elif isinstance(object, Edge):
-      # Edges are always stored and persisted through the from node
-      # Note that it also need to be added to the to node through this call
       self._add_node(node=object.frm)
 
   def _add_node(self, node: Node) -> None:
@@ -213,7 +220,11 @@ class SimpleRepository(Repository):
     if not node.id in self.nodes:
       if not node.loadstate == LoadState.FULL:
         raise PersistenceException("A newly created node should be fully loaded.")
-    ...
+      self.nodes[node.id] = self._new_node_to_node_model(node)
+    else:
+      attributes_to_check: list[str] = []
+    for edge in node.edges:
+      self._add_edge(edge)
 
   @staticmethod
   def _new_node_to_node_model(node: Node) -> NodeModel:
