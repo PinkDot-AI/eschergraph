@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from abc import ABC
 from abc import abstractmethod
+from typing import Optional
 from typing import TYPE_CHECKING
 
 from eschergraph.graph.loading import LoadState
@@ -11,8 +12,6 @@ if TYPE_CHECKING:
   from eschergraph.graph.node import Node
 
 
-# TODO: potentially add a refresh method (that takes into account the loadingstate)
-# TODO: reconsider the logic for a node name as node duplication can occur
 class Repository(ABC):
   """An abstract base class for an EscherGraph repository."""
 
@@ -40,17 +39,21 @@ class Repository(ABC):
     """
     raise NotImplementedError
 
-  # Reconsider this method
   @abstractmethod
-  def get_node_by_name(self, name: str, loadstate: LoadState = LoadState.CORE) -> Node:
-    """Get a node by name.
+  def get_node_by_name(
+    self, name: str, loadstate: LoadState = LoadState.CORE, level: Optional[int] = None
+  ) -> Optional[Node]:
+    """Get a node by name at a certain level.
+
+    Returns the node, and None if no node is found.
 
     Args:
       name (str): The node to get.
       loadstate (LoadState): The state in which the node should be loaded.
+      level (Optional[int]): The level at which the node exists. The default is 0.
 
     Returns:
-      The node that matches the given name.
+      The node that matches the name at the specified level.
     """
     raise NotImplementedError
 

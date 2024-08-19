@@ -13,7 +13,6 @@ from attrs import fields_dict
 
 from eschergraph.config import DEFAULT_GRAPH_NAME
 from eschergraph.config import DEFAULT_SAVE_LOCATION
-from eschergraph.exceptions import NodeDoesNotExistException
 from eschergraph.graph.base import EscherBase
 from eschergraph.graph.community import Community
 from eschergraph.graph.edge import Edge
@@ -223,6 +222,8 @@ class SimpleRepository(Repository):
     if not node.id in self.nodes:
       if not node.loadstate == LoadState.FULL:
         raise PersistenceException("A newly created node should be fully loaded.")
+
+      # Check if the node already exists at this level
       self.nodes[node.id] = self._new_node_to_node_model(node)
     else:
       attributes_to_check: list[str] = self._select_attributes_to_add(node)
@@ -252,27 +253,30 @@ class SimpleRepository(Repository):
 
   def get_node_by_name(
     self, name: str, loadstate: LoadState = LoadState.CORE, level: Optional[int] = None
-  ) -> Node:
+  ) -> Optional[Node]:
     """Get a node by name at a certain level.
+
+    Returns the node, and None if no node is found.
 
     Args:
       name (str): The name of the node.
       loadstate (LoadState): The state in which the node should be loaded.
-      level (Optional[int]): The level at which the node should exist. The default is 0.
+      level (Optional[int]): The level at which the node should exists. The default is 0.
 
     Returns:
-      The node that matches the name.
+      The node that matches the name at the specified level.
     """
     if not level:
       level = 0
-    try:
-      node: Node = Node(id=self.node_name_index[level][name], repository=self)
-      self._load_node(node, loadstate)
-      return node
-    except KeyError:
-      raise NodeDoesNotExistException(
-        f"No node with name: {name} exists at level {level}"
-      )
+    if not level in self.node_name_index:
+      return None
+    id: Optional[UUID] = self.node_name_index[level].get(name)
+    if not id:
+      return None
+    node_id: UUID = id
+    node: Node = Node(id=node_id, repository=self)
+    self._load_node(node, loadstate)
+    return node
 
   def save(self) -> None:
     """Save the graph to the persistent storage.
