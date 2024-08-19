@@ -68,6 +68,35 @@ def test_create_level_0_no_same_name(mock_repository: Mock) -> None:
   )
 
 
+def test_create_level_0_same_name(mock_repository: Mock) -> None:
+  document_id: UUID = uuid4()
+  duplicate_node: Node = Node(
+    metadata={Metadata(document_id=document_id, chunk_id=1)},
+    name="test_node",
+    description="the original node",
+    level=0,
+    repository=mock_repository,
+    properties=[],
+    loadstate=LoadState.CORE,
+  )
+  mock_repository.get_node_by_name.return_value = duplicate_node
+  node: Node = Node.create(
+    name="test_node",
+    description="A node for testing",
+    level=0,
+    repository=mock_repository,
+    metadata={Metadata(document_id=document_id, chunk_id=2)},
+  )
+
+  mock_repository.get_node_by_name.assert_called_once()
+  node.name == "test_node"
+  node.id == duplicate_node.id
+  node.metadata = {
+    Metadata(document_id=document_id, chunk_id=2),
+    Metadata(document_id=document_id, chunk_id=1),
+  }
+
+
 # Test all the added getters and setters
 property_parameters: list[tuple[str, Any]] = [
   ("metadata", set()),
