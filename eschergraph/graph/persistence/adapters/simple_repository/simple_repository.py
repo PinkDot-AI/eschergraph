@@ -184,7 +184,7 @@ class SimpleRepository(Repository):
         attr.metadata["group"].value > object.loadstate.value
         and attr.metadata["group"].value <= loadstate.value
       ):
-        attributes.append(name)
+        attributes.append(name[1:])
     return attributes
 
   @staticmethod

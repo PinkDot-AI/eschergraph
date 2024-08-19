@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Callable
 
 import pytest
 
@@ -8,6 +9,7 @@ from eschergraph.config import DEFAULT_GRAPH_NAME
 from eschergraph.config import DEFAULT_SAVE_LOCATION
 from eschergraph.graph import Edge
 from eschergraph.graph import Node
+from eschergraph.graph.base import EscherBase
 from eschergraph.graph.loading import LoadState
 from eschergraph.graph.persistence import Metadata
 from eschergraph.graph.persistence.adapters.simple_repository import SimpleRepository
@@ -124,7 +126,44 @@ def test_attributes_to_add_edge() -> None:
   assert set(SimpleRepository._select_attributes_to_add(edge_full)) == core_attributes
 
 
-def test_attributes_to_load_node() -> None: ...
+def test_attributes_to_load_node() -> None:
+  attributes_state: dict[int, set[str]] = {
+    0: set(),
+    1: {"name", "description", "level", "properties", "metadata"},
+    2: {"edges"},
+    3: {
+      "community",
+      "child_nodes",
+      "report",
+    },
+  }
+  all_load_combinations(create_basic_node, attributes_state)
 
 
-def test_attributes_to_load_edge() -> None: ...
+def test_attributes_to_load_edge() -> None:
+  attributes_state: dict[int, set[str]] = {
+    0: set(),
+    1: {"description", "metadata"},
+    2: set(),
+    3: set(),
+  }
+  all_load_combinations(create_edge, attributes_state)
+
+
+def all_load_combinations(
+  create_function: Callable[[], EscherBase], attributes_state: dict[int, set[str]]
+) -> None:
+  for object_loadstate in LoadState:
+    object: EscherBase = create_function()
+    object._loadstate = object_loadstate
+    for loadstate in LoadState:
+      if object_loadstate.value >= loadstate.value:
+        assert SimpleRepository._select_attributes_to_load(object, loadstate) == []
+      else:
+        assert_set: set[str] = set()
+        for i in range(object_loadstate.value + 1, loadstate.value + 1):
+          assert_set = assert_set | attributes_state[i]
+        assert (
+          set(SimpleRepository._select_attributes_to_load(object, loadstate))
+          == assert_set
+        )
