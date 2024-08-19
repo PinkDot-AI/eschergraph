@@ -84,6 +84,9 @@ class Node(EscherBase):
     Returns:
       The node that has been created.
     """
+    # Check if a node with the same name exists at the specified level
+    # TODO: add logic to merge the description
+
     return cls(
       name=name,
       description=description,
