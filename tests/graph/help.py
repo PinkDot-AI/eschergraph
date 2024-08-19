@@ -50,10 +50,21 @@ def create_basic_node(repository: Optional[Repository] = None) -> Node:
   )
 
 
-def create_edge(frm: Node, to: Node, repository: Optional[Repository] = None) -> Edge:
+def create_edge(
+  frm: Optional[Node] = None,
+  to: Optional[Node] = None,
+  repository: Optional[Repository] = None,
+) -> Edge:
   # If a repository is not specified, then use a mock
   if not repository:
     repository = MagicMock(spec=Repository)
+
+  # Create an edge without specifying nodes
+  if not frm:
+    frm = create_basic_node(repository=repository)
+
+  if not to:
+    to = create_basic_node(repository=repository)
 
   return Edge.create(
     frm=frm,
@@ -117,6 +128,3 @@ def create_simple_extracted_graph(
       )
 
   return graph, nodes, edges
-
-
-create_simple_extracted_graph()

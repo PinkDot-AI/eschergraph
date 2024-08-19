@@ -41,7 +41,7 @@ class SimpleRepository(Repository):
   save_location: str = field(default=None)
   nodes: dict[UUID, NodeModel] = field(init=False)
   edges: dict[UUID, EdgeModel] = field(init=False)
-  node_name_index: dict[str, UUID] = field(init=False)
+  node_name_index: dict[int, dict[str, UUID]] = field(init=False)
 
   def __init__(
     self, name: Optional[str] = None, save_location: Optional[str] = None
@@ -193,8 +193,11 @@ class SimpleRepository(Repository):
     for name, attr in fields_dict(object.__class__).items():
       if "group" not in attr.metadata:
         continue
-      if attr.metadata["group"].value <= object.loadstate.value:
-        attributes.append(name)
+      # The node id is never changed and loadstate not used
+      elif attr.metadata["group"] == LoadState.REFERENCE:
+        continue
+      elif attr.metadata["group"].value <= object.loadstate.value:
+        attributes.append(name[1:])
     return attributes
 
   # Order for adding nodes and edges (also add the references (or update them)):
@@ -222,7 +225,7 @@ class SimpleRepository(Repository):
         raise PersistenceException("A newly created node should be fully loaded.")
       self.nodes[node.id] = self._new_node_to_node_model(node)
     else:
-      attributes_to_check: list[str] = []
+      attributes_to_check: list[str] = self._select_attributes_to_add(node)
     for edge in node.edges:
       self._add_edge(edge)
 
@@ -247,22 +250,29 @@ class SimpleRepository(Repository):
 
     self._add_node(node=edge.to)
 
-  def get_node_by_name(self, name: str, loadstate: LoadState = LoadState.CORE) -> Node:
-    """Get a node by name.
+  def get_node_by_name(
+    self, name: str, loadstate: LoadState = LoadState.CORE, level: Optional[int] = None
+  ) -> Node:
+    """Get a node by name at a certain level.
 
     Args:
       name (str): The name of the node.
       loadstate (LoadState): The state in which the node should be loaded.
+      level (Optional[int]): The level at which the node should exist. The default is 0.
 
     Returns:
       The node that matches the name.
     """
+    if not level:
+      level = 0
     try:
-      node: Node = Node(id=self.node_name_index[name], repository=self)
+      node: Node = Node(id=self.node_name_index[level][name], repository=self)
       self._load_node(node, loadstate)
       return node
     except KeyError:
-      raise NodeDoesNotExistException(f"No node with name: {name} exists")
+      raise NodeDoesNotExistException(
+        f"No node with name: {name} exists at level {level}"
+      )
 
   def save(self) -> None:
     """Save the graph to the persistent storage.

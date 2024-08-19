@@ -6,13 +6,16 @@ import pytest
 
 from eschergraph.config import DEFAULT_GRAPH_NAME
 from eschergraph.config import DEFAULT_SAVE_LOCATION
+from eschergraph.graph import Edge
 from eschergraph.graph import Node
+from eschergraph.graph.loading import LoadState
 from eschergraph.graph.persistence import Metadata
 from eschergraph.graph.persistence.adapters.simple_repository import SimpleRepository
 from eschergraph.graph.persistence.adapters.simple_repository.models import NodeModel
 from eschergraph.graph.persistence.exceptions import DirectoryDoesNotExistException
 from eschergraph.graph.persistence.exceptions import FilesMissingException
 from tests.graph.help import create_basic_node
+from tests.graph.help import create_edge
 
 
 def test_filenames_function_default() -> None:
@@ -74,3 +77,54 @@ def test_node_to_node_model() -> None:
   assert node_model["properties"] == node.properties
   assert node_model["level"] == node.level
   assert {Metadata(**md) for md in node_model["metadata"]} == node.metadata
+
+
+def test_attributes_to_add_node() -> None:
+  node_reference: Node = create_basic_node()
+  node_reference._loadstate = LoadState.REFERENCE
+
+  node_core: Node = create_basic_node()
+  node_core._loadstate = LoadState.CORE
+  core_attributes: set[str] = {"name", "description", "level", "properties", "metadata"}
+
+  node_connected: Node = create_basic_node()
+  node_connected._loadstate = LoadState.CONNECTED
+  connected_attributes: set[str] = core_attributes | {"edges"}
+
+  node_full: Node = create_basic_node()
+  node_full._loadstate = LoadState.FULL
+  full_attributes: set[str] = connected_attributes | {
+    "community",
+    "child_nodes",
+    "report",
+  }
+
+  assert SimpleRepository._select_attributes_to_add(node_reference) == []
+  assert set(SimpleRepository._select_attributes_to_add(node_core)) == core_attributes
+  assert (
+    set(SimpleRepository._select_attributes_to_add(node_connected))
+    == connected_attributes
+  )
+  assert set(SimpleRepository._select_attributes_to_add(node_full)) == full_attributes
+
+
+def test_attributes_to_add_edge() -> None:
+  edge_reference: Edge = create_edge()
+  edge_reference._loadstate = LoadState.REFERENCE
+
+  edge_core: Edge = create_edge()
+  edge_core._loadstate = LoadState.CORE
+  core_attributes: set[str] = {"metadata", "description"}
+
+  edge_full: Edge = create_edge()
+  edge_full._loadstate = LoadState.FULL
+
+  assert SimpleRepository._select_attributes_to_add(edge_reference) == []
+  assert set(SimpleRepository._select_attributes_to_add(edge_core)) == core_attributes
+  assert set(SimpleRepository._select_attributes_to_add(edge_full)) == core_attributes
+
+
+def test_attributes_to_load_node() -> None: ...
+
+
+def test_attributes_to_load_edge() -> None: ...
