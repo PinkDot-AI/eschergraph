@@ -68,6 +68,8 @@ def create_edge(
   if not to:
     to = create_basic_node(repository=repository)
 
+  assert frm != to
+
   return Edge.create(
     frm=frm,
     to=to,
