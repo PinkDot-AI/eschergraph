@@ -13,6 +13,7 @@ from eschergraph.graph.base import EscherBase
 from eschergraph.graph.loading import LoadState
 from eschergraph.graph.persistence import Metadata
 from eschergraph.graph.persistence.adapters.simple_repository import SimpleRepository
+from eschergraph.graph.persistence.adapters.simple_repository.models import EdgeModel
 from eschergraph.graph.persistence.adapters.simple_repository.models import NodeModel
 from eschergraph.graph.persistence.exceptions import DirectoryDoesNotExistException
 from eschergraph.graph.persistence.exceptions import FilesMissingException
@@ -79,6 +80,16 @@ def test_node_to_node_model() -> None:
   assert node_model["properties"] == node.properties
   assert node_model["level"] == node.level
   assert {Metadata(**md) for md in node_model["metadata"]} == node.metadata
+
+
+def test_edge_to_edge_model() -> None:
+  edge: Edge = create_edge()
+  edge_model: EdgeModel = SimpleRepository._new_edge_to_edge_model(edge)
+
+  assert edge_model["description"] == edge.description
+  assert edge_model["frm"] == edge.frm.id
+  assert edge_model["to"] == edge.to.id
+  assert {Metadata(**md) for md in edge_model["metadata"]} == edge.metadata
 
 
 def test_attributes_to_add_node() -> None:
