@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from typing import Optional
 from typing import TYPE_CHECKING
+from uuid import UUID
 
 from attrs import define
 from attrs import field
 
+from eschergraph.exceptions import NodeCreationException
 from eschergraph.graph.base import EscherBase
 from eschergraph.graph.community import Community
 from eschergraph.graph.loading import LoadState
@@ -84,8 +86,22 @@ class Node(EscherBase):
     Returns:
       The node that has been created.
     """
-    # Check if a node with the same name exists at the specified level
-    # TODO: add logic to merge the description
+    # Check if a node with the same name exists within a certain document (only at level 0)
+    if level == 0:
+      if not metadata:
+        raise NodeCreationException(
+          "A node extracted at level 0 needs to contain metadata."
+        )
+      document_id: UUID = next(iter(metadata)).document_id
+      node_same_name: Optional[Node] = repository.get_node_by_name(
+        name=name, document_id=document_id
+      )
+
+      # If a node with the same name exists for this document
+      if node_same_name:
+        # TODO: add logic to merge the description
+        node_same_name.metadata = node_same_name.metadata | metadata
+        return node_same_name
 
     return cls(
       name=name,

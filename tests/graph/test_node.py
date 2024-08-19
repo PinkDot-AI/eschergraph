@@ -4,13 +4,17 @@ import random
 from typing import Any
 from unittest.mock import call
 from unittest.mock import Mock
+from uuid import UUID
+from uuid import uuid4
 
 import pytest
 from attrs import fields_dict
 
+from eschergraph.exceptions import NodeCreationException
 from eschergraph.graph import Node
 from eschergraph.graph.community import Community
 from eschergraph.graph.loading import LoadState
+from eschergraph.graph.persistence import Metadata
 
 
 def test_initialize(mock_repository: Mock) -> None:
@@ -21,19 +25,47 @@ def test_create(mock_repository: Mock) -> None:
   node: Node = Node.create(
     name="test_node",
     description="A node for testing",
-    level=0,
+    level=1,
     repository=mock_repository,
   )
   assert node.properties == []
   assert node.id
-  assert node.level == 0
+  assert node.level == 1
   assert node.edges == set()
   assert node.report == []
   assert node.child_nodes == []
   assert node.loadstate == LoadState.FULL
 
-  # No loading is conducted for a new node
+  # No loading is conducted for a new node (not at level 0)
   mock_repository.load.assert_not_called()
+
+
+def test_create_level_0_no_metadata(mock_repository: Mock) -> None:
+  with pytest.raises(NodeCreationException):
+    Node.create(
+      name="test_node",
+      description="A node for testing",
+      level=0,
+      repository=mock_repository,
+    )
+
+
+def test_create_level_0_no_same_name(mock_repository: Mock) -> None:
+  # Prepare the mock
+  mock_repository.get_node_by_name.return_value = None
+
+  document_id: UUID = uuid4()
+  node: Node = Node.create(
+    name="test_node",
+    description="A node for testing",
+    level=0,
+    repository=mock_repository,
+    metadata={Metadata(document_id=document_id, chunk_id=1)},
+  )
+
+  mock_repository.get_node_by_name.assert_called_once_with(
+    name=node.name, document_id=document_id
+  )
 
 
 # Test all the added getters and setters

@@ -4,6 +4,7 @@ from abc import ABC
 from abc import abstractmethod
 from typing import Optional
 from typing import TYPE_CHECKING
+from uuid import UUID
 
 from eschergraph.graph.loading import LoadState
 
@@ -41,19 +42,20 @@ class Repository(ABC):
 
   @abstractmethod
   def get_node_by_name(
-    self, name: str, loadstate: LoadState = LoadState.CORE, level: Optional[int] = None
+    self, name: str, document_id: UUID, loadstate: LoadState = LoadState.CORE
   ) -> Optional[Node]:
-    """Get a node by name at a certain level.
+    """Get a node from a certain document by name.
 
     Returns the node, and None if no node is found.
+    The nodes that are returned from this method are all at level 0.
 
     Args:
       name (str): The node to get.
+      document_id (UUID): The id of the document from which the node has been extracted.
       loadstate (LoadState): The state in which the node should be loaded.
-      level (Optional[int]): The level at which the node exists. The default is 0.
 
     Returns:
-      The node that matches the name at the specified level.
+      The node that matches the name in the specified document.
     """
     raise NotImplementedError
 

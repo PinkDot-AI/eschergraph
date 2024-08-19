@@ -32,6 +32,7 @@ def create_basic_node(repository: Optional[Repository] = None) -> Node:
   # If a repository is not specified, then use a mock
   if not repository:
     repository = MagicMock(spec=Repository)
+    repository.get_node_by_name.return_value = None
 
   num_properties: int = random.randint(0, 150)
 
@@ -58,6 +59,7 @@ def create_edge(
   # If a repository is not specified, then use a mock
   if not repository:
     repository = MagicMock(spec=Repository)
+    repository.get_node_by_name.return_value = None
 
   # Create an edge without specifying nodes
   if not frm:

@@ -40,7 +40,7 @@ class SimpleRepository(Repository):
   save_location: str = field(default=None)
   nodes: dict[UUID, NodeModel] = field(init=False)
   edges: dict[UUID, EdgeModel] = field(init=False)
-  node_name_index: dict[int, dict[str, UUID]] = field(init=False)
+  node_name_index: dict[UUID, dict[str, UUID]] = field(init=False)
 
   def __init__(
     self, name: Optional[str] = None, save_location: Optional[str] = None
@@ -252,25 +252,24 @@ class SimpleRepository(Repository):
     self._add_node(node=edge.to)
 
   def get_node_by_name(
-    self, name: str, loadstate: LoadState = LoadState.CORE, level: Optional[int] = None
+    self, name: str, document_id: UUID, loadstate: LoadState = LoadState.CORE
   ) -> Optional[Node]:
-    """Get a node by name at a certain level.
+    """Get a node from a certain document by name.
 
     Returns the node, and None if no node is found.
+    The nodes that are returned from this method are all at level 0.
 
     Args:
-      name (str): The name of the node.
+      name (str): The node to get.
+      document_id (UUID): The id of the document from which the node has been extracted.
       loadstate (LoadState): The state in which the node should be loaded.
-      level (Optional[int]): The level at which the node should exists. The default is 0.
 
     Returns:
-      The node that matches the name at the specified level.
+      The node that matches the name in the specified document.
     """
-    if not level:
-      level = 0
-    if not level in self.node_name_index:
+    if not document_id in self.node_name_index:
       return None
-    id: Optional[UUID] = self.node_name_index[level].get(name)
+    id: Optional[UUID] = self.node_name_index[document_id].get(name)
     if not id:
       return None
     node_id: UUID = id
