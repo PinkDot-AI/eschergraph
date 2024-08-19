@@ -13,3 +13,7 @@ class DirectoryDoesNotExistException(PersistenceException):
 
 class FilesMissingException(PersistenceException):
   """Some files are missing or corrupted."""
+
+
+class PersistingEdgeException(PersistenceException):
+  """Both referenced edges need to exist when an edge is persisted directly."""

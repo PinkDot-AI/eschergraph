@@ -14,7 +14,7 @@ from eschergraph.graph.persistence.adapters.simple_repository.models import Node
 
 
 def compare_node_to_node_model(node: Node, node_model: NodeModel) -> bool:
-  # If the node is in a community
+  # Check equality for a node being in a community
   if node.community.node and not node_model["community"]:
     return False
   elif not node.community.node and node_model["community"]:
@@ -36,4 +36,10 @@ def compare_node_to_node_model(node: Node, node_model: NodeModel) -> bool:
 
 
 def compare_edge_to_edge_model(edge: Edge, edge_model: EdgeModel) -> bool:
-  return True
+  return (
+    edge.frm.id == edge_model["frm"]
+    and edge.to.id == edge_model["to"]
+    and edge.description == edge_model["description"]
+    and [cast(MetadataModel, asdict(md)) for md in edge.metadata]
+    == edge_model["metadata"]
+  )

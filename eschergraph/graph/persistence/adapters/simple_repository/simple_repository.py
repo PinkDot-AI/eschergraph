@@ -27,6 +27,7 @@ from eschergraph.graph.persistence.adapters.simple_repository.models import Node
 from eschergraph.graph.persistence.exceptions import DirectoryDoesNotExistException
 from eschergraph.graph.persistence.exceptions import FilesMissingException
 from eschergraph.graph.persistence.exceptions import PersistenceException
+from eschergraph.graph.persistence.exceptions import PersistingEdgeException
 from eschergraph.graph.persistence.metadata import Metadata
 from eschergraph.graph.persistence.repository import Repository
 
@@ -198,10 +199,6 @@ class SimpleRepository(Repository):
         attributes.append(name[1:])
     return attributes
 
-  # Order for adding nodes and edges (also add the references (or update them)):
-  # From node
-  # Edge
-  # To node
   def add(self, object: EscherBase) -> None:
     """Add the node to the persistent storage.
 
@@ -214,23 +211,12 @@ class SimpleRepository(Repository):
     if isinstance(object, Node):
       self._add_node(node=object)
     elif isinstance(object, Edge):
-      self._add_node(node=object.frm)
+      self._add_edge(edge=object)
 
   def _add_node(self, node: Node) -> None:
     # Check if the node already exists
     if not node.id in self.nodes:
-      if not node.loadstate == LoadState.FULL:
-        raise PersistenceException("A newly created node should be fully loaded.")
-
-      # Check if the node already exists for this document
-      if node.level == 0 and self.get_node_by_name(
-        name=node.name, document_id=next(iter(node.metadata)).document_id
-      ):
-        raise NodeCreationException(
-          f"A node with name: {node.name} already exists at level 0 for this document"
-        )
-
-      self.nodes[node.id] = self._new_node_to_node_model(node)
+      self._add_new_node(node)
     else:
       attributes_to_check: list[str] = self._select_attributes_to_add(node)
       node_model: NodeModel = self.nodes[node.id]
@@ -247,8 +233,30 @@ class SimpleRepository(Repository):
         else:
           node_model[attr] = Node.__dict__[attr].fget(node)  # type: ignore
 
+    # Adding the nodes (without edges) that are connected to this node
     for edge in node.edges:
+      if not edge.frm.id in self.nodes:
+        self._add_new_node(node=edge.frm, add_edges=False)
+      elif not edge.to.id in self.nodes:
+        self._add_new_node(node=edge.to, add_edges=False)
+
       self._add_edge(edge)
+
+  def _add_new_node(self, node: Node, add_edges: bool = True) -> None:
+    if not node.loadstate == LoadState.FULL:
+      raise PersistenceException("A newly created node should be fully loaded.")
+
+    # Check if the node already exists for this document
+    if node.level == 0 and self.get_node_by_name(
+      name=node.name, document_id=next(iter(node.metadata)).document_id
+    ):
+      raise NodeCreationException(
+        f"A node with name: {node.name} already exists at level 0 for this document"
+      )
+    node_model: NodeModel = self._new_node_to_node_model(node)
+    if not add_edges:
+      node_model["edges"] = set()
+    self.nodes[node.id] = node_model
 
   @staticmethod
   def _new_node_to_node_model(node: Node) -> NodeModel:
@@ -273,11 +281,19 @@ class SimpleRepository(Repository):
     }
 
   def _add_edge(self, edge: Edge) -> None:
-    # The from node has already been persisted
+    # Check if both referenced nodes are already persisted
+    if not edge.frm.id in self.nodes or not edge.to.id in self.nodes:
+      raise PersistingEdgeException(
+        "Both referenced nodes need to exist when an edge is persisted directly"
+      )
 
     # Check if the edge already exists
     if not edge.id in self.edges:
       self.edges[edge.id] = self._new_edge_to_edge_model(edge)
+
+      # Making sure that the edges can also be found on the nodes
+      self.nodes[edge.frm.id]["edges"].add(edge.id)
+      self.nodes[edge.to.id]["edges"].add(edge.id)
     else:
       attributes_to_check: list[str] = self._select_attributes_to_add(edge)
       edge_model: EdgeModel = self.edges[edge.id]
@@ -292,9 +308,6 @@ class SimpleRepository(Repository):
           edge_model["metadata"] = [
             cast(MetadataModel, asdict(md)) for md in edge.metadata
           ]
-
-    # Finally, persis the to node
-    self._add_node(node=edge.to)
 
   def get_node_by_name(
     self, name: str, document_id: UUID, loadstate: LoadState = LoadState.CORE
