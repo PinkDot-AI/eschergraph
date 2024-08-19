@@ -13,6 +13,7 @@ from attrs import fields_dict
 
 from eschergraph.config import DEFAULT_GRAPH_NAME
 from eschergraph.config import DEFAULT_SAVE_LOCATION
+from eschergraph.exceptions import NodeCreationException
 from eschergraph.graph.base import EscherBase
 from eschergraph.graph.community import Community
 from eschergraph.graph.edge import Edge
@@ -28,8 +29,6 @@ from eschergraph.graph.persistence.exceptions import FilesMissingException
 from eschergraph.graph.persistence.exceptions import PersistenceException
 from eschergraph.graph.persistence.metadata import Metadata
 from eschergraph.graph.persistence.repository import Repository
-
-# TODO: add logic for a duplicate node name
 
 
 @define
@@ -223,10 +222,31 @@ class SimpleRepository(Repository):
       if not node.loadstate == LoadState.FULL:
         raise PersistenceException("A newly created node should be fully loaded.")
 
-      # Check if the node already exists at this level
+      # Check if the node already exists for this document
+      if node.level == 0 and self.get_node_by_name(
+        name=node.name, document_id=next(iter(node.metadata)).document_id
+      ):
+        raise NodeCreationException(
+          f"A node with name: {node.name} already exists at level 0 for this document"
+        )
+
       self.nodes[node.id] = self._new_node_to_node_model(node)
     else:
       attributes_to_check: list[str] = self._select_attributes_to_add(node)
+      node_model: NodeModel = self.nodes[node.id]
+      for attr in attributes_to_check:
+        if attr == "edges":
+          node_model["edges"] = {edge.id for edge in node.edges}
+        elif attr == "metadata":
+          node_model["metadata"] = [
+            cast(MetadataModel, asdict(md)) for md in node.metadata
+          ]
+        elif attr == "community" and node.community.node:
+          node_model["community"] = node.community.node.id
+          self._add_node(node.community.node)
+        else:
+          node_model[attr] = Node.__dict__[attr].fget(node)  # type: ignore
+
     for edge in node.edges:
       self._add_edge(edge)
 
@@ -243,12 +263,37 @@ class SimpleRepository(Repository):
       "metadata": [cast(MetadataModel, asdict(md)) for md in node.metadata],
     }
 
+  @staticmethod
+  def _new_edge_to_edge_model(edge: Edge) -> EdgeModel:
+    return {
+      "frm": edge.frm.id,
+      "to": edge.to.id,
+      "description": edge.description,
+      "metadata": [cast(MetadataModel, asdict(md)) for md in edge.metadata],
+    }
+
   def _add_edge(self, edge: Edge) -> None:
-    # Persisting an edge (only used for creation, and updating the metadata and description)
     # The from node has already been persisted
 
-    # Persist the edge attributes (not the referenced nodes)
+    # Check if the edge already exists
+    if not edge.id in self.edges:
+      self.edges[edge.id] = self._new_edge_to_edge_model(edge)
+    else:
+      attributes_to_check: list[str] = self._select_attributes_to_add(edge)
+      edge_model: EdgeModel = self.edges[edge.id]
+      for attr in attributes_to_check:
+        if attr == "frm":
+          edge_model["frm"] = edge.frm.id
+        elif attr == "to":
+          edge_model["to"] = edge.to.id
+        elif attr == "description":
+          edge_model["description"] = edge.description
+        elif attr == "metadata":
+          edge_model["metadata"] = [
+            cast(MetadataModel, asdict(md)) for md in edge.metadata
+          ]
 
+    # Finally, persis the to node
     self._add_node(node=edge.to)
 
   def get_node_by_name(
