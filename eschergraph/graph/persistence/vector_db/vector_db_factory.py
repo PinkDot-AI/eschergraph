@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from eschergraph.graph.persistence.vector_db.adapters.chromadb import ChromaDB
+from eschergraph.graph.persistence.vector_db.providers.chromadb import ChromaDB
 from eschergraph.graph.persistence.vector_db.vector_db import VectorDB
 
 

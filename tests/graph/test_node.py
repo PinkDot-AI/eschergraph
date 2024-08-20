@@ -32,7 +32,6 @@ def test_create(mock_repository: Mock) -> None:
   assert node.id
   assert node.level == 1
   assert node.edges == set()
-  assert node.report == []
   assert node.child_nodes == []
   assert node.loadstate == LoadState.FULL
 
