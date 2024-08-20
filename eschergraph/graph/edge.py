@@ -81,7 +81,7 @@ class Edge(EscherBase):
     return edge
 
   def __eq__(self, other: object) -> bool:
-    """The equals method for two nodes.
+    """The equals method for an edge.
 
     Two edges are equal if they have the same description and run between the same nodes.
 
