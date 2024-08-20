@@ -20,6 +20,8 @@ requests = "^2.32.3"
 types-requests = "^2.32.0.20240712"
 tiktoken = "^0.7.0"
 langchain-text-splitters = "^0.2.2"
+igraph = "^0.11.6"
+leidenalg = "^0.10.2"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.7.1"

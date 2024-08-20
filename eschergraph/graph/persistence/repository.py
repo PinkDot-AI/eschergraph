@@ -96,3 +96,19 @@ class Repository(ABC):
       The edge or None if no edge is found.
     """
     raise NotImplementedError
+
+  @abstractmethod
+  def get_all_at_level(self, level: int) -> list[Node]:
+    """Get all nodes at a certain level.
+
+    Note that level 0 corresponds to nodes that are directly extracted
+    from a source text. Level 1 corresponds to the direct communities of these nodes.
+    And so on.
+
+    Args:
+      level (int): The level at which the nodes should occur.
+
+    Returns:
+      A list with all the nodes at the specified level.
+    """
+    raise NotImplementedError
