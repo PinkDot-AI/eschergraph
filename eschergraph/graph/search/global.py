@@ -1,11 +1,18 @@
+from __future__ import annotations
+
 import concurrent.futures
 import json
-from typing import Dict, List, Optional
+from typing import cast
+from typing import List
+from typing import Optional
+from uuid import UUID
 
-from eschergraph.agents.embedy import Embed
+from eschergraph.agents.embedding import Embedding
 from eschergraph.agents.jinja_helper import process_template
 from eschergraph.agents.llm import Model
 from eschergraph.agents.reranker import Reranker
+from eschergraph.exceptions import ExternalProviderException
+from eschergraph.graph.community import Finding
 from eschergraph.graph.graph import Graph
 from eschergraph.graph.node import Node
 from eschergraph.graph.persistence.vector_db.vector_db import VectorDB
@@ -16,10 +23,10 @@ def search_global(
   prompt: str,
   llm: Model,
   reranker: Reranker,
-  embedder: Embed,
+  embedder: Embedding,
   vecdb: VectorDB,
   collection_name: str,
-):
+) -> str | None:
   """Search a graph globally through it's communities.
 
   Note that the findings for a community should be sorted, this is the default behavior when building a graph.
@@ -37,11 +44,18 @@ def search_global(
 
   ans_template = "question_with_context.jinja"
   if len(extracted_nodes) > 0:
-    fnds = retrieve_similar_findings(graph=graph, prompt=prompt, embedder=embedder, vecdb=vecdb, collection_name=collection_name, reranker=reranker)
+    fnds = retrieve_similar_findings(
+      graph=graph,
+      prompt=prompt,
+      embedder=embedder,
+      vecdb=vecdb,
+      collection_name=collection_name,
+      reranker=reranker,
+    )
   else:
     fnds = retrieve_key_findings(graph, llm)
 
-  context = "\n".join([fnd["explanation"] for fnd in fnds])
+  context = "\n".join([fnd.explanation for fnd in fnds])
   full_prompt = process_template(ans_template, {"CONTEXT": context, "QUERY": prompt})
 
   return llm.get_plain_response(full_prompt)
@@ -50,7 +64,7 @@ def search_global(
 def retrieve_similar_findings(
   graph: Graph,
   prompt: str,
-  embedder: Embed,
+  embedder: Embedding,
   vecdb: VectorDB,
   collection_name: str,
   reranker: Reranker,
@@ -58,7 +72,7 @@ def retrieve_similar_findings(
   findings_to_return: int = 10,
   top_vec_results: int = 5,
   top_node_findings: int = 3,
-) -> List[Dict[str, str]]:
+) -> List[Finding]:
   """A search of the graph based on the similarity of prompt and nodes.
 
   Args:
@@ -74,12 +88,12 @@ def retrieve_similar_findings(
       top_node_findings (int): Maximum findings to use per node. Defaults to 3.
 
   Returns:
-      List[Dict[str, str]]: A list of findings
+      List[Finding]: A list of findings
   """
   # Search is done from top level
   curr_level = graph.repository.get_max_level()
   stop_level = max(curr_level - levels_to_search, 0)
-  embedded_prompt = embedder.embed(prompt)
+  embedded_prompt = embedder.get_embedding([prompt])[0]
 
   search_res: List[Node | None] = []
   while curr_level >= stop_level:
@@ -92,20 +106,21 @@ def retrieve_similar_findings(
       ),
     )
 
-    search_res.extend([graph.repository.get_node_by_id(nd["id"]) for nd in res])
+    search_res.extend([
+      graph.repository.get_node_by_id(cast(UUID, nd["id"])) for nd in res
+    ])
     curr_level -= 1
 
   findings = [
     finding
     for nd in search_res
     if nd is not None
-    for finding in nd.report["findings"][:top_node_findings]
+    for finding in nd.report.findings[:top_node_findings]
   ]
 
-  rank_res = reranker.rank(
-    [fd["explanation"] for fd in findings], prompt, findings_to_return
+  rank_res = reranker.rerank(
+    prompt, [fd.explanation for fd in findings], findings_to_return
   )
-
   return [findings[ranked.index] for ranked in rank_res]
 
 
@@ -115,7 +130,7 @@ def retrieve_key_findings(
   n: int = 2,
   sorted: bool = True,
   level: Optional[int] = None,
-) -> List[Dict[str, str]]:
+) -> List[Finding]:
   """Retrieve most important findings of a level.
 
   Args:
@@ -133,16 +148,20 @@ def retrieve_key_findings(
 
   # Findings of reports should be sorted when building the graph
   if sorted:
-    ordered_nds = nodes
+    key_findings = [fnd for nd in nodes for fnd in nd.report.findings[:n]]
   else:
-    ordered_nds = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=llm.max_threads) as executor:
-      ordered_nds = list(executor.map(lambda nd: order_findings(nd, llm=llm), nodes))
+      findings_per_node = list(
+        executor.map(lambda nd: order_findings(nd, llm=llm), nodes)
+      )
+    key_findings = [
+      finding for findings in findings_per_node for finding in findings[:n]
+    ]
 
-  return [fnd for nd in ordered_nds for fnd in nd.report["findings"][:n]]
+  return key_findings
 
 
-def order_findings(nd: Node, llm: Model) -> Dict[str, List[dict]]:
+def order_findings(nd: Node, llm: Model) -> List[Finding]:
   """Order the findings of a node.
 
   Args:
@@ -153,15 +172,18 @@ def order_findings(nd: Node, llm: Model) -> Dict[str, List[dict]]:
       Dict[str, List[dict]]: a dict with ordered findings
   """
   template = "importance_rank.jinja"
-  jsonized = json.dumps(nd.report["findings"], indent=4)
+  jsonized = nd.report.findings_to_json()
   prompt = process_template(template, {"json_list": jsonized})
-  output = json.loads(
-    llm.get_formatted_response(prompt=prompt, response_format={"type": "json_object"})
+  message = llm.get_formatted_response(
+    prompt=prompt, response_format={"type": "json_object"}
   )
-  return {"name": nd.name, "findings": output["findings"]}
+  if message is None:
+    raise ExternalProviderException("Empty message response from formatted response")
+  output = json.loads(message)
+  return [Finding(fndg["summary"], fndg["explanation"]) for fndg in output["findings"]]
 
 
-def extract_entities_from(query, llm: Model) -> List[str]:
+def extract_entities_from(query: str, llm: Model) -> List[str]:
   """Extract entities from query.
 
   Args:
@@ -177,6 +199,11 @@ def extract_entities_from(query, llm: Model) -> List[str]:
     {"query": query},
   )
   res = llm.get_plain_response(prompt=prompt)
-  output = json.loads(res.choices[0].message.content)
+  if res is None:
+    raise ExternalProviderException("Empty message response while extracting entities")
 
-  return output
+  data = json.loads(res)
+  if not isinstance(data, list) or not all(isinstance(item, str) for item in data):
+    raise ValueError("Expected a list of strings")
+
+  return data

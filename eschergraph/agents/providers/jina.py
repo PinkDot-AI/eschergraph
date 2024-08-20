@@ -1,14 +1,27 @@
-from typing import Dict, List
+from __future__ import annotations
+
+import os
+from typing import Any
+
+import requests
+from requests import Response
 from sentence_transformers import CrossEncoder
 
 from eschergraph.agents.reranker import Reranker
 
 
 class JinaReranker(Reranker):
-  """The reranker using Jina's model."""
+  """A reranker that uses Jina's API to rerank a list of documents based on their relevance to a query.
 
-  def __init__(self, model_repo="jinaai/jina-reranker-v1-turbo-en"):
-    """Initialize the reranker model.
+  Methods:
+      rerank(query: str, text_list: list[str], top_n: int) -> Optional[list[RerankerResult]]:
+          Sends a request to Jina's API to rerank the provided text list according to the query.
+  """
+
+  def rerank(
+    self, query: str, texts_list: list[str], top_n: int
+  ) -> list[RerankerResult]:
+    """Reranks a list of text documents based on their relevance to the query using Jina's API.
 
     Args:
         model_repo (str, optional): the hugginface repository of the reranker. Defaults to "jinaai/jina-reranker-v1-turbo-en".

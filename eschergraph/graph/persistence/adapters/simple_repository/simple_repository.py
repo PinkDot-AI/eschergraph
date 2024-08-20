@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import pickle
 from typing import cast
+from typing import List
 from typing import Optional
 from uuid import UUID
 
@@ -286,7 +287,7 @@ class SimpleRepository(Repository):
       "properties": node.properties,
       "edges": {edge.id for edge in node.edges},
       "community": node.community.node.id if node.community.node else None,
-      "report": [],
+      "report": node.report,
       "metadata": [cast(MetadataModel, asdict(md)) for md in node.metadata],
       "child_nodes": {child.id for child in node.child_nodes},
     }
@@ -421,3 +422,25 @@ class SimpleRepository(Repository):
     for key, value in filenames.items():
       with open(value, "wb") as file:
         pickle.dump(getattr(self, key), file)
+
+  def get_nodes_by_level(
+    self, level: int, loadstate: LoadState = LoadState.CORE
+  ) -> List[Node]:
+    """Get nodes by level.
+
+    Args:
+        level (int): The level of the nodes
+        loadstate (LoadState): The state in which the nodes should be loaded.
+
+    Returns:
+        List[Node]: Nodes of the given level
+    """
+    raise NotImplementedError
+
+  def get_max_level(self) -> int:
+    """Get the highest non-root level of the graph.
+
+    Returns:
+        int: The highest level
+    """
+    raise NotImplementedError

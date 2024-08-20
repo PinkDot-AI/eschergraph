@@ -4,6 +4,8 @@ from typing import Optional
 from typing import TypedDict
 from uuid import UUID
 
+from eschergraph.graph.community import Report
+
 from eschergraph.graph.property import Property
 
 
@@ -23,7 +25,7 @@ class NodeModel(TypedDict):
   properties: list[Property]
   edges: set[UUID]
   community: Optional[UUID]
-  report: list[dict[str, str]]
+  report: Report
   metadata: list[MetadataModel]
   child_nodes: set[UUID]
 

@@ -50,7 +50,7 @@ class Model(ABC):
     ...
 
   @abstractmethod
-  def get_formatted_response(self, prompt: str, response_format: dict) -> str | None:
+  def get_formatted_response(self, prompt: str, response_format: Any) -> str | None:
     """Get a formatted response from an LLM.
 
     Args:

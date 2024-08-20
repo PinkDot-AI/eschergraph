@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from abc import ABC
 from abc import abstractmethod
-from typing import Dict, List
+from typing import Any
+from typing import Dict
+from typing import List
+from uuid import UUID
 
 
 class VectorDB(ABC):
@@ -42,7 +45,7 @@ class VectorDB(ABC):
     self,
     embedding: List[float],
     top_n: int,
-    metadata: Dict[str, str],
+    metadata: Dict[str, Any],
     collection_name: str,
   ) -> Dict[str, str]:
     """Search for the top_n documents that are most similar to the given embedding.
@@ -60,8 +63,9 @@ class VectorDB(ABC):
 
   @abstractmethod
   def format_search_results(
+    self,
     result: Dict[str, str],
-  ) -> List[Dict[str, int | str | float | dict]]:
+  ) -> List[Dict[str, UUID | int | str | float | Dict[str, Any]]]:
     """Format search results into a standard.
 
     Args:
