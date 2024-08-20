@@ -19,17 +19,16 @@ class NodeModel(TypedDict):
   description: str
   level: int
   properties: list[str]
-  edges: set[EdgeModel]
+  edges: set[UUID]
   community: Optional[UUID]
   report: list[dict[str, str]]
-  metadata: set[MetadataModel]
+  metadata: list[MetadataModel]
 
 
 class EdgeModel(TypedDict):
   """The persistent data model for an edge."""
 
-  id: UUID
   frm: UUID
   to: UUID
   description: str
-  metadata: set[MetadataModel]
+  metadata: list[MetadataModel]
