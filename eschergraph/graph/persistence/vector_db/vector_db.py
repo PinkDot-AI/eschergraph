@@ -5,24 +5,24 @@ from abc import abstractmethod
 
 
 class VectorDB(ABC):
-  """This is the Abstrcat class for all vector DB implementations."""
+  """This is the abstract base class for all vector DB implementations."""
 
   @abstractmethod
   def connect(self) -> None:
-    """Possible conntection class."""
+    """Possible connection method."""
     pass
 
   @abstractmethod
   def create_collection(self, name: str) -> None:
-    """Crete a collection with a given name.
+    """Create a collection with a given name.
 
-    Parameters:
-    name (str) name for the collection.
+    Args:
+      name (str): Name for the collection.
     """
     pass
 
   @abstractmethod
-  def input_documents(
+  def insert_documents(
     self,
     embeddings: list[list[float]],
     documents: list[str],
@@ -32,11 +32,12 @@ class VectorDB(ABC):
   ) -> None:
     """Store documents with their embeddings, ids, and metadata.
 
-    Parameters:
-    embedding (List[List[float]]): List of embeddings for the documents.
-    document (List[str]): List of document texts.
-    ids (List[int]): List of document IDs.
-    metadata (List[Dict[str, Any]]): List of metadata dictionaries.
+    Args:
+      embeddings (list[List[float]]): List of embeddings for the documents.
+      documents (list[str]): List of document texts.
+      ids (list[int]): List of document IDs.
+      metadata (list[dict[str, Any]]): List of metadata dictionaries.
+      collection_name (str): The name of the collection.
     """
     pass
 
@@ -50,12 +51,13 @@ class VectorDB(ABC):
   ) -> dict[str, str]:
     """Search for the top_n documents that are most similar to the given embedding.
 
-    Parameters:
-    embedding (List[float]): Embedding of the query document.
-    top_n (int): Number of top documents to retrieve.
-    metadata (Dict[str, Any]): Metadata to filter the search results.
+    Args:
+      embedding (list[float]): Embedding of the query document.
+      top_n (int): Number of top documents to retrieve.
+      metadata (dict[str, str]): Metadata to filter the search results.
+      collection_name (str): The collection's name.
 
     Returns:
-    List[Dict[str, Any]]: List of documents that match the query.
+      dict[str, str]: List of documents that match the query.
     """
     pass
