@@ -16,6 +16,8 @@ openai = "^1.35.7"
 chromadb = "^0.5.5"
 pymilvus = "^2.4.4"
 sentence-transformers = "^3.0.1"
+requests = "^2.32.3"
+types-requests = "^2.32.0.20240712"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.7.1"
@@ -25,6 +27,7 @@ coverage = "^7.5.4"
 semversioner = "^2.0.5"
 poethepoet = "^0.27.0"
 pytest-repeat = "^0.9.3"
+faker = "^26.3.0"
 
 [tool.poetry_dynamic_versioning]
 enable = true
