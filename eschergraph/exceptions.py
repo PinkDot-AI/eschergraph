@@ -30,3 +30,9 @@ class EdgeCreationException(BaseEscherGraphException):
 
 class NodeCreationException(BaseEscherGraphException):
   """When something goes wrong creating a node."""
+
+
+class FileTypeNotProcessableException(BaseEscherGraphException):
+  """When a file is not processable due to its type."""
+
+  pass
