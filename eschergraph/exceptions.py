@@ -34,3 +34,9 @@ class NodeCreationException(BaseEscherGraphException):
 
 class CredentialException(BaseEscherGraphException):
   """Missing credential for external provider."""
+
+
+class FileTypeNotProcessableException(BaseEscherGraphException):
+  """When a file is not processable due to its type."""
+
+  pass

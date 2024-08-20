@@ -18,6 +18,8 @@ pymilvus = "^2.4.4"
 sentence-transformers = "^3.0.1"
 requests = "^2.32.3"
 types-requests = "^2.32.0.20240712"
+tiktoken = "^0.7.0"
+langchain-text-splitters = "^0.2.2"
 igraph = "^0.11.6"
 leidenalg = "^0.10.2"
 
@@ -130,7 +132,6 @@ warn_redundant_casts = true
 warn_unused_ignores = true
 
 ignore_missing_imports = true
-
 # Getting these passing should be easy
 strict_equality = true
 extra_checks = true
