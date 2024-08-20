@@ -5,8 +5,9 @@ import os
 from enum import Enum
 
 from attrs import define
-from openai import NotGiven, OpenAI
 from dotenv import load_dotenv
+from openai import NotGiven
+from openai import OpenAI
 from openai.types import CompletionUsage
 from openai.types.chat import ChatCompletionMessageParam
 from openai.types.chat import ChatCompletionMessageToolCall
@@ -15,6 +16,7 @@ from openai.types.chat import ChatCompletionToolChoiceOptionParam
 from openai.types.chat import ChatCompletionToolParam
 from openai.types.chat import ChatCompletionUserMessageParam
 from openai.types.chat.chat_completion import ChatCompletion
+from openai.types.chat.completion_create_params import ResponseFormat
 from openai.types.shared_params import FunctionDefinition
 from openai.types.shared_params import FunctionParameters
 from tenacity import retry
@@ -67,7 +69,9 @@ class ChatGPT(Model, Embedding):
     return self._get_response(prompt)
 
   @retry(wait=wait_random_exponential(multiplier=1, max=40), stop=stop_after_attempt(3))
-  def get_formatted_response(self, prompt: str, response_format: dict) -> str | None:
+  def get_formatted_response(
+    self, prompt: str, response_format: ResponseFormat
+  ) -> str | None:
     """Get a formatted response from OpenAI.
 
     Args:
@@ -79,7 +83,11 @@ class ChatGPT(Model, Embedding):
     """
     return self._get_response(prompt=prompt, response_format=response_format)
 
-  def _get_response(self, prompt: str, response_format: dict | NotGiven = NotGiven):
+  def _get_response(
+    self,
+    prompt: str,
+    response_format: ResponseFormat | NotGiven = NotGiven(),
+  ) -> str | None:
     messages: list[ChatCompletionMessageParam] = self._get_messages(prompt)
     messages.append(
       ChatCompletionSystemMessageParam(role="system", content=SYSTEM_MESSAGE)

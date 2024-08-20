@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from abc import ABC
 from abc import abstractmethod
-from typing import Optional
 
 from attrs import define
 
@@ -28,6 +27,6 @@ class Reranker(ABC):
   @abstractmethod
   def rerank(
     self, query: str, texts_list: list[str], top_n: int
-  ) -> Optional[list[RerankerResult]]:
+  ) -> list[RerankerResult]:
     """Get a list of texts to be embedded by an embedding model."""
     raise NotImplementedError

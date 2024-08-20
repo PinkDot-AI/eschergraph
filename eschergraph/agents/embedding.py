@@ -8,6 +8,6 @@ class Embedding(ABC):
   """The abstract base class for all the embedding models used in the package."""
 
   @abstractmethod
-  def get_embedding(self, list_text: list[str]) -> list[list[float]] | None:
+  def get_embedding(self, list_text: list[str]) -> list[list[float]]:
     """Get the embedding vectors for a list of text."""
     raise NotImplementedError

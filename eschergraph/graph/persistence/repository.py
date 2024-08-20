@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from abc import ABC
 from abc import abstractmethod
-from typing import TYPE_CHECKING, List, Optional
+from typing import List
+from typing import Optional
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from eschergraph.graph.edge import Edge
