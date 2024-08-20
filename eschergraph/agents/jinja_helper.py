@@ -25,7 +25,7 @@ def process_template(template_file: str, data: dict[str, str]) -> str:
     The formatted prompt as a string.
   """
   jinja_env: Environment = Environment(
-    loader=FileSystemLoader(searchpath="./pinkgraph/agents/prompts"),
+    loader=FileSystemLoader(searchpath="./eschergraph/agents/prompts"),
     autoescape=select_autoescape(),
   )
 
