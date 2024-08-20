@@ -31,11 +31,7 @@ def test_chroma() -> None:
       "parent_node": "",
     },
   ]
-<<<<<<< HEAD:tests/graph/persistence/vector_db/adapters/test_chroma.py
-  vector_db.insert(
-=======
   vector_db.insert_documents(
->>>>>>> main:tests/graph/persistence/vector_db/providers/test_chroma.py
     documents=docs,
     embeddings=embeddings,
     ids=ids,
