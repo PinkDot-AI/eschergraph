@@ -58,8 +58,8 @@ class SimpleRepository(Repository):
       save_location = DEFAULT_SAVE_LOCATION
 
       # Create the default directory if it does not exist
-      if not os.path.isdir(DEFAULT_SAVE_LOCATION):
-        os.makedirs(name=DEFAULT_SAVE_LOCATION)
+      if not os.path.isdir(save_location):
+        os.makedirs(name=save_location)
 
     self.name = name
     self.save_location = save_location
@@ -149,6 +149,11 @@ class SimpleRepository(Repository):
           )
           for edge_id in nodeModel["edges"]
         }
+      elif attr == "child_nodes":
+        node._child_nodes = [
+          Node(id=node_id, repository=node.repository)
+          for node_id in nodeModel["child_nodes"]
+        ]
       else:
         setattr(node, "_" + attr, nodeModel[attr])  # type: ignore
 
@@ -230,6 +235,8 @@ class SimpleRepository(Repository):
         elif attr == "community" and node.community.node:
           node_model["community"] = node.community.node.id
           self._add_node(node.community.node)
+        elif attr == "child_nodes":
+          node_model["child_nodes"] = {child.id for child in node.child_nodes}
         else:
           node_model[attr] = Node.__dict__[attr].fget(node)  # type: ignore
 
@@ -242,21 +249,33 @@ class SimpleRepository(Repository):
 
       self._add_edge(edge)
 
+    # Adding the child nodes (without edges)
+    for child in node.child_nodes:
+      if not child.id in self.nodes:
+        self._add_new_node(node=child, add_edges=False)
+
   def _add_new_node(self, node: Node, add_edges: bool = True) -> None:
     if not node.loadstate == LoadState.FULL:
       raise PersistenceException("A newly created node should be fully loaded.")
 
     # Check if the node already exists for this document
-    if node.level == 0 and self.get_node_by_name(
-      name=node.name, document_id=next(iter(node.metadata)).document_id
-    ):
-      raise NodeCreationException(
-        f"A node with name: {node.name} already exists at level 0 for this document"
-      )
+    if node.level == 0:
+      for mtd in node.metadata:
+        if self.get_node_by_name(name=node.name, document_id=mtd.document_id):
+          raise NodeCreationException(
+            f"A node with name: {node.name} already exists at level 0 for this document"
+          )
     node_model: NodeModel = self._new_node_to_node_model(node)
     if not add_edges:
       node_model["edges"] = set()
     self.nodes[node.id] = node_model
+
+    # Keep the node-name index updated
+    for mtd in node.metadata:
+      if not mtd.document_id in self.node_name_index:
+        self.node_name_index[mtd.document_id] = {}
+
+      self.node_name_index[mtd.document_id][node.name] = node.id
 
   @staticmethod
   def _new_node_to_node_model(node: Node) -> NodeModel:
@@ -269,6 +288,7 @@ class SimpleRepository(Repository):
       "community": node.community.node.id if node.community.node else None,
       "report": [],
       "metadata": [cast(MetadataModel, asdict(md)) for md in node.metadata],
+      "child_nodes": {child.id for child in node.child_nodes},
     }
 
   @staticmethod

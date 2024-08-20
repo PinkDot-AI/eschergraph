@@ -80,6 +80,7 @@ def test_node_to_node_model() -> None:
   assert node_model["properties"] == node.properties
   assert node_model["level"] == node.level
   assert {Metadata(**md) for md in node_model["metadata"]} == node.metadata
+  assert "child_nodes" in node_model
 
 
 def test_edge_to_edge_model() -> None:
@@ -178,3 +179,19 @@ def all_load_combinations(
           set(SimpleRepository._select_attributes_to_load(object, loadstate))
           == assert_set
         )
+
+
+def test_get_node_by_name(saved_graph_dir: Path) -> None:
+  repository: SimpleRepository = SimpleRepository(
+    save_location=saved_graph_dir.as_posix()
+  )
+
+  node: Node = create_basic_node(repository=repository)
+  repository.add(node)
+
+  assert (
+    repository.get_node_by_name(
+      name=node.name, document_id=next(iter(node.metadata)).document_id
+    )
+    == node
+  )
