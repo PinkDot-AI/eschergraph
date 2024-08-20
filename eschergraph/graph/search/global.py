@@ -37,13 +37,14 @@ def search_global(
 
   ans_template = "question_with_context.jinja"
   if len(extracted_nodes) > 0:
-    full_prompt = retrieve_similar_findings()
+    fnds = retrieve_similar_findings(graph=graph, prompt=prompt, embedder=embedder, vecdb=vecdb, collection_name=collection_name, reranker=reranker)
   else:
     fnds = retrieve_key_findings(graph, llm)
-    context = "\n".join([fnd["explanation"] for fnd in fnds])
-    full_prompt = process_template(ans_template, {"CONTEXT": context, "QUERY": prompt})
 
-    return llm.get_plain_response(full_prompt)
+  context = "\n".join([fnd["explanation"] for fnd in fnds])
+  full_prompt = process_template(ans_template, {"CONTEXT": context, "QUERY": prompt})
+
+  return llm.get_plain_response(full_prompt)
 
 
 def retrieve_similar_findings(
@@ -75,9 +76,6 @@ def retrieve_similar_findings(
   Returns:
       List[Dict[str, str]]: A list of findings
   """
-  # From top n node levels, do vector search of communities (findings)
-  # Get x findings from every level, on importance?
-
   # Search is done from top level
   curr_level = graph.repository.get_max_level()
   stop_level = max(curr_level - levels_to_search, 0)
@@ -108,7 +106,7 @@ def retrieve_similar_findings(
     prompt, [fd["explanation"] for fd in findings], findings_to_return
   )
 
-  return [findings[ranked["index"]] for ranked in rank_res]
+  return [findings[ranked.index] for ranked in rank_res]
 
 
 def retrieve_key_findings(
@@ -138,7 +136,7 @@ def retrieve_key_findings(
     ordered_nds = nodes
   else:
     ordered_nds = []
-    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=llm.max_threads) as executor:
       ordered_nds = list(executor.map(lambda nd: order_findings(nd, llm=llm), nodes))
 
   return [fnd for nd in ordered_nds for fnd in nd.report["findings"][:n]]
