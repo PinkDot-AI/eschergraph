@@ -391,6 +391,25 @@ class SimpleRepository(Repository):
       repository=self,
     )
 
+  def get_all_at_level(self, level: int) -> list[Node]:
+    """Get all nodes at a certain level.
+
+    Note that level 0 corresponds to nodes that are directly extracted
+    from a source text. Level 1 corresponds to the direct communities of these nodes.
+    And so on.
+
+    Args:
+      level (int): The level at which the nodes should occur.
+
+    Returns:
+      A list with all the nodes at the specified level.
+    """
+    return [
+      Node(id=id, repository=self)
+      for id, nm in self.nodes.items()
+      if nm["level"] == level
+    ]
+
   def save(self) -> None:
     """Save the graph to the persistent storage.
 
