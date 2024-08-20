@@ -116,3 +116,25 @@ class Node(EscherBase):
       report=[],
       loadstate=LoadState.FULL,
     )
+
+  def __eq__(self, other: object) -> bool:
+    """The equals method for a node.
+
+    Two nodes are equal if all their core attributes match.
+
+    Args:
+      other (object): The object to compare the node to.
+
+    Returns:
+      True if equal and false otherwise.
+    """
+    if isinstance(other, Node):
+      return (
+        self.name == other.name
+        and self.description == other.description
+        and self.level == other.level
+        and self.metadata == other.metadata
+        and self.properties == other.properties
+      )
+
+    return False
