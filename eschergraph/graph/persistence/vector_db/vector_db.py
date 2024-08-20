@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from abc import ABC
 from abc import abstractmethod
+from typing import Dict, List
 
 
 class VectorDB(ABC):
@@ -19,10 +20,10 @@ class VectorDB(ABC):
   @abstractmethod
   def insert(
     self,
-    embeddings: list[list[float]],
-    documents: list[str],
-    ids: list[str],
-    metadata: list[dict[str, str]],
+    embeddings: List[List[float]],
+    documents: List[str],
+    ids: List[str],
+    metadata: List[Dict[str, str]],
     collection_name: str,
   ) -> None:
     """Store documents with their embeddings, ids, and metadata.
@@ -39,11 +40,11 @@ class VectorDB(ABC):
   @abstractmethod
   def search(
     self,
-    embedding: list[float],
+    embedding: List[float],
     top_n: int,
-    metadata: dict[str, str],
+    metadata: Dict[str, str],
     collection_name: str,
-  ) -> dict[str, str]:
+  ) -> Dict[str, str]:
     """Search for the top_n documents that are most similar to the given embedding.
 
     Args:
@@ -54,5 +55,19 @@ class VectorDB(ABC):
 
     Returns:
       Dictionary with results that match the que
+    """
+    raise NotImplementedError
+
+  @abstractmethod
+  def format_search_results(
+    result: Dict[str, str],
+  ) -> List[Dict[str, int | str | float | dict]]:
+    """Format search results into a standard.
+
+    Args:
+        result: The result of a search
+
+    Returns:
+        Dict[str, int | str | float | dict]: A list of dictionaries containing a standardized format
     """
     raise NotImplementedError
