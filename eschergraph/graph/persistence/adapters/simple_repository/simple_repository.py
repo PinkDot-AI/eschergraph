@@ -2,30 +2,34 @@ from __future__ import annotations
 
 import os
 import pickle
+from typing import cast
 from typing import Optional
 from uuid import UUID
 
+from attrs import asdict
 from attrs import define
 from attrs import field
 from attrs import fields_dict
 
 from eschergraph.config import DEFAULT_GRAPH_NAME
 from eschergraph.config import DEFAULT_SAVE_LOCATION
-from eschergraph.exceptions import NodeDoesNotExistException
+from eschergraph.exceptions import NodeCreationException
 from eschergraph.graph.base import EscherBase
 from eschergraph.graph.community import Community
 from eschergraph.graph.edge import Edge
 from eschergraph.graph.loading import LoadState
 from eschergraph.graph.node import Node
 from eschergraph.graph.persistence.adapters.simple_repository.models import EdgeModel
+from eschergraph.graph.persistence.adapters.simple_repository.models import (
+  MetadataModel,
+)
 from eschergraph.graph.persistence.adapters.simple_repository.models import NodeModel
 from eschergraph.graph.persistence.exceptions import DirectoryDoesNotExistException
 from eschergraph.graph.persistence.exceptions import FilesMissingException
 from eschergraph.graph.persistence.exceptions import PersistenceException
+from eschergraph.graph.persistence.exceptions import PersistingEdgeException
 from eschergraph.graph.persistence.metadata import Metadata
 from eschergraph.graph.persistence.repository import Repository
-
-# TODO: logic for loading from a file (for when the file does not yet exist)
 
 
 @define
@@ -36,7 +40,7 @@ class SimpleRepository(Repository):
   save_location: str = field(default=None)
   nodes: dict[UUID, NodeModel] = field(init=False)
   edges: dict[UUID, EdgeModel] = field(init=False)
-  node_name_index: dict[str, UUID] = field(init=False)
+  node_name_index: dict[UUID, dict[str, UUID]] = field(init=False)
 
   def __init__(
     self, name: Optional[str] = None, save_location: Optional[str] = None
@@ -138,12 +142,12 @@ class SimpleRepository(Repository):
         # Add a reference to the edges
         node._edges = {
           Edge(
-            id=edge["id"],
-            frm=Node(id=edge["frm"], repository=node.repository),
-            to=Node(id=edge["to"], repository=node.repository),
+            id=edge_id,
+            frm=Node(id=self.edges[edge_id]["frm"], repository=node.repository),
+            to=Node(id=self.edges[edge_id]["to"], repository=node.repository),
             repository=node.repository,
           )
-          for edge in nodeModel["edges"]
+          for edge_id in nodeModel["edges"]
         }
       else:
         setattr(node, "_" + attr, nodeModel[attr])  # type: ignore
@@ -179,7 +183,20 @@ class SimpleRepository(Repository):
         attr.metadata["group"].value > object.loadstate.value
         and attr.metadata["group"].value <= loadstate.value
       ):
-        attributes.append(name)
+        attributes.append(name[1:])
+    return attributes
+
+  @staticmethod
+  def _select_attributes_to_add(object: EscherBase) -> list[str]:
+    attributes: list[str] = []
+    for name, attr in fields_dict(object.__class__).items():
+      if "group" not in attr.metadata:
+        continue
+      # The node id is never changed and loadstate not used
+      elif attr.metadata["group"] == LoadState.REFERENCE:
+        continue
+      elif attr.metadata["group"].value <= object.loadstate.value:
+        attributes.append(name[1:])
     return attributes
 
   def add(self, object: EscherBase) -> None:
@@ -191,24 +208,132 @@ class SimpleRepository(Repository):
     Args:
       object (EscherBase): The node or edge to add / update.
     """
-    ...
+    if isinstance(object, Node):
+      self._add_node(node=object)
+    elif isinstance(object, Edge):
+      self._add_edge(edge=object)
 
-  def get_node_by_name(self, name: str, loadstate: LoadState = LoadState.CORE) -> Node:
-    """Get a node by name.
+  def _add_node(self, node: Node) -> None:
+    # Check if the node already exists
+    if not node.id in self.nodes:
+      self._add_new_node(node)
+    else:
+      attributes_to_check: list[str] = self._select_attributes_to_add(node)
+      node_model: NodeModel = self.nodes[node.id]
+      for attr in attributes_to_check:
+        if attr == "edges":
+          node_model["edges"] = {edge.id for edge in node.edges}
+        elif attr == "metadata":
+          node_model["metadata"] = [
+            cast(MetadataModel, asdict(md)) for md in node.metadata
+          ]
+        elif attr == "community" and node.community.node:
+          node_model["community"] = node.community.node.id
+          self._add_node(node.community.node)
+        else:
+          node_model[attr] = Node.__dict__[attr].fget(node)  # type: ignore
+
+    # Adding the nodes (without edges) that are connected to this node
+    for edge in node.edges:
+      if not edge.frm.id in self.nodes:
+        self._add_new_node(node=edge.frm, add_edges=False)
+      elif not edge.to.id in self.nodes:
+        self._add_new_node(node=edge.to, add_edges=False)
+
+      self._add_edge(edge)
+
+  def _add_new_node(self, node: Node, add_edges: bool = True) -> None:
+    if not node.loadstate == LoadState.FULL:
+      raise PersistenceException("A newly created node should be fully loaded.")
+
+    # Check if the node already exists for this document
+    if node.level == 0 and self.get_node_by_name(
+      name=node.name, document_id=next(iter(node.metadata)).document_id
+    ):
+      raise NodeCreationException(
+        f"A node with name: {node.name} already exists at level 0 for this document"
+      )
+    node_model: NodeModel = self._new_node_to_node_model(node)
+    if not add_edges:
+      node_model["edges"] = set()
+    self.nodes[node.id] = node_model
+
+  @staticmethod
+  def _new_node_to_node_model(node: Node) -> NodeModel:
+    return {
+      "name": node.name,
+      "description": node.description,
+      "level": node.level,
+      "properties": node.properties,
+      "edges": {edge.id for edge in node.edges},
+      "community": node.community.node.id if node.community.node else None,
+      "report": [],
+      "metadata": [cast(MetadataModel, asdict(md)) for md in node.metadata],
+    }
+
+  @staticmethod
+  def _new_edge_to_edge_model(edge: Edge) -> EdgeModel:
+    return {
+      "frm": edge.frm.id,
+      "to": edge.to.id,
+      "description": edge.description,
+      "metadata": [cast(MetadataModel, asdict(md)) for md in edge.metadata],
+    }
+
+  def _add_edge(self, edge: Edge) -> None:
+    # Check if both referenced nodes are already persisted
+    if not edge.frm.id in self.nodes or not edge.to.id in self.nodes:
+      raise PersistingEdgeException(
+        "Both referenced nodes need to exist when an edge is persisted directly"
+      )
+
+    # Check if the edge already exists
+    if not edge.id in self.edges:
+      self.edges[edge.id] = self._new_edge_to_edge_model(edge)
+
+      # Making sure that the edges can also be found on the nodes
+      self.nodes[edge.frm.id]["edges"].add(edge.id)
+      self.nodes[edge.to.id]["edges"].add(edge.id)
+    else:
+      attributes_to_check: list[str] = self._select_attributes_to_add(edge)
+      edge_model: EdgeModel = self.edges[edge.id]
+      for attr in attributes_to_check:
+        if attr == "frm":
+          edge_model["frm"] = edge.frm.id
+        elif attr == "to":
+          edge_model["to"] = edge.to.id
+        elif attr == "description":
+          edge_model["description"] = edge.description
+        elif attr == "metadata":
+          edge_model["metadata"] = [
+            cast(MetadataModel, asdict(md)) for md in edge.metadata
+          ]
+
+  def get_node_by_name(
+    self, name: str, document_id: UUID, loadstate: LoadState = LoadState.CORE
+  ) -> Optional[Node]:
+    """Get a node from a certain document by name.
+
+    Returns the node, and None if no node is found.
+    The nodes that are returned from this method are all at level 0.
 
     Args:
-      name (str): The name of the node.
+      name (str): The node to get.
+      document_id (UUID): The id of the document from which the node has been extracted.
       loadstate (LoadState): The state in which the node should be loaded.
 
     Returns:
-      The node that matches the name.
+      The node that matches the name in the specified document.
     """
-    try:
-      node: Node = Node(id=self.node_name_index[name], repository=self)
-      self._load_node(node, loadstate)
-      return node
-    except KeyError:
-      raise NodeDoesNotExistException(f"No node with name: {name} exists")
+    if not document_id in self.node_name_index:
+      return None
+    id: Optional[UUID] = self.node_name_index[document_id].get(name)
+    if not id:
+      return None
+    node_id: UUID = id
+    node: Node = Node(id=node_id, repository=self)
+    self._load_node(node, loadstate)
+    return node
 
   def save(self) -> None:
     """Save the graph to the persistent storage.
