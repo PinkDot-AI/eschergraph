@@ -355,6 +355,42 @@ class SimpleRepository(Repository):
     self._load_node(node, loadstate)
     return node
 
+  def get_node_by_id(self, id: UUID) -> Optional[Node]:
+    """Get a node by id.
+
+    If a node with this id is not found, then None is returned.
+
+    Args:
+      id (UUID): The node's id.
+
+    Returns:
+      The node or None if no node with this id exists.
+    """
+    if not id in self.nodes:
+      return None
+    return Node(id=id, repository=self)
+
+  def get_edge_by_id(self, id: UUID) -> Optional[Edge]:
+    """Get an edge by id.
+
+    If no edge with this id is found, then None is returned.
+
+    Args:
+      id (UUID): The edge's id.
+
+    Returns:
+      The edge or None if no edge is found.
+    """
+    edge_model: Optional[EdgeModel] = self.edges.get(id)
+    if not edge_model:
+      return None
+    return Edge(
+      id=id,
+      frm=Node(id=edge_model["frm"], repository=self),
+      to=Node(id=edge_model["to"], repository=self),
+      repository=self,
+    )
+
   def save(self) -> None:
     """Save the graph to the persistent storage.
 
