@@ -35,6 +35,7 @@ class Model(ABC):
   """The abstract base class for all the LLMs used in the package."""
 
   tokens: list[TokenUsage] = field(factory=list)
+  max_threads: int = field(default=10)
 
   @abstractmethod
   def get_plain_response(self, prompt: str) -> str | None:
