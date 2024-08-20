@@ -11,6 +11,7 @@ from eschergraph.graph.loading import LoadState
 if TYPE_CHECKING:
   from eschergraph.graph.base import EscherBase
   from eschergraph.graph.node import Node
+  from eschergraph.graph.edge import Edge
 
 
 class Repository(ABC):
@@ -65,5 +66,33 @@ class Repository(ABC):
 
     This method might not be necessary for running databases but can be useful
     in some cases. Essentially, it amounts to comitting the changes.
+    """
+    raise NotImplementedError
+
+  @abstractmethod
+  def get_node_by_id(self, id: UUID) -> Optional[Node]:
+    """Get a node by id.
+
+    If a node with this id is not found, then None is returned.
+
+    Args:
+      id (UUID): The node's id.
+
+    Returns:
+      The node or None if no node with this id exists.
+    """
+    raise NotImplementedError
+
+  @abstractmethod
+  def get_edge_by_id(self, id: UUID) -> Optional[Edge]:
+    """Get an edge by id.
+
+    If no edge with this id is found, then None is returned.
+
+    Args:
+      id (UUID): The edge's id.
+
+    Returns:
+      The edge or None if no edge is found.
     """
     raise NotImplementedError

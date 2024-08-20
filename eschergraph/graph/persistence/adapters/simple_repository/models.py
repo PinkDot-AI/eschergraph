@@ -23,6 +23,7 @@ class NodeModel(TypedDict):
   community: Optional[UUID]
   report: list[dict[str, str]]
   metadata: list[MetadataModel]
+  child_nodes: set[UUID]
 
 
 class EdgeModel(TypedDict):

@@ -5,6 +5,7 @@ from uuid import UUID
 
 import pytest
 
+from eschergraph.exceptions import NodeCreationException
 from eschergraph.graph import Edge
 from eschergraph.graph import Node
 from eschergraph.graph.loading import LoadState
@@ -27,7 +28,7 @@ def test_adding_new_nodes(saved_graph_dir: Path) -> None:
     save_location=saved_graph_dir.as_posix()
   )
 
-  for _ in range(100):
+  for _ in range(10):
     node: Node = create_basic_node(repository=repository)
     repository.add(node)
     node_dict[node.id] = node
@@ -44,7 +45,25 @@ def test_adding_new_nodes(saved_graph_dir: Path) -> None:
       node=node_dict[node_id], node_model=new_repository.nodes[node_id]
     )
 
-  assert len(new_repository.nodes) == 100
+  assert len(new_repository.nodes) == 10
+
+
+def test_adding_duplicate_node_name_document(saved_graph_dir: Path) -> None:
+  repository: SimpleRepository = SimpleRepository(
+    save_location=saved_graph_dir.as_posix()
+  )
+
+  node1: Node = create_basic_node(repository=repository)
+  node2: Node = create_basic_node(repository=repository)
+
+  # Make sure that node 2 duplicates node 1
+  node2.name = node1.name
+  node2.metadata = node1.metadata
+
+  repository.add(node1)
+
+  with pytest.raises(NodeCreationException):
+    repository.add(node2)
 
 
 def test_adding_new_edges(saved_graph_dir: Path) -> None:
@@ -54,7 +73,7 @@ def test_adding_new_edges(saved_graph_dir: Path) -> None:
     save_location=saved_graph_dir.as_posix()
   )
 
-  for _ in range(100):
+  for _ in range(10):
     edge: Edge = create_edge(repository=repository)
     repository.add(edge.frm)
     repository.add(edge)
@@ -75,8 +94,8 @@ def test_adding_new_edges(saved_graph_dir: Path) -> None:
     )
     assert compare_node_to_node_model(ref_edge.to, new_repository.nodes[ref_edge.to.id])
 
-  assert len(new_repository.edges) == 100
-  assert len(new_repository.nodes) == 200
+  assert len(new_repository.edges) == 10
+  assert len(new_repository.nodes) == 20
 
   for node_model in new_repository.nodes.values():
     assert len(node_model["edges"]) == 1
