@@ -68,8 +68,6 @@ def create_edge(
   if not to:
     to = create_basic_node(repository=repository)
 
-  assert frm != to
-
   return Edge.create(
     frm=frm,
     to=to,
@@ -120,13 +118,11 @@ def create_simple_extracted_graph(
       pair: tuple[int, int] = random.choice(valid_pairs)
       valid_pairs.remove(pair)
 
-      edge_data: Edge = create_edge(frm=nodes[pair[0]], to=nodes[pair[1]])
-
       edges.append(
         graph.add_edge(
           frm=nodes[pair[0]],
           to=nodes[pair[1]],
-          description=edge_data.description,
+          description=faker.text(max_nb_chars=80),
           metadata=metadata,
         )
       )
