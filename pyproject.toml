@@ -19,10 +19,11 @@ pre-commit = "^3.7.1"
 pytest = "^8.2.2"
 assertpy = "^1.1"
 coverage = "^7.5.4"
-
-# Inspired by the graphrag project
 semversioner = "^2.0.5"
 poethepoet = "^0.27.0"
+pytest-repeat = "^0.9.3"
+faker = "^26.3.0"
+
 [tool.poetry_dynamic_versioning]
 enable = true
 style = "pep440"
@@ -120,6 +121,8 @@ docstring-code-line-length = 40
 warn_unused_configs = true
 warn_redundant_casts = true
 warn_unused_ignores = true
+
+ignore_missing_imports = true
 
 # Getting these passing should be easy
 strict_equality = true

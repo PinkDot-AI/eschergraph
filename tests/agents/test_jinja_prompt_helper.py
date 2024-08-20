@@ -68,7 +68,7 @@ def test_templating_function_elaboration_missing_data() -> None:
 
 def test_extract_variables() -> None:
   jinja_env: Environment = Environment(
-    loader=FileSystemLoader(searchpath="./pinkgraph/agents/prompts"),
+    loader=FileSystemLoader(searchpath="./eschergraph/agents/prompts"),
     autoescape=select_autoescape(),
   )
 
