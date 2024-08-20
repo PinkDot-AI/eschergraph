@@ -3,7 +3,6 @@ from __future__ import annotations
 import os
 import pickle
 from typing import cast
-from typing import List
 from typing import Optional
 from uuid import UUID
 
@@ -411,6 +410,14 @@ class SimpleRepository(Repository):
       if nm["level"] == level
     ]
 
+  def get_max_level(self) -> int:
+    """Get the highest non-root level of the graph.
+
+    Returns:
+        int: The highest level
+    """
+    raise NotImplementedError
+
   def save(self) -> None:
     """Save the graph to the persistent storage.
 
@@ -422,25 +429,3 @@ class SimpleRepository(Repository):
     for key, value in filenames.items():
       with open(value, "wb") as file:
         pickle.dump(getattr(self, key), file)
-
-  def get_nodes_by_level(
-    self, level: int, loadstate: LoadState = LoadState.CORE
-  ) -> List[Node]:
-    """Get nodes by level.
-
-    Args:
-        level (int): The level of the nodes
-        loadstate (LoadState): The state in which the nodes should be loaded.
-
-    Returns:
-        List[Node]: Nodes of the given level
-    """
-    raise NotImplementedError
-
-  def get_max_level(self) -> int:
-    """Get the highest non-root level of the graph.
-
-    Returns:
-        int: The highest level
-    """
-    raise NotImplementedError

@@ -144,7 +144,7 @@ def retrieve_key_findings(
       List[str]: A list of findings
   """
   node_level = level if level is not None else graph.repository.get_max_level()
-  nodes = graph.repository.get_nodes_by_level(node_level)
+  nodes = graph.repository.get_all_at_level(node_level)
 
   # Findings of reports should be sorted when building the graph
   if sorted:
