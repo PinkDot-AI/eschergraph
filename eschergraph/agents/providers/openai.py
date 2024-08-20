@@ -6,6 +6,7 @@ from enum import Enum
 
 from attrs import define
 from openai import NotGiven, OpenAI
+from dotenv import load_dotenv
 from openai.types import CompletionUsage
 from openai.types.chat import ChatCompletionMessageParam
 from openai.types.chat import ChatCompletionMessageToolCall
@@ -20,6 +21,7 @@ from tenacity import retry
 from tenacity import stop_after_attempt
 from tenacity import wait_random_exponential
 
+from eschergraph.agents.embedding import Embedding
 from eschergraph.agents.llm import FunctionCall
 from eschergraph.agents.llm import Model
 from eschergraph.agents.llm import TokenUsage
@@ -31,6 +33,7 @@ SYSTEM_MESSAGE: str = """
 You are an agent that will use tools to parse all the data
 from any document into a refined and parsed form.
 """
+load_dotenv()
 
 
 class OpenAIModel(Enum):
@@ -39,14 +42,15 @@ class OpenAIModel(Enum):
   GPT_3: str = "gpt-3.5-turbo"
   GPT_4o: str = "gpt-4o"
   GPT_4o_MINI: str = "gpt-4o-mini"
+  TEXT_EMBEDDING_LARGE: str = "text-embedding-3-large"
 
 
 @define
-class ChatGPT(Model):
+class ChatGPT(Model, Embedding):
   """The class that handles communication with the OpenAI API."""
 
   model: OpenAIModel
-  client: OpenAI = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+  client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
   @retry(wait=wait_random_exponential(multiplier=1, max=40), stop=stop_after_attempt(3))
   def get_plain_response(self, prompt: str) -> str | None:
@@ -154,6 +158,29 @@ class ChatGPT(Model):
         )
       )
 
+  def get_embedding(self, text_list: list[str]) -> list[list[float]]:
+    """Generates embeddings for a list of text inputs using a specified model.
+
+    This method takes a list of strings, processes each string by replacing newline characters with spaces,
+    and then sends the processed list to a model to generate embeddings. If the input list is empty, it returns
+    a list containing an empty list.
+
+    Args:
+        text_list (list[str]): A list of text strings for which embeddings are to be generated.
+
+    Returns:
+        list[list[float]]: A list of embeddings, where each embedding is a list of floats corresponding to
+        the input text. If the input list is empty, returns a list containing an empty list.
+    """
+    # Handle empty lists
+    if not len(text_list) > 0:
+      return [[]]
+
+    model = "text-embedding-3-large"
+    text_list = [t.replace("\n", " ") for t in text_list]
+    response = self.client.embeddings.create(input=text_list, model=model).data
+    return [e.embedding for e in response]
+
   @staticmethod
   def _get_tools_for_chat(tools: list[Tool]) -> list[ChatCompletionToolParam]:
     chat_tools: list[ChatCompletionToolParam] = []
@@ -195,3 +222,6 @@ class ChatGPT(Model):
     )
     messages.append(ChatCompletionUserMessageParam(role="user", content=prompt))
     return messages
+
+
+chat = ChatGPT(OpenAIModel.GPT_3, )

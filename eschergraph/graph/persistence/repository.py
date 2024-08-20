@@ -11,9 +11,9 @@ from eschergraph.graph.loading import LoadState
 if TYPE_CHECKING:
   from eschergraph.graph.base import EscherBase
   from eschergraph.graph.node import Node
+  from eschergraph.graph.edge import Edge
 
 
-# Potentially change the EscherBase type hint to Node | Edge for readability!
 class Repository(ABC):
   """An abstract base class for an EscherGraph repository."""
 
@@ -42,15 +42,21 @@ class Repository(ABC):
     raise NotImplementedError
 
   @abstractmethod
-  def get_node_by_name(self, name: str, loadstate: LoadState = LoadState.CORE) -> Node:
-    """Get a node by name.
+  def get_node_by_name(
+    self, name: str, document_id: UUID, loadstate: LoadState = LoadState.CORE
+  ) -> Optional[Node]:
+    """Get a node from a certain document by name.
+
+    Returns the node, and None if no node is found.
+    The nodes that are returned from this method are all at level 0.
 
     Args:
       name (str): The node to get.
+      document_id (UUID): The id of the document from which the node has been extracted.
       loadstate (LoadState): The state in which the node should be loaded.
 
     Returns:
-      The node that matches the given name.
+      The node that matches the name in the specified document.
     """
     raise NotImplementedError
 

@@ -104,8 +104,8 @@ def retrieve_similar_findings(
     for finding in nd.report["findings"][:top_node_findings]
   ]
 
-  rank_res = reranker.rank(
-    [fd["explanation"] for fd in findings], prompt, findings_to_return
+  rank_res = reranker.rerank(
+    prompt, [fd["explanation"] for fd in findings], findings_to_return
   )
 
   return [findings[ranked["index"]] for ranked in rank_res]

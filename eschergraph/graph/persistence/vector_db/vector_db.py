@@ -6,19 +6,24 @@ from typing import Dict, List
 
 
 class VectorDB(ABC):
-  """The abstract base class for a vector database."""
+  """This is the abstract base class for all vector DB implementations."""
+
+  @abstractmethod
+  def connect(self) -> None:
+    """Possible connection method."""
+    pass
 
   @abstractmethod
   def create_collection(self, name: str) -> None:
-    """Crete a collection with a given name.
+    """Create a collection with a given name.
 
     Args:
-      name (str): Collection's name.
+      name (str): Name for the collection.
     """
     raise NotImplementedError
 
   @abstractmethod
-  def insert(
+  def insert_documents(
     self,
     embeddings: List[List[float]],
     documents: List[str],
@@ -29,10 +34,10 @@ class VectorDB(ABC):
     """Store documents with their embeddings, ids, and metadata.
 
     Args:
-      embeddings (list[list[float]]): List of embeddings for the documents.
-      documents (list[str]): List of document texts.
-      ids (list[int]): List of document IDs.
-      metadata (list[Dict[str, Any]]): List of metadata dictionaries.
+      embeddings (List[List[float]]): List of embeddings for the documents.
+      documents (List[str]): List of document texts.
+      ids (List[int]): List of document IDs.
+      metadata (List[dict[str, Any]]): List of metadata dictionaries.
       collection_name (str): The name of the collection.
     """
     raise NotImplementedError
@@ -50,11 +55,11 @@ class VectorDB(ABC):
     Args:
       embedding (list[float]): Embedding of the query document.
       top_n (int): Number of top documents to retrieve.
-      metadata (dict[str, Any]): Metadata to filter the search results.
-      collection_name (str): The name of the collection.
+      metadata (dict[str, str]): Metadata to filter the search results.
+      collection_name (str): The collection's name.
 
     Returns:
-      Dictionary with results that match the que
+      dict[str, str]: List of documents that match the query.
     """
     raise NotImplementedError
 
