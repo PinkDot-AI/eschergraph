@@ -20,11 +20,11 @@ class ChromaDB(VectorDB):
     """Create a new collection in ChromaDB.
 
     Args:
-        name (str): The name of the collection to be created.
+      name (str): The name of the collection to be created.
     """
     self.collection = self.client.create_collection(name=name)
 
-  def input_documents(
+  def insert_documents(
     self,
     embeddings: list[list[float]],
     documents: list[str],
@@ -32,14 +32,14 @@ class ChromaDB(VectorDB):
     metadata: list[dict[str, str]],
     collection_name: str,
   ) -> None:
-    """Input documents into a ChromaDB collection.
+    """Insert documents into a ChromaDB collection.
 
     Args:
-        embeddings (list[list[float]]): List of embeddings for the documents.
-        documents (list[str]): List of documents to be added.
-        ids (list[str]): List of IDs corresponding to each document.
-        metadata (list[dict]): List of metadata dictionaries for each document.
-        collection_name (str): Name of the collection to add documents to.
+      embeddings (list[list[float]]): List of embeddings for the documents.
+      documents (list[str]): List of documents to be added.
+      ids (list[str]): List of IDs corresponding to each document.
+      metadata (list[dict]): List of metadata dictionaries for each document.
+      collection_name (str): Name of the collection to add documents to.
     """
     collection = self.client.get_collection(name=collection_name)
     collection.add(
@@ -59,13 +59,13 @@ class ChromaDB(VectorDB):
     """Search for documents in a ChromaDB collection.
 
     Args:
-        embedding (list[float]): The embedding to search for.
-        top_n (int): The number of top results to return.
-        metadata (dict): Metadata to filter the search results.
-        collection_name (str): Name of the collection to search in.
+      embedding (list[float]): The embedding to search for.
+      top_n (int): The number of top results to return.
+      metadata (dict): Metadata to filter the search results.
+      collection_name (str): Name of the collection to search in.
 
     Returns:
-        dict: Search results containing the documents.
+      dict: Search results containing the documents.
     """
     collection = self.client.get_collection(name=collection_name)
     results: dict[str, str] = collection.query(
