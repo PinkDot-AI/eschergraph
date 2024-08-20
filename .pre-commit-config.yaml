@@ -45,5 +45,5 @@ repos:
   hooks:
   - id: mypy
     files: (eschergraph/|tests/|scripts/)
-    additional_dependencies: [attrs, jinja2, openai, tenacity, pytest, types-assertpy]
+    additional_dependencies: [attrs, jinja2, openai, tenacity, pytest, types-assertpy, types-requests]
     args: [--config=pyproject.toml, --enable-incomplete-feature=NewGenericSyntax]
