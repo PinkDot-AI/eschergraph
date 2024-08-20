@@ -30,3 +30,7 @@ class EdgeCreationException(BaseEscherGraphException):
 
 class NodeCreationException(BaseEscherGraphException):
   """When something goes wrong creating a node."""
+
+
+class CredentialException(BaseEscherGraphException):
+  """Missing credential for external provider."""
