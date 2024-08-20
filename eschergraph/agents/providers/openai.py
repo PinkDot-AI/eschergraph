@@ -5,6 +5,7 @@ import os
 from enum import Enum
 
 from attrs import define
+from dotenv import load_dotenv
 from openai import OpenAI
 from openai.types import CompletionUsage
 from openai.types.chat import ChatCompletionMessageParam
@@ -32,6 +33,7 @@ SYSTEM_MESSAGE: str = """
 You are an agent that will use tools to parse all the data
 from any document into a refined and parsed form.
 """
+load_dotenv()
 
 
 class OpenAIModel(Enum):
