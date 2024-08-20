@@ -9,20 +9,22 @@ from requests import Response
 from sentence_transformers import CrossEncoder
 
 from eschergraph.agents.reranker import Reranker
-from eschergraph.agents.reranker import RerankerItem
+from eschergraph.agents.reranker import RerankerResult
+from eschergraph.exceptions import CredentialException
+from eschergraph.exceptions import ExternalProviderException
 
 
 class JinaReranker(Reranker):
   """A reranker that uses Jina's API to rerank a list of documents based on their relevance to a query.
 
   Methods:
-      rerank(query: str, text_list: list[str], top_n: int) -> Optional[list[RerankerItem]]:
+      rerank(query: str, text_list: list[str], top_n: int) -> Optional[list[RerankerResult]]:
           Sends a request to Jina's API to rerank the provided text list according to the query.
   """
 
   def rerank(
     self, query: str, texts_list: list[str], top_n: int
-  ) -> Optional[list[RerankerItem]]:
+  ) -> Optional[list[RerankerResult]]:
     """Reranks a list of text documents based on their relevance to the query using Jina's API.
 
     Args:
@@ -31,7 +33,7 @@ class JinaReranker(Reranker):
         top_n (int): The number of top relevant documents to return.
 
     Returns:
-        Optional[list[RerankerItem]]: A list of reranked items with their relevance scores and text,
+        Optional[list[RerankerResult]]: A list of reranked items with their relevance scores and text,
         or None if the request fails.
     """
     if not texts_list:
@@ -39,7 +41,7 @@ class JinaReranker(Reranker):
 
     jina_api_key: str | None = os.getenv("JINA_API_KEY")
     if not jina_api_key:
-      raise ValueError("JINA_API_KEY environment variable is not set")
+      raise CredentialException("JINA_API_KEY environment variable is not set")
 
     url = "https://api.jina.ai/v1/rerank"
     headers = {
@@ -59,7 +61,7 @@ class JinaReranker(Reranker):
       response_json: Any = response.json()
 
       return [
-        RerankerItem(
+        RerankerResult(
           index=r["index"],
           relevance_score=r["relevance_score"],
           text=r["document"]["text"],
@@ -68,18 +70,16 @@ class JinaReranker(Reranker):
       ]
 
     except requests.RequestException as e:
-      print(f"Request failed: {e}")
-      return None
+      raise ExternalProviderException(f"Request failed: {e}")
     except ValueError as e:
-      print(f"Error parsing JSON: {e}")
-      return None
+      raise ExternalProviderException(f"Something went wrong parsing the resulf: {e}")
 
 
 class JinaRerankerTurbo(Reranker):
   """A reranker that uses a local model downloaded via the sentence_transformers library.
 
   Methods:
-      rerank(docs: list[str], query: str, top_n: int) -> Optional[list[RerankerItem]]:
+      rerank(docs: list[str], query: str, top_n: int) -> Optional[list[RerankerResult]]:
           Reranks the provided list of documents using the locally hosted model.
   """
 
@@ -91,7 +91,7 @@ class JinaRerankerTurbo(Reranker):
 
   def rerank(
     self, query: str, texts_list: list[str], top_n: int
-  ) -> Optional[list[RerankerItem]]:
+  ) -> list[RerankerResult]:
     """Reranks a list of text documents based on their relevance to the query using the locally hosted model.
 
     Args:
@@ -100,7 +100,7 @@ class JinaRerankerTurbo(Reranker):
         top_n (int): The number of top relevant documents to return.
 
     Returns:
-        Optional[list[RerankerItem]]: A list of reranked items with their relevance scores and text.
+        Optional[list[RerankerResult]]: A list of reranked items with their relevance scores and text.
     """
     if len(texts_list) == 0:
       return []
@@ -108,14 +108,19 @@ class JinaRerankerTurbo(Reranker):
     # Perform the ranking
     results = self.model.rank(query, texts_list, return_documents=True, top_k=top_n)
 
-    # Convert results to list of RerankerItem
-    reranked_items = [
-      RerankerItem(
-        index=r.get("corpus_id", None),
-        relevance_score=r.get("score", None),
-        text=r.get("text", ""),
-      )
-      for r in results
-    ]
+    # Convert results to list of RerankerResult
+    try:
+      reranked_items = [
+        RerankerResult(
+          index=r.get("corpus_id"),
+          relevance_score=r.get("score"),
+          text=r.get("text"),
+        )
+        for r in results
+      ]
 
-    return reranked_items
+      return reranked_items
+    except TypeError:
+      raise ExternalProviderException(
+        "Something went wrong obtaining the reranker results."
+      )
