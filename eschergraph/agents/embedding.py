@@ -9,5 +9,5 @@ class Embedding(ABC):
 
   @abstractmethod
   def get_embedding(self, list_text: list[str]) -> list[list[float]] | None:
-    """Get a list of texts to be embedded by an embedding model."""
+    """Get the embedding vectors for a list of text."""
     raise NotImplementedError

@@ -2,12 +2,13 @@ from __future__ import annotations
 
 from abc import ABC
 from abc import abstractmethod
-from dataclasses import dataclass
 from typing import Optional
 
+from attrs import define
 
-@dataclass
-class RerankerItem:
+
+@define
+class RerankerResult:
   """Represents a reranked item with its index, relevance score, and associated text.
 
   Attributes:
@@ -27,6 +28,6 @@ class Reranker(ABC):
   @abstractmethod
   def rerank(
     self, query: str, texts_list: list[str], top_n: int
-  ) -> Optional[list[RerankerItem]]:
+  ) -> Optional[list[RerankerResult]]:
     """Get a list of texts to be embedded by an embedding model."""
     raise NotImplementedError
