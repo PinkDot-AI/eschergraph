@@ -22,7 +22,7 @@ def _create_level_igraph(nodes: list[Node]) -> ig.Graph:
     for edge in node.edges
     if edge.frm.id == node.id and edge.to.id in node_ids
   ]
-  return ig.Graph.DictList(vertices=vertices, edges=edges, directed=True)
+  return ig.Graph.DictList(vertices=vertices, edges=edges, directed=False)
 
 
 def get_leidenalg_communities(nodes: list[Node]) -> list[list[UUID]]:
