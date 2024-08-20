@@ -19,6 +19,7 @@ from eschergraph.graph.persistence.exceptions import DirectoryDoesNotExistExcept
 from eschergraph.graph.persistence.exceptions import FilesMissingException
 from tests.graph.help import create_basic_node
 from tests.graph.help import create_edge
+from tests.graph.help import create_simple_extracted_graph
 
 
 def test_filenames_function_default() -> None:
@@ -195,3 +196,17 @@ def test_get_node_by_name(saved_graph_dir: Path) -> None:
     )
     == node
   )
+
+
+def test_get_all_at_level(saved_graph_dir: Path) -> None:
+  repository: SimpleRepository = SimpleRepository(
+    save_location=saved_graph_dir.as_posix()
+  )
+
+  _, nodes, _ = create_simple_extracted_graph(repository=repository)
+
+  level_0: list[Node] = repository.get_all_at_level(level=0)
+  level_1: list[Node] = repository.get_all_at_level(level=1)
+
+  assert {n.id for n in nodes} == {n.id for n in level_0}
+  assert not level_1
