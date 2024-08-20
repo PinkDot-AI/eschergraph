@@ -222,6 +222,3 @@ class ChatGPT(Model, Embedding):
     )
     messages.append(ChatCompletionUserMessageParam(role="user", content=prompt))
     return messages
-
-
-chat = ChatGPT(OpenAIModel.GPT_3, )
