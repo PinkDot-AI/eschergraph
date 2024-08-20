@@ -2,7 +2,7 @@ import concurrent.futures
 import json
 from typing import Dict, List, Optional
 
-from eschergraph.agents.embedy import Embed
+from eschergraph.agents.embedding import Embedding
 from eschergraph.agents.jinja_helper import process_template
 from eschergraph.agents.llm import Model
 from eschergraph.agents.reranker import Reranker
@@ -16,7 +16,7 @@ def search_global(
   prompt: str,
   llm: Model,
   reranker: Reranker,
-  embedder: Embed,
+  embedder: Embedding,
   vecdb: VectorDB,
   collection_name: str,
 ):
@@ -50,7 +50,7 @@ def search_global(
 def retrieve_similar_findings(
   graph: Graph,
   prompt: str,
-  embedder: Embed,
+  embedder: Embedding,
   vecdb: VectorDB,
   collection_name: str,
   reranker: Reranker,
@@ -79,7 +79,7 @@ def retrieve_similar_findings(
   # Search is done from top level
   curr_level = graph.repository.get_max_level()
   stop_level = max(curr_level - levels_to_search, 0)
-  embedded_prompt = embedder.embed(prompt)
+  embedded_prompt = embedder.get_embedding(prompt)
 
   search_res: List[Node | None] = []
   while curr_level >= stop_level:
