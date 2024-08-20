@@ -49,6 +49,19 @@ class Model(ABC):
     ...
 
   @abstractmethod
+  def get_formatted_response(self, prompt: str, response_format: dict) -> str | None:
+    """Get a formatted response from an LLM.
+
+    Args:
+      prompt (str): The user prompt that is send to ChatGPT.
+      response_format (dict): Type of format that will be returned
+
+    Returns:
+      Formatted answer
+    """
+    ...
+
+  @abstractmethod
   def get_function_calls(self, prompt: str, tools: list[Tool]) -> list[FunctionCall]:
     """Get function calls from the model.
 

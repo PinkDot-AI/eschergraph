@@ -1,8 +1,10 @@
 from typing import Dict, List
 from sentence_transformers import CrossEncoder
 
+from eschergraph.agents.reranker import Reranker
 
-class JinaReranker:
+
+class JinaReranker(Reranker):
   """The reranker using Jina's model."""
 
   def __init__(self, model_repo="jinaai/jina-reranker-v1-turbo-en"):

@@ -2,8 +2,10 @@ from __future__ import annotations
 
 from abc import ABC
 from abc import abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Optional
+from uuid import UUID
 
+from eschergraph.graph.edge import Edge
 from eschergraph.graph.loading import LoadState
 
 if TYPE_CHECKING:
@@ -53,10 +55,62 @@ class Repository(ABC):
     raise NotImplementedError
 
   @abstractmethod
+  def get_nodes_by_level(
+    self, level: int, loadstate: LoadState = LoadState.CORE
+  ) -> List[Node]:
+    """Get nodes by level.
+
+    Args:
+        level (int): The level of the nodes
+        loadstate (LoadState): The state in which the nodes should be loaded.
+
+    Returns:
+        List[Node]: Nodes of the given level
+    """
+    raise NotImplementedError
+
+  @abstractmethod
+  def get_max_level(self) -> int:
+    """Get the highest non-root level of the graph.
+
+    Returns:
+        int: The highest level
+    """
+    raise NotImplementedError
+
+  @abstractmethod
   def save(self) -> None:
     """Explicitly indicate that the repository should save the graph to its persistent storage.
 
     This method might not be necessary for running databases but can be useful
     in some cases. Essentially, it amounts to comitting the changes.
+    """
+    raise NotImplementedError
+
+  @abstractmethod
+  def get_node_by_id(self, id: UUID) -> Optional[Node]:
+    """Get a node by id.
+
+    If a node with this id is not found, then None is returned.
+
+    Args:
+      id (UUID): The node's id.
+
+    Returns:
+      The node or None if no node with this id exists.
+    """
+    raise NotImplementedError
+
+  @abstractmethod
+  def get_edge_by_id(self, id: UUID) -> Optional[Edge]:
+    """Get an edge by id.
+
+    If no edge with this id is found, then None is returned.
+
+    Args:
+      id (UUID): The edge's id.
+
+    Returns:
+      The edge or None if no edge is found.
     """
     raise NotImplementedError

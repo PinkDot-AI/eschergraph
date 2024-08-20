@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Dict, List
 
 import chromadb
 from chromadb import Collection
@@ -75,3 +76,24 @@ class ChromaDB(VectorDB):
     )
 
     return result  # type: ignore
+
+  def format_search_results(
+    result: QueryResult,
+  ) -> List[Dict[str, int | str | float | dict]]:
+    """Format search results into a standard.
+
+    Args:
+        result (QueryResult): The result of a search
+
+    Returns:
+        Dict[str, int | str | float | dict]: A list of dictionaries containing standardized format
+    """
+    return [
+      {
+        "id": result["ids"][0][i],
+        "chunk": result["documents"][0][i],
+        "distance": result["distances"][0][i],
+        "metadata": result["metadatas"][0][i],
+      }
+      for i in range(len(result["ids"][0]))
+    ]
