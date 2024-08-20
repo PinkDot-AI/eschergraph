@@ -3,8 +3,6 @@ from __future__ import annotations
 import os
 import time
 from typing import Any
-from typing import Dict
-from typing import List
 from typing import Optional
 from uuid import UUID
 from uuid import uuid4
@@ -21,7 +19,7 @@ from eschergraph.exceptions import FileTypeNotProcessableException
 
 @define
 class Chunk:
-  """Datastructure of the chunk objects."""
+  """The chunk object."""
 
   text: str
   chunk_id: int
@@ -30,17 +28,14 @@ class Chunk:
   doc_name: str
 
 
+# TODO: add more files types: html, docx, pptx, xlsx.
 @define
 class Reader:
-  """This class will turn a file location into chunk objects as defined above.
+  """Reader will parse a file into chunks.
 
   Types accepted:
-  pdf, txt
-
-  PDF files: use a document analysis model to extract paragraphs and pagesections
-  Txt files: use the Langchain recursivechunker with 800 chunksize and 100 overlap.
-  TODO add more files types: html, docx, pptx, xlsx.
-
+    - pdf: use a document analysis model to extract paragraphs and pagesections
+    - txt: use the Langchain recursivechunker with 800 chunksize and 100 overlap
   """
 
   file_location: str
@@ -49,15 +44,15 @@ class Reader:
   chunk_size: int = 1500
   overlap: int = 300
   total_tokens: int = 0
-  all_chunks: List[Chunk] = field(factory=list)
+  chunks: list[Chunk] = field(factory=list)
   doc_id: UUID = field(factory=uuid4)
-  filename: str = field(init=False)
 
-  def __attrs_post_init__(self) -> None:
-    """Post-initialization to set derived attributes."""
-    self.filename = os.path.basename(self.file_location)
+  @property
+  def filename(self) -> str:
+    """The name of the file that is being parsed."""
+    return os.path.basename(self.file_location)
 
-  def _get_document_analysis(self) -> Optional[Any]:
+  def _get_document_analysis(self) -> Any:
     # Send the file to the specified URL and get the response
     with open(self.file_location, "rb") as file:
       files = {"file": file}
@@ -68,25 +63,25 @@ class Reader:
     except Exception as e:
       raise ExternalProviderException from e
 
-  def _handle_json_response(self, response_json: List[Dict[str, Any]]) -> List[Chunk]:
-    current_chunk: List[str] = []
+  def _handle_json_response(self, response_json: Any) -> None:
+    current_chunk: list[str] = []
     current_token_count: int = 0
-    chunk_id: int = 0  # Initialize a chunk ID counter
+    chunk_id: int = 0
 
     for i, item in enumerate(response_json):
       if item["type"] in ["TABLE", "PICTURE", "CAPTION"] and self.multimodal:
-        #### TO DO: implement multimodal handling
+        # TODO: implement multimodal handling
         pass
 
-      elif item["type"] in ["TEXT", "SECTION_HEADER", "LIST_ITEM", "FORMULA"]:
+      elif item["type"] in ["TEXT", "SECTION_HEADER", "list_ITEM", "FORMULA"]:
         text: str = item["text"] + "\n"
         tokens: int = self._count_tokens(text)
         # Calculate the effective token limit
         effective_token_limit: int = self.optimal_tokens
         if (
-          item["type"] == "LIST_ITEM"
+          item["type"] == "list_ITEM"
           and i + 1 < len(response_json)
-          and response_json[i + 1]["type"] == "LIST_ITEM"
+          and response_json[i + 1]["type"] == "list_ITEM"
         ):
           effective_token_limit = int(self.optimal_tokens * 1.2)
         # Check if adding this item exceeds the effective token limit
@@ -115,22 +110,21 @@ class Reader:
       self._process_text_chunk(
         current_chunk, chunk_id, int(response_json[-1]["page_number"])
       )
-    return self.all_chunks
 
   @staticmethod
   def _count_tokens(text: str) -> int:
-    # Assuming you have installed the tiktoken library and configured the tokenizer
     tokenizer = tiktoken.get_encoding("cl100k_base")
-    tokens: List[str] = tokenizer.encode(text)
+    tokens: list[str] = tokenizer.encode(text)
     return len(tokens)
 
   def _process_text_chunk(
-    self, chunk_list: List[str], chunk_id: int, page_num: int
+    self, chunk_list: list[str], chunk_id: int, page_num: int
   ) -> None:
-    # Add your logic to handle text chunks
     text: str = " ".join(chunk_list)
+
     if not self._chunk_filter(text):
       return
+
     chunk: Chunk = Chunk(
       text=text,
       chunk_id=chunk_id,
@@ -138,7 +132,7 @@ class Reader:
       doc_id=self.doc_id,
       doc_name=self.file_location,
     )
-    self.all_chunks.append(chunk)
+    self.chunks.append(chunk)
 
   def _handle_plain_text(self) -> None:
     with open(self.file_location, "r", encoding="utf-8") as txt_file:
@@ -149,7 +143,7 @@ class Reader:
       chunk_size=self.chunk_size, chunk_overlap=self.overlap
     )
     all_splits = text_splitter.create_documents([text_content])
-    chunks: List[Chunk] = []
+    chunks: list[Chunk] = []
     for idx, split in enumerate(all_splits):
       chunk_text: str = split.page_content
       if self._chunk_filter(chunk_text):
@@ -162,9 +156,9 @@ class Reader:
             doc_name=self.filename,
           )
         )
-    self.all_chunks = chunks
+    self.chunks = chunks
 
-  def parse(self) -> List[Chunk] | None:
+  def parse(self) -> list[Chunk] | None:
     """This is the main function that parses the document."""
     start_time: float = time.time()
     if self.file_location.endswith(".txt"):
@@ -181,12 +175,12 @@ class Reader:
         f"File type of {self.file_location} is not processable."
       )
 
-    total_tokens: int = sum(self._count_tokens(c.text) for c in self.all_chunks)
+    total_tokens: int = sum(self._count_tokens(c.text) for c in self.chunks)
     self.total_tokens = total_tokens
     print(
-      f"Parsed {self.file_location} with multimodal = {self.multimodal} into {len(self.all_chunks)} chunks, {self.total_tokens} tokens, in {round(time.time() - start_time, 3)} seconds"
+      f"Parsed {self.file_location} with multimodal = {self.multimodal} into {len(self.chunks)} chunks, {self.total_tokens} tokens, in {round(time.time() - start_time, 3)} seconds"
     )
-    return self.all_chunks
+    return self.chunks
 
   def _chunk_filter(self, chunk: str) -> bool:
     min_length = 100
