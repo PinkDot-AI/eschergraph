@@ -38,5 +38,3 @@ class CredentialException(BaseEscherGraphException):
 
 class FileTypeNotProcessableException(BaseEscherGraphException):
   """When a file is not processable due to its type."""
-
-  pass

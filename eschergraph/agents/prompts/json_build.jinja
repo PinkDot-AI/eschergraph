@@ -1,0 +1,34 @@
+-Goal-
+Extract all relevant information from the provided text into a graph representation containing entities and relations.
+
+-Steps-
+1. Identify all named entities in singular form. For people please include the entire name.
+For each identified entity, extract the following information:
+- entity_name: Name of the entity
+- entity_description: Comprehensive description of the entity's attributes and activities
+
+Format each entity output as a JSON entry with the following format:
+
+{"name": <entity name>, "description": <entity description>}
+
+2. From the entities identified in step 1, identify all pairs of (source_entity, target_entity) that are *clearly related* to each other.
+For each pair of related entities, extract the following information:
+- source_entity: name of the source entity, as identified in step 1
+- target_entity: name of the target entity, as identified in step 1
+- relationship_description: explanation as to why you think the source entity and the target entity are related to each other
+- relationship_strength: an integer score between 1 to 10, indicating strength of the relationship between the source entity and target entity
+
+Format each relationship as a JSON entry with the following format:
+
+{"source": <source_entity>, "target": <target_entity>, "relationship": <relationship_description>, "relationship_strength": <relationship_strength>}
+
+3. Return output in English as a single list of all JSON entities and relationships identified in steps 1 and 2.
+
+However, only extract entities that are specific so avoid extracting entities like CEO or employee, but instead
+extract only named entities.
+
+-Real Data-
+######################
+text: {{ input_text }}
+######################
+output:

@@ -49,6 +49,24 @@ class Model(ABC):
     ...
 
   @abstractmethod
+  def get_json_response(
+    self,
+    prompt: str,
+    model: str | None,
+    temperature: float,
+  ) -> str | None:
+    """Get a json response from an LLM.
+
+    Args:
+      prompt (str): The prompt to send to the LLM.
+      model (str): which provider model will be used.
+      temperature (float): the temperature set for the model.
+
+    Returns:
+      The response from the LLM.
+    """
+
+  @abstractmethod
   def get_function_calls(self, prompt: str, tools: list[Tool]) -> list[FunctionCall]:
     """Get function calls from the model.
 

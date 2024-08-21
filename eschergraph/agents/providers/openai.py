@@ -86,6 +86,41 @@ class ChatGPT(Model, Embedding):
     except Exception as e:
       raise ExternalProviderException(e)
 
+  def get_json_response(
+    self, prompt: str, model: str | None = None, temperature: float = 0.1
+  ) -> str | None:
+    """Get a json text response from ChatGPT.
+
+    Note that the model that is used is specified when instantiating the class.
+
+    Args:
+      prompt (str): The user prompt that is send to ChatGPT.
+      model (str|None): the option for setting the model.
+      temperature(float): setting the temperature for the llm
+
+    Returns:
+      The answer given or None.
+    """
+    messages: list[ChatCompletionMessageParam] = self._get_messages(prompt)
+    messages.append(
+      ChatCompletionSystemMessageParam(role="system", content=SYSTEM_MESSAGE)
+    )
+    messages.append(ChatCompletionUserMessageParam(role="user", content=prompt))
+    if not model:
+      model = self.model.value
+    try:
+      response: ChatCompletion = self.client.chat.completions.create(
+        model=model,
+        messages=messages,
+        temperature=temperature,
+        response_format={"type": "json_object"},
+      )
+      # Log the tokens that were used
+      self._add_token_usage(response)
+      return response.choices[0].message.content
+    except Exception as e:
+      raise ExternalProviderException(e)
+
   def get_function_calls(self, prompt: str, tools: list[Tool]) -> list[FunctionCall]:
     """Get function calls from ChatGPT.
 
