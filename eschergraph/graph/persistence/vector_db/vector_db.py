@@ -23,7 +23,7 @@ class VectorDB(ABC):
     Args:
       name (str): Name for the collection.
     """
-    raise NotImplementedError
+    pass
 
   @abstractmethod
   def insert_documents(
@@ -43,7 +43,7 @@ class VectorDB(ABC):
       metadata (List[dict[str, Any]]): List of metadata dictionaries.
       collection_name (str): The name of the collection.
     """
-    raise NotImplementedError
+    pass
 
   @abstractmethod
   def search(
@@ -64,7 +64,7 @@ class VectorDB(ABC):
     Returns:
       dict[str, str]: List of documents that match the query.
     """
-    raise NotImplementedError
+    pass
 
   @abstractmethod
   def format_search_results(
@@ -79,4 +79,4 @@ class VectorDB(ABC):
     Returns:
         Dict[str, int | str | float | dict]: A list of dictionaries containing a standardized format
     """
-    raise NotImplementedError
+    pass

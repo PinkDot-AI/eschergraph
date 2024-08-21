@@ -33,6 +33,11 @@ def test_create(mock_repository: Mock) -> None:
   assert node.id
   assert node.level == 1
   assert node.edges == set()
+  assert (
+    node.report.title is None
+    and node.report.summary is None
+    and node.report.findings is None
+  )
   assert node.child_nodes == []
   assert node.loadstate == LoadState.FULL
 
