@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from enum import Enum
 
+from attr import Factory
 from attr import field
 from attrs import define
 from openai import OpenAI
@@ -45,11 +46,12 @@ class OpenAIModel(Enum):
 
 
 @define
-class ChatGPT(Model, Embedding):
+class OpenAIProvider(Model, Embedding):
   """The class that handles communication with the OpenAI API."""
 
   model: OpenAIModel
   api_key: str = field(kw_only=True)
+  tokens: list[TokenUsage] = Factory(list)
 
   @property
   def client(self) -> OpenAI:
@@ -102,10 +104,7 @@ class ChatGPT(Model, Embedding):
       The answer given or None.
     """
     messages: list[ChatCompletionMessageParam] = self._get_messages(prompt)
-    messages.append(
-      ChatCompletionSystemMessageParam(role="system", content=SYSTEM_MESSAGE)
-    )
-    messages.append(ChatCompletionUserMessageParam(role="user", content=prompt))
+
     if not model:
       model = self.model.value
     try:

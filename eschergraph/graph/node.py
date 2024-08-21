@@ -20,6 +20,14 @@ if TYPE_CHECKING:
   from eschergraph.graph.persistence import Repository
 
 
+@define
+class Property:
+  """This is the dataclass for the properties."""
+
+  description: str
+  metadata: Metadata
+
+
 @loading_getter_setter
 @define
 class Node(EscherBase):
@@ -34,7 +42,7 @@ class Node(EscherBase):
   _level: Optional[int] = field(default=None, metadata={"group": LoadState.CORE})
   """The level at which the node occurs. Level 0 refers to directly extracted entities, and levels
   above that are aggregated communities."""
-  _properties: Optional[list[str]] = field(
+  _properties: Optional[list[Property]] = field(
     default=None, metadata={"group": LoadState.CORE}
   )
   _edges: Optional[set[Edge]] = field(
@@ -54,7 +62,7 @@ class Node(EscherBase):
   name: str = field(init=False)
   description: str = field(init=False)
   level: int = field(init=False)
-  properties: list[str] = field(init=False)
+  properties: list[Property] = field(init=False)
   edges: set[Edge] = field(init=False)
   community: Community = field(init=False)
   child_nodes: list[Node] = field(init=False)
@@ -67,7 +75,7 @@ class Node(EscherBase):
     description: str,
     level: int,
     repository: Repository,
-    properties: Optional[list[str]] = None,
+    properties: Optional[list[Property]] = None,
     metadata: Optional[set[Metadata]] = None,
   ) -> Node:
     """The method that allows for the creation of a new node.
@@ -80,7 +88,7 @@ class Node(EscherBase):
       description (str): The node description.
       level (int): The level of the node.
       repository (Repository): The repository that will store the node.
-      properties (Optional[list[str]]): The optional properties for the node.
+      properties (Optional[list[Property]]): The optional properties for the node.
       metadata (Optional[set[Metadata]]): The optional metadata for the node.
 
     Returns:

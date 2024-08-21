@@ -4,6 +4,8 @@ from typing import Optional
 from typing import TypedDict
 from uuid import UUID
 
+from eschergraph.graph.node import Property
+
 
 class MetadataModel(TypedDict):
   """The persistent data model for an object's metadata."""
@@ -18,7 +20,7 @@ class NodeModel(TypedDict):
   name: str
   description: str
   level: int
-  properties: list[str]
+  properties: list[Property]
   edges: set[UUID]
   community: Optional[UUID]
   report: list[dict[str, str]]
