@@ -416,7 +416,7 @@ class SimpleRepository(Repository):
     Returns:
         int: The highest level
     """
-    raise NotImplementedError
+    return max(node["level"] for node in self.nodes.values())
 
   def save(self) -> None:
     """Save the graph to the persistent storage.
