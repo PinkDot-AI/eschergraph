@@ -114,7 +114,7 @@ def retrieve_similar_findings(
   findings = [
     finding
     for nd in search_res
-    if nd is not None
+    if nd is not None and nd.report.findings is not None
     for finding in nd.report.findings[:top_node_findings]
   ]
 
@@ -148,7 +148,12 @@ def retrieve_key_findings(
 
   # Findings of reports should be sorted when building the graph
   if sorted:
-    key_findings = [fnd for nd in nodes for fnd in nd.report.findings[:n]]
+    key_findings = [
+      fnd
+      for nd in nodes
+      if nd.report.findings is not None
+      for fnd in nd.report.findings[:n]
+    ]
   else:
     with concurrent.futures.ThreadPoolExecutor(max_workers=llm.max_threads) as executor:
       findings_per_node = list(

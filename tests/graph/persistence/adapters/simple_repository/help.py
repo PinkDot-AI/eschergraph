@@ -23,13 +23,27 @@ def compare_node_to_node_model(node: Node, node_model: NodeModel) -> bool:
     if not node.community.node.id == node_model["community"]:
       return False
 
+  if (
+    node.report.title != node_model["report"]["title"]
+    or node.report.summary != node_model["report"]["summary"]
+  ):
+    return False
+  if node.report.findings is not None:
+    if node_model["report"]["findings"] is None:
+      return False
+    for idx, fnd in enumerate(node.report.findings):
+      if (
+        fnd.summary != node_model["report"]["findings"][idx]["summary"]
+        or fnd.explanation != node_model["report"]["findings"][idx]["explanation"]
+      ):
+        return False
+
   return (
     node.name == node_model["name"]
     and node.description == node_model["description"]
     and node.level == node_model["level"]
     and node.properties == node_model["properties"]
     and {edge.id for edge in node.edges} == node_model["edges"]
-    and node.report == node_model["report"]
     and [cast(MetadataModel, asdict(md)) for md in node.metadata]
     == node_model["metadata"]
   )

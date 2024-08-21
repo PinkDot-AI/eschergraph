@@ -16,6 +16,8 @@ from eschergraph.config import DEFAULT_SAVE_LOCATION
 from eschergraph.exceptions import NodeCreationException
 from eschergraph.graph.base import EscherBase
 from eschergraph.graph.community import Community
+from eschergraph.graph.community import Finding
+from eschergraph.graph.community import Report
 from eschergraph.graph.edge import Edge
 from eschergraph.graph.loading import LoadState
 from eschergraph.graph.node import Node
@@ -24,6 +26,7 @@ from eschergraph.graph.persistence.adapters.simple_repository.models import (
   MetadataModel,
 )
 from eschergraph.graph.persistence.adapters.simple_repository.models import NodeModel
+from eschergraph.graph.persistence.adapters.simple_repository.models import ReportModel
 from eschergraph.graph.persistence.exceptions import DirectoryDoesNotExistException
 from eschergraph.graph.persistence.exceptions import FilesMissingException
 from eschergraph.graph.persistence.exceptions import PersistenceException
@@ -154,6 +157,21 @@ class SimpleRepository(Repository):
           Node(id=node_id, repository=node.repository)
           for node_id in nodeModel["child_nodes"]
         ]
+      elif attr == "report":
+        if (
+          nodeModel["report"]["title"] is None
+          or nodeModel["report"]["summary"] is None
+          or nodeModel["report"]["findings"] is None
+        ):
+          node._report = Report()
+        else:
+          node._report = Report(
+            title=nodeModel["report"]["title"],
+            summary=nodeModel["report"]["summary"],
+            findings=[
+              Finding(**finding) for finding in nodeModel["report"]["findings"]
+            ],
+          )
       else:
         setattr(node, "_" + attr, nodeModel[attr])  # type: ignore
 
@@ -286,7 +304,7 @@ class SimpleRepository(Repository):
       "properties": node.properties,
       "edges": {edge.id for edge in node.edges},
       "community": node.community.node.id if node.community.node else None,
-      "report": node.report,
+      "report": cast(ReportModel, asdict(node.report)),
       "metadata": [cast(MetadataModel, asdict(md)) for md in node.metadata],
       "child_nodes": {child.id for child in node.child_nodes},
     }
