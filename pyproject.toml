@@ -23,7 +23,6 @@ langchain-text-splitters = "^0.2.2"
 igraph = "^0.11.6"
 leidenalg = "^0.10.2"
 seaborn = "^0.13.2"
-networkx = "^3.3"
 pyvis = "^0.3.2"
 
 [tool.poetry.group.dev.dependencies]

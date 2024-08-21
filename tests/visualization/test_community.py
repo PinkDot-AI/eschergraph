@@ -1,16 +1,11 @@
 from __future__ import annotations
 
-from eschergraph.visualization.community import _community_to_colors
+from eschergraph.graph import Edge
+from eschergraph.graph import Node
+from eschergraph.visualization.community import visualize_community_graph
 
 
-def test_community_to_colors(node_name_comms: list[list[str]]) -> None:
-  comm_colors: list[dict[str, str | int]] = _community_to_colors(node_name_comms)
-  comm_color_code: list[set[str]] = [set() for _ in range(len(node_name_comms))]
-
-  for node in comm_colors:
-    comm_color_code[int(node["group"]) - 1].add(str(node["color"]))
-
-  for comm_color in comm_color_code:
-    assert len(comm_color) == 1
-
-  assert comm_colors[-1]["group"] == len(node_name_comms)
+def test_visualize_community_graph(
+  community_graph: tuple[list[list[Node]], list[Edge]],
+) -> None:
+  visualize_community_graph(comms=community_graph[0], edges=community_graph[1])
