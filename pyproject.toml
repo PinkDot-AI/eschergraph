@@ -25,7 +25,6 @@ leidenalg = "^0.10.2"
 fuzzywuzzy = "^0.18.0"
 python-levenshtein = "^0.25.1"
 seaborn = "^0.13.2"
-networkx = "^3.3"
 pyvis = "^0.3.2"
 
 [tool.poetry.group.dev.dependencies]

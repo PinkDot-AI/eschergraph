@@ -139,3 +139,25 @@ class Node(EscherBase):
       )
 
     return False
+
+  def __hash__(self) -> int:
+    """The hash method for a node.
+
+    Only the id is used as this characterizes a node.
+
+    Returns:
+      The integer hash value.
+    """
+    return hash(self.id)
+
+  # TODO: properly implement this method
+  # Done quickly to prevent infinite recursion
+  def __repr__(self) -> str:
+    """The representation method for a node.
+
+    Needs to be implemented because otherwise infinite recursion can occur.
+
+    Returns:
+      The string representation of a node.
+    """
+    return f"Node Name: {self.name} Description:{self.description}"
