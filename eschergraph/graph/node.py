@@ -113,7 +113,7 @@ class Node(EscherBase):
       community=Community(),
       edges=set(),
       child_nodes=[],
-      report=None,
+      report=Report(),
       loadstate=LoadState.FULL,
     )
 

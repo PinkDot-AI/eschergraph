@@ -5,6 +5,7 @@ from typing import List
 from typing import Optional
 from typing import TYPE_CHECKING
 
+from attrs import asdict
 from attrs import define
 from attrs import field
 
@@ -23,9 +24,18 @@ class Community:
 class Report:
   """A report of a community node."""
 
-  title: str
-  summary: str
-  findings: List[Finding]
+  title: Optional[str] = field(default=None)
+  summary: Optional[str] = field(default=None)
+  findings: Optional[List[Finding]] = field(default=None)
+
+  def __attrs_post_init__(self) -> None:
+    """Either all are initialized or none are."""
+    values = asdict(self).values()
+
+    if all(value is None for value in values):
+      return
+    elif any(value is None for value in values):
+      raise ValueError("Some properties were not initialized")
 
   def findings_to_json(self) -> str:
     """Convert the list of findings to a json output.
@@ -33,7 +43,9 @@ class Report:
     Returns:
         str: Findings as a json formatted string
     """
-    return json.dumps([fnd.to_json() for fnd in self.findings], indent=4)
+    if self.findings is None:
+      raise ValueError("Findings not found")
+    return json.dumps([asdict(fnd) for fnd in self.findings], indent=4)
 
 
 @define
@@ -42,7 +54,3 @@ class Finding:
 
   summary: str
   explanation: str
-
-  def to_json(self) -> str:
-    """Convert finding to json formatted string."""
-    return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
