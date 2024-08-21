@@ -1,10 +1,9 @@
 from __future__ import annotations
 
+from typing import List
 from typing import Optional
 from typing import TypedDict
 from uuid import UUID
-
-from eschergraph.graph.community import Report
 
 
 class MetadataModel(TypedDict):
@@ -12,6 +11,21 @@ class MetadataModel(TypedDict):
 
   document_id: UUID
   chunk_id: int
+
+
+class FindingModel(TypedDict):
+  """The persistent data model for a finding."""
+
+  summary: str
+  explanation: str
+
+
+class ReportModel(TypedDict):
+  """The persistent data model for a report."""
+
+  title: Optional[str]
+  summary: Optional[str]
+  findings: Optional[List[FindingModel]]
 
 
 class NodeModel(TypedDict):
@@ -23,7 +37,7 @@ class NodeModel(TypedDict):
   properties: list[str]
   edges: set[UUID]
   community: Optional[UUID]
-  report: Report
+  report: ReportModel
   metadata: list[MetadataModel]
   child_nodes: set[UUID]
 

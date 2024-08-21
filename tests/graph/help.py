@@ -129,3 +129,43 @@ def create_simple_extracted_graph(
     )
 
   return graph, nodes, edges
+
+
+def create_node_only_multi_level_graph(
+  max_level: int,
+  repository: Optional[Repository] = None,
+) -> Graph:
+  """Create a graph with multiple levels, the graph makes no sense, as the nodes are not connected
+  in any way.
+
+  Args:
+      max_level (int): Max level of a node
+      repository (Optional[Repository], optional): Repository to be used. Defaults to None.
+
+  Returns:
+      Graph: The created graph
+  """
+  if not repository:
+    repository = MagicMock(spec=Repository)
+
+  graph: Graph = Graph(name="multi_level_graph", repository=repository)
+  document_id: UUID = uuid4()
+  num_chunks: int = random.randint(5, 20)
+
+  metadata: list[Metadata] = [
+    Metadata(document_id=document_id, chunk_id=i) for i in range(num_chunks)
+  ]
+  # Make max_level occur multiple times and increase by one because of modulo operation
+  num_nodes: int = random.randint((max_level + 1) * 4, 100)
+  for i in range(num_nodes):
+    node_data: Node = create_basic_node(repository=repository)
+
+    graph.add_node(
+      name=node_data.name,
+      description=node_data.description,
+      level=i % (max_level + 1),
+      metadata=random.choice(metadata),
+      properties=node_data.properties,
+    )
+
+  return graph

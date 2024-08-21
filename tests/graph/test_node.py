@@ -13,6 +13,7 @@ from attrs import fields_dict
 from eschergraph.exceptions import NodeCreationException
 from eschergraph.graph import Node
 from eschergraph.graph.community import Community
+from eschergraph.graph.community import Report
 from eschergraph.graph.loading import LoadState
 from eschergraph.graph.persistence import Metadata
 
@@ -106,7 +107,7 @@ property_parameters: list[tuple[str, Any]] = [
   ("edges", set()),
   ("community", Community()),
   ("child_nodes", []),
-  ("report", []),
+  ("report", Report()),
 ]
 
 

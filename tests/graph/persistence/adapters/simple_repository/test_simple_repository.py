@@ -19,6 +19,7 @@ from eschergraph.graph.persistence.exceptions import DirectoryDoesNotExistExcept
 from eschergraph.graph.persistence.exceptions import FilesMissingException
 from tests.graph.help import create_basic_node
 from tests.graph.help import create_edge
+from tests.graph.help import create_node_only_multi_level_graph
 from tests.graph.help import create_simple_extracted_graph
 
 
@@ -210,3 +211,14 @@ def test_get_all_at_level(saved_graph_dir: Path) -> None:
 
   assert {n.id for n in nodes} == {n.id for n in level_0}
   assert not level_1
+
+
+def test_get_max_level(saved_graph_dir: Path) -> None:
+  repository: SimpleRepository = SimpleRepository(
+    save_location=saved_graph_dir.as_posix()
+  )
+
+  max_level = 7
+  _ = create_node_only_multi_level_graph(max_level=max_level, repository=repository)
+
+  assert repository.get_max_level() == max_level
