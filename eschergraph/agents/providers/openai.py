@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 import json
-import os
 from enum import Enum
 
+from attr import field
 from attrs import define
-from dotenv import load_dotenv
 from openai import OpenAI
 from openai.types import CompletionUsage
 from openai.types.chat import ChatCompletionMessageParam
@@ -27,13 +26,13 @@ from eschergraph.agents.llm import Model
 from eschergraph.agents.llm import TokenUsage
 from eschergraph.agents.tools import Function
 from eschergraph.agents.tools import Tool
+from eschergraph.exceptions import CredentialException
 from eschergraph.exceptions import ExternalProviderException
 
 SYSTEM_MESSAGE: str = """
 You are an agent that will use tools to parse all the data
 from any document into a refined and parsed form.
 """
-load_dotenv()
 
 
 class OpenAIModel(Enum):
@@ -50,7 +49,14 @@ class ChatGPT(Model, Embedding):
   """The class that handles communication with the OpenAI API."""
 
   model: OpenAIModel
-  client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+  api_key: str = field(kw_only=True)
+
+  @property
+  def client(self) -> OpenAI:
+    """The OpenAI client."""
+    if not self.api_key:
+      raise CredentialException("No API key has been set")
+    return OpenAI(api_key=self.api_key)
 
   @retry(wait=wait_random_exponential(multiplier=1, max=40), stop=stop_after_attempt(3))
   def get_plain_response(self, prompt: str) -> str | None:
