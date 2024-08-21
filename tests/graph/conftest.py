@@ -12,7 +12,10 @@ from eschergraph.graph.persistence import Repository
 
 @pytest.fixture(scope="function")
 def mock_repository() -> Mock:
-  return MagicMock(spec=Repository)
+  mock: MagicMock = MagicMock(spec=Repository)
+  mock.get_node_by_name.return_value = None
+
+  return mock
 
 
 @pytest.fixture(scope="function")

@@ -83,6 +83,7 @@ def create_simple_extracted_graph(
   # The mock repository as default, does not make much sense for this function
   if not repository:
     repository = MagicMock(spec=Repository)
+    repository.get_node_by_name.return_value = None
 
   graph: Graph = Graph(name="test_graph", repository=repository)
   nodes: list[Node] = []
