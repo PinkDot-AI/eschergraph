@@ -6,7 +6,6 @@ from typing import Optional
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from eschergraph.graph.edge import Edge
 from eschergraph.graph.loading import LoadState
 
 if TYPE_CHECKING:
