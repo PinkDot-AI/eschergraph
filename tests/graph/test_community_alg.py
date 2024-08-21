@@ -20,7 +20,7 @@ def test_create_level_igraph() -> None:
 
 def test_get_leidenalg_communities() -> None:
   _, nodes, _ = create_simple_extracted_graph()
-  partitions: list[list[UUID]] = get_leidenalg_communities(nodes)
+  partitions: list[list[UUID]] = get_leidenalg_communities(nodes).partitions
 
   assert {n.id for n in nodes} == {id for p in partitions for id in p}
   assert len(partitions) < len(nodes)
