@@ -1,33 +1,25 @@
-from __future__ import annotations
+from abc import ABC, abstractmethod
+from typing import Dict, List
 
-from abc import ABC
-from abc import abstractmethod
-from typing import Optional
-
-from attrs import define
-
-
-@define
-class RerankerResult:
-  """Represents a reranked item with its index, relevance score, and associated text.
-
-  Attributes:
-      index (int): The position of the item in the original list.
-      relevance_score (float): The relevance score assigned by the reranker.
-      text (str): The content of the item.
-  """
-
-  index: int
-  relevance_score: float
-  text: str
+from attr import field
+from sentence_transformers import CrossEncoder
 
 
 class Reranker(ABC):
-  """The abstract base class for all the embedding models used in the package."""
+  """The abstract base class for all rerankers used in the package."""
+
+  model: CrossEncoder = field(default=None)
 
   @abstractmethod
-  def rerank(
-    self, query: str, texts_list: list[str], top_n: int
-  ) -> Optional[list[RerankerResult]]:
-    """Get a list of texts to be embedded by an embedding model."""
-    raise NotImplementedError
+  def rank(self, docs: list[str], query: str, top_n: int) -> List[Dict]:
+    """Rank the documents based on the relevance to the query.
+
+    Args:
+        docs (list[str]): a list of strings containing information
+        query (str): string of text used for comparing relevance
+        top_n (int): amount of relevant results to be returned
+
+    Returns:
+        List[Dict]: A list of dicts containing the most relevant docs and their relevance scores
+    """
+    ...

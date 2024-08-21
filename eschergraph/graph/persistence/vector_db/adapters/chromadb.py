@@ -2,30 +2,29 @@ from __future__ import annotations
 from typing import Dict, List
 
 import chromadb
+from chromadb import Collection
+from chromadb import QueryResult
+from chromadb.api import ClientAPI
 
 from eschergraph.graph.persistence.vector_db.vector_db import VectorDB
 
 
 class ChromaDB(VectorDB):
-  """This is the ChromaDB implementation."""
+  """The ChromaDB vector database implementation."""
 
   def __init__(self) -> None:
     """Initialize the ChromaDB client."""
-    self.client = chromadb.Client()
-
-  def connect(self) -> None:
-    """Connect to ChromaDB. Currently a placeholder function."""
-    pass
+    self.client: ClientAPI = chromadb.Client()
 
   def create_collection(self, name: str) -> None:
     """Create a new collection in ChromaDB.
 
     Args:
-      name (str): The name of the collection to be created.
+        name (str): The name of the collection to be created.
     """
-    self.collection = self.client.create_collection(name=name)
+    self.collection: Collection = self.client.create_collection(name=name)
 
-  def insert_documents(
+  def insert(
     self,
     embeddings: list[list[float]],
     documents: list[str],
@@ -33,7 +32,7 @@ class ChromaDB(VectorDB):
     metadata: list[dict[str, str]],
     collection_name: str,
   ) -> None:
-    """Insert documents into a ChromaDB collection.
+    """Input documents into a ChromaDB collection.
 
     Args:
       embeddings (list[list[float]]): List of embeddings for the documents.
@@ -42,7 +41,7 @@ class ChromaDB(VectorDB):
       metadata (list[dict]): List of metadata dictionaries for each document.
       collection_name (str): Name of the collection to add documents to.
     """
-    collection = self.client.get_collection(name=collection_name)
+    collection: Collection = self.client.get_collection(name=collection_name)
     collection.add(
       documents=documents,
       ids=ids,
@@ -60,41 +59,41 @@ class ChromaDB(VectorDB):
     """Search for documents in a ChromaDB collection.
 
     Args:
-      embedding (list[float]): The embedding to search for.
-      top_n (int): The number of top results to return.
-      metadata (dict): Metadata to filter the search results.
-      collection_name (str): Name of the collection to search in.
+        embedding (list[float]): The embedding to search for.
+        top_n (int): The number of top results to return.
+        metadata (dict): Metadata to filter the search results.
+        collection_name (str): Name of the collection to search in.
 
     Returns:
-      dict: Search results containing the documents.
+        dict: Search results containing the documents.
     """
-    collection = self.client.get_collection(name=collection_name)
-    results: dict[str, str] = collection.query(
+    collection: Collection = self.client.get_collection(name=collection_name)
+    result: QueryResult = collection.query(
       query_embeddings=[embedding],
       n_results=top_n,
       where=metadata,
       include=["documents"],
     )
 
-    return results
+    return result  # type: ignore
 
   def format_search_results(
-    result: Dict[str, str],
+    result: QueryResult,
   ) -> List[Dict[str, int | str | float | dict]]:
     """Format search results into a standard.
 
     Args:
-        result: The result of a search
+        result (QueryResult): The result of a search
 
     Returns:
-        Dict[str, int | str | float | dict]: A list of dictionaries containing a standardized format
+        Dict[str, int | str | float | dict]: A list of dictionaries containing standardized format
     """
     return [
-        {
-            "id": result["ids"][0][i],
-            "chunk": result["documents"][0][i],
-            "distance": result["distances"][0][i],
-            "metadata": result["metadatas"][0][i],
-        }
-        for i in range(len(result["ids"][0]))
+      {
+        "id": result["ids"][0][i],
+        "chunk": result["documents"][0][i],
+        "distance": result["distances"][0][i],
+        "metadata": result["metadatas"][0][i],
+      }
+      for i in range(len(result["ids"][0]))
     ]

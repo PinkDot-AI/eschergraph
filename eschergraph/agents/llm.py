@@ -35,6 +35,7 @@ class Model(ABC):
   """The abstract base class for all the LLMs used in the package."""
 
   tokens: list[TokenUsage] = field(factory=list)
+  max_threads: int = field(default=10)
 
   @abstractmethod
   def get_plain_response(self, prompt: str) -> str | None:
@@ -49,22 +50,17 @@ class Model(ABC):
     ...
 
   @abstractmethod
-  def get_json_response(
-    self,
-    prompt: str,
-    model: str | None,
-    temperature: float,
-  ) -> str | None:
-    """Get a json response from an LLM.
+  def get_formatted_response(self, prompt: str, response_format: dict) -> str | None:
+    """Get a formatted response from an LLM.
 
     Args:
-      prompt (str): The prompt to send to the LLM.
-      model (str): which provider model will be used.
-      temperature (float): the temperature set for the model.
+      prompt (str): The user prompt that is send to ChatGPT.
+      response_format (dict): Type of format that will be returned
 
     Returns:
-      The response from the LLM.
+      Formatted answer
     """
+    ...
 
   @abstractmethod
   def get_function_calls(self, prompt: str, tools: list[Tool]) -> list[FunctionCall]:

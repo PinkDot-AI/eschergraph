@@ -3,9 +3,11 @@ from __future__ import annotations
 from abc import ABC
 from abc import abstractmethod
 from typing import Optional
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Optional
+from uuid import UUID
 from uuid import UUID
 
+from eschergraph.graph.edge import Edge
 from eschergraph.graph.loading import LoadState
 
 if TYPE_CHECKING:
@@ -61,6 +63,54 @@ class Repository(ABC):
     raise NotImplementedError
 
   @abstractmethod
+  def get_nodes_by_level(
+    self, level: int, loadstate: LoadState = LoadState.CORE
+  ) -> List[Node]:
+    """Get nodes by level.
+
+    Args:
+        level (int): The level of the nodes
+        loadstate (LoadState): The state in which the nodes should be loaded.
+
+    Returns:
+        List[Node]: Nodes of the given level
+    """
+    raise NotImplementedError
+
+  @abstractmethod
+  def get_max_level(self) -> int:
+    """Get the highest non-root level of the graph.
+
+    Returns:
+        int: The highest level
+    """
+    raise NotImplementedError
+
+  @abstractmethod
+  def get_nodes_by_level(
+    self, level: int, loadstate: LoadState = LoadState.CORE
+  ) -> List[Node]:
+    """Get nodes by level.
+
+    Args:
+        level (int): The level of the nodes
+        loadstate (LoadState): The state in which the nodes should be loaded.
+
+    Returns:
+        List[Node]: Nodes of the given level
+    """
+    raise NotImplementedError
+
+  @abstractmethod
+  def get_max_level(self) -> int:
+    """Get the highest non-root level of the graph.
+
+    Returns:
+        int: The highest level
+    """
+    raise NotImplementedError
+
+  @abstractmethod
   def save(self) -> None:
     """Explicitly indicate that the repository should save the graph to its persistent storage.
 
@@ -94,21 +144,5 @@ class Repository(ABC):
 
     Returns:
       The edge or None if no edge is found.
-    """
-    raise NotImplementedError
-
-  @abstractmethod
-  def get_all_at_level(self, level: int) -> list[Node]:
-    """Get all nodes at a certain level.
-
-    Note that level 0 corresponds to nodes that are directly extracted
-    from a source text. Level 1 corresponds to the direct communities of these nodes.
-    And so on.
-
-    Args:
-      level (int): The level at which the nodes should occur.
-
-    Returns:
-      A list with all the nodes at the specified level.
     """
     raise NotImplementedError

@@ -31,7 +31,7 @@ def test_chroma() -> None:
       "parent_node": "",
     },
   ]
-  vector_db.insert_documents(
+  vector_db.insert(
     documents=docs,
     embeddings=embeddings,
     ids=ids,

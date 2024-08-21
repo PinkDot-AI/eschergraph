@@ -15,18 +15,6 @@ tenacity = "^8.4.2"
 openai = "^1.35.7"
 chromadb = "^0.5.5"
 pymilvus = "^2.4.4"
-sentence-transformers = "^3.0.1"
-requests = "^2.32.3"
-types-requests = "^2.32.0.20240712"
-tiktoken = "^0.7.0"
-langchain-text-splitters = "^0.2.2"
-igraph = "^0.11.6"
-leidenalg = "^0.10.2"
-fuzzywuzzy = "^0.18.0"
-python-levenshtein = "^0.25.1"
-seaborn = "^0.13.2"
-pyvis = "^0.3.2"
-
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.7.1"
 pytest = "^8.2.2"
@@ -134,6 +122,8 @@ docstring-code-line-length = 40
 warn_unused_configs = true
 warn_redundant_casts = true
 warn_unused_ignores = true
+
+ignore_missing_imports = true
 
 ignore_missing_imports = true
 # Getting these passing should be easy

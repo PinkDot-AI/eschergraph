@@ -2,62 +2,72 @@ from __future__ import annotations
 
 from abc import ABC
 from abc import abstractmethod
+from typing import Dict, List
 
 
 class VectorDB(ABC):
-  """This is the abstract base class for all vector DB implementations."""
-
-  @abstractmethod
-  def connect(self) -> None:
-    """Possible connection method."""
-    pass
+  """The abstract base class for a vector database."""
 
   @abstractmethod
   def create_collection(self, name: str) -> None:
     """Create a collection with a given name.
 
     Args:
-      name (str): Name for the collection.
+      name (str): Collection's name.
     """
-    pass
+    raise NotImplementedError
 
   @abstractmethod
-  def insert_documents(
+  def insert(
     self,
-    embeddings: list[list[float]],
-    documents: list[str],
-    ids: list[str],
-    metadata: list[dict[str, str]],
+    embeddings: List[List[float]],
+    documents: List[str],
+    ids: List[str],
+    metadata: List[Dict[str, str]],
     collection_name: str,
   ) -> None:
     """Store documents with their embeddings, ids, and metadata.
 
     Args:
-      embeddings (list[List[float]]): List of embeddings for the documents.
+      embeddings (list[list[float]]): List of embeddings for the documents.
       documents (list[str]): List of document texts.
       ids (list[int]): List of document IDs.
-      metadata (list[dict[str, Any]]): List of metadata dictionaries.
+      metadata (list[Dict[str, Any]]): List of metadata dictionaries.
       collection_name (str): The name of the collection.
     """
-    pass
+    raise NotImplementedError
 
   @abstractmethod
   def search(
     self,
-    embedding: list[float],
+    embedding: List[float],
     top_n: int,
-    metadata: dict[str, str],
+    metadata: Dict[str, str],
     collection_name: str,
-  ) -> dict[str, str]:
+  ) -> Dict[str, str]:
     """Search for the top_n documents that are most similar to the given embedding.
 
     Args:
       embedding (list[float]): Embedding of the query document.
       top_n (int): Number of top documents to retrieve.
-      metadata (dict[str, str]): Metadata to filter the search results.
-      collection_name (str): The collection's name.
+      metadata (dict[str, Any]): Metadata to filter the search results.
+      collection_name (str): The name of the collection.
 
     Returns:
-      dict[str, str]: List of documents that match the query.
+      Dictionary with results that match the que
     """
-    pass
+    raise NotImplementedError
+
+  @abstractmethod
+  def format_search_results(
+    result: Dict[str, str],
+  ) -> List[Dict[str, int | str | float | dict]]:
+    """Format search results into a standard.
+
+    Args:
+        result: The result of a search
+
+    Returns:
+        Dict[str, int | str | float | dict]: A list of dictionaries containing a standardized format
+    """
+    raise NotImplementedError
