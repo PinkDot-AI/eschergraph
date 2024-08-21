@@ -14,6 +14,7 @@ from attrs import fields
 from eschergraph.exceptions import DataLoadingException
 from eschergraph.graph.base import EscherBase
 from eschergraph.graph.community import Community as Community
+from eschergraph.graph.community import Report as Report
 from eschergraph.graph.loading import LoadState
 from eschergraph.graph.persistence.metadata import Metadata as Metadata
 # Custom graph atttribute classes need to be imported for discovery for creating getters and setters

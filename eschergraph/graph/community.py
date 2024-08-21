@@ -5,6 +5,7 @@ from typing import List
 from typing import Optional
 from typing import TYPE_CHECKING
 
+from attrs import asdict
 from attrs import define
 from attrs import field
 
@@ -33,7 +34,7 @@ class Report:
     Returns:
         str: Findings as a json formatted string
     """
-    return json.dumps([fnd.to_json() for fnd in self.findings], indent=4)
+    return json.dumps([asdict(fnd) for fnd in self.findings], indent=4)
 
 
 @define
@@ -42,7 +43,3 @@ class Finding:
 
   summary: str
   explanation: str
-
-  def to_json(self) -> str:
-    """Convert finding to json formatted string."""
-    return json.dumps(self, default=lambda o: o.__dict__, sort_keys=True, indent=4)
