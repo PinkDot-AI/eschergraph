@@ -2,7 +2,7 @@ from __future__ import annotations
 
 
 class BaseEscherGraphException(Exception):
-  """The base class for all Pinkgraph exceptions."""
+  """The base class for all EscherGraph exceptions."""
 
 
 class PromptFormattingException(BaseEscherGraphException):

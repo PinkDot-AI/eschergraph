@@ -6,4 +6,4 @@ def main() -> None:
 
   With an example docstring.
   """
-  print("Welcome to the pinkgraph library!")
+  print("Welcome to the eschergraph library!")
