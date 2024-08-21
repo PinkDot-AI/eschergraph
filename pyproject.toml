@@ -5,7 +5,7 @@ description = "The library that uses AI agents to enable building and searching 
 authors = ["PinkDot AI"]
 license = "MIT"
 readme = "README.md"
-packages = [{ include = "pinkgraph" }]
+packages = [{ include = "eschergraph" }]
 
 [tool.poetry.dependencies]
 python = "^3.9"

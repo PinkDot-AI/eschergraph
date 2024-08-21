@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-import os
 from typing import Any
 
 import requests
+from attr import define
+from attr import field
 from requests import Response
 from sentence_transformers import CrossEncoder
 
@@ -13,6 +14,7 @@ from eschergraph.exceptions import CredentialException
 from eschergraph.exceptions import ExternalProviderException
 
 
+@define
 class JinaReranker(Reranker):
   """A reranker that uses Jina's API to rerank a list of documents based on their relevance to a query.
 
@@ -20,6 +22,8 @@ class JinaReranker(Reranker):
       rerank(query: str, text_list: list[str], top_n: int) -> Optional[list[RerankerResult]]:
           Sends a request to Jina's API to rerank the provided text list according to the query.
   """
+
+  api_key: str = field(kw_only=True)
 
   def rerank(
     self, query: str, texts_list: list[str], top_n: int
@@ -38,14 +42,13 @@ class JinaReranker(Reranker):
     if not texts_list:
       return []
 
-    jina_api_key: str | None = os.getenv("JINA_API_KEY")
-    if not jina_api_key:
-      raise CredentialException("JINA_API_KEY environment variable is not set")
+    if not self.api_key:
+      raise CredentialException("No API key has been set")
 
     url = "https://api.jina.ai/v1/rerank"
     headers = {
       "Content-Type": "application/json",
-      "Authorization": f"Bearer {jina_api_key}",
+      "Authorization": f"Bearer {self.api_key}",
     }
     data = {
       "model": "jina-reranker-v2-base-multilingual",
