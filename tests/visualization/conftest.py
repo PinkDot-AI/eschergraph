@@ -5,6 +5,7 @@ from uuid import UUID
 
 import pytest
 from faker import Faker
+from pytest import TempPathFactory
 
 from eschergraph.graph import Edge
 from eschergraph.graph import Node
@@ -42,3 +43,8 @@ def community_graph() -> tuple[list[list[Node]], list[Edge]]:
     comms.append(comm_nodes)
 
   return comms, edges
+
+
+@pytest.fixture(scope="function")
+def visualization_dir(tmp_path_factory: TempPathFactory) -> str:
+  return tmp_path_factory.mktemp("visualization").as_posix()
