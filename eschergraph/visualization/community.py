@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Optional
+
 import seaborn as sns
 from pyvis.network import Network
 
@@ -7,7 +9,11 @@ from eschergraph.graph import Edge
 from eschergraph.graph import Node
 
 
-def visualize_community_graph(comms: list[list[Node]], edges: list[Edge]) -> None:
+def visualize_community_graph(
+  comms: list[list[Node]],
+  edges: list[Edge],
+  save_location: Optional[str] = "community_visual.html",
+) -> None:
   """Visualize a graph of communities.
 
   Communities are provided in a list containing lists of nodes, where each
@@ -16,6 +22,7 @@ def visualize_community_graph(comms: list[list[Node]], edges: list[Edge]) -> Non
   Args:
     comms (list[list[node]]): A list of communities.
     edges (list[Edge]): The list of edges in the community graph.
+    save_location (Optional[str]): The location to save the generated visual.
   """
   palette: list[str] = sns.color_palette("hls", len(comms)).as_hex()
   net = Network(
@@ -43,4 +50,4 @@ def visualize_community_graph(comms: list[list[Node]], edges: list[Edge]) -> Non
   net.force_atlas_2based(central_gravity=0.015, gravity=-31)
   net.show_buttons(filter_=["physics"])
 
-  net.show(name="visual.html", notebook=False)
+  net.show(name=save_location, notebook=False)
