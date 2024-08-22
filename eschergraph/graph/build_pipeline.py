@@ -121,12 +121,14 @@ class Build:
       f"\nExpected completion time: {self._get_time_indication()}."
     )
 
-    # Build graph
-    self._build_graph()
+    # Building nodes and edges
+    self._build_node_edges()
 
-    # Add properties
+    # Building properties
+    self._build_properties()
+    # Persisting them to the graph
 
-    # Remove unmatched nodes
+    self._persist_to_graph()
 
     # Merge nodes and remove duplicates
 
@@ -141,11 +143,49 @@ class Build:
     # Visualize
     return self.graph
 
+  def remove_unmatched_nodes(self) -> None:
+    """Remove all unmatched nodes from the graph."""
+    pass
+
+  def _build_node_edges(self) -> None:
+    """Processes each chunk to extract nodes and edges and logs them.
+
+    This method uses multithreading to process chunks in parallel, extracting
+    nodes and edges from the text and adding them to the building logs.
+    """
+    with ThreadPoolExecutor(max_workers=10) as executor:
+      futures = {
+        executor.submit(self._handle_chunk_building, chunk): chunk
+        for chunk in self.reader.chunks
+      }
+      for future in as_completed(futures):
+        try:
+          future.result()  # We can handle results or exceptions here if needed
+        except Exception as e:
+          print(f"Error processing chunk: {e}")
+
+  def _build_properties(self) -> None:
+    """Processes the building logs to extract and log properties for each node.
+
+    This method uses multithreading to process building logs in parallel,
+    extracting properties and adding them to the building logs.
+    """
+    with ThreadPoolExecutor(max_workers=10) as executor:
+      futures = {
+        executor.submit(self._handle_property_chunk, logitem): logitem
+        for logitem in self.building_logs
+      }
+      for future in as_completed(futures):
+        try:
+          future.result()  # We can handle results or exceptions here if needed
+        except Exception as e:
+          print(f"Error processing property: {e}")
+
   def _handle_chunk_building(self, chunk: Chunk) -> None:
     """Handles the process of building a graph from a single chunk of text.
 
     It sends a prompt to the model, receives the JSON response, and adds
-    nodes and edges to the graph based on that response.
+    nodes and edges to the building logs based on that response.
 
     Args:
         chunk (Chunk): A chunk of text to be processed.
@@ -155,34 +195,6 @@ class Build:
       prompt=prompt_send
     )
     metadata: Metadata = Metadata(document_id=chunk.doc_id, chunk_id=chunk.chunk_id)
-    for entity in json_nodes_edge["entities"]:
-      # Add the nodes (if they do not yet exist)
-      if self.graph.repository.get_node_by_name(
-        entity["name"].lower(), document_id=chunk.doc_id
-      ):
-        continue
-
-      self.graph.add_node(
-        name=entity["name"],
-        description=entity["description"],
-        level=0,
-        metadata=metadata,
-      )
-
-    for edge in json_nodes_edge["relationships"]:
-      to_node: Node | None = self.graph.repository.get_node_by_name(
-        edge["source"].lower(), document_id=chunk.doc_id
-      )
-      from_node: Node | None = self.graph.repository.get_node_by_name(
-        edge["target"].lower(), document_id=chunk.doc_id
-      )
-      if to_node and from_node:
-        self.graph.add_edge(
-          frm=from_node,
-          to=to_node,
-          description=edge["relationship"],
-          metadata=metadata,
-        )
 
     # Add to building logger
     self.building_logs.append(
@@ -194,21 +206,12 @@ class Build:
       )
     )
 
-  def _add_properties(self) -> None:
-    """This is the main properties function that threads the llm calles to add propeties."""
-    with ThreadPoolExecutor(max_workers=10) as executor:
-      futures = {
-        executor.submit(self._handle_property_chunk, item): item
-        for item in self.building_logs
-      }
-      for future in as_completed(futures):
-        try:
-          future.result()
-        except Exception as e:
-          print(f"Error processing property: {e}")
-
   def _handle_property_chunk(self, logitem: BuildLogItem) -> None:
-    """'This is the function for adding properties to the nodes."""
+    """Handles the process of adding properties to nodes from a single log item.
+
+    Args:
+        logitem (BuildLogItem): A log item containing nodes and edges to be processed.
+    """
     node_names: list[str] = [e["name"] for e in logitem.node_edge_json["entities"]]
 
     if len(node_names) == 0:
@@ -223,38 +226,61 @@ class Build:
     entity_prop_dict: dict[str, list[dict[str, list[str]]]] = self._get_json_response(
       property_prompt
     )
-    for entity in entity_prop_dict["entities"]:
-      for node_name_key, properties in entity.items():
-        node_name: str = node_name_key.lower()
-        node: Node | None = self.graph.repository.get_node_by_name(
-          node_name, document_id=logitem.metadata.document_id
-        )
-        if not node:
-          print("This node does not yet exist")
-          print(node_name)
-          return
-        for property in properties:
-          node.properties.append(
-            Property(description=property, metadata=logitem.metadata)
-          )
+
+    # Add properties to the building log
     logitem.properties_json = entity_prop_dict
 
-  def _build_graph(self) -> None:
-    """Builds the graph by processing each chunk of the document in parallel using a ThreadPoolExecutor.
+  def _persist_to_graph(self) -> None:
+    """Adds nodes, edges, and properties to the graph from the building logs.
 
-    Each chunk is handled by the _handle_chunk_building
-    method. Logs any errors encountered during the process.
+    This method processes the building logs sequentially, adding nodes, edges,
+    and properties to the graph as specified by the logged data.
     """
-    with ThreadPoolExecutor(max_workers=10) as executor:
-      futures = {
-        executor.submit(self._handle_chunk_building, chunk): chunk
-        for chunk in self.reader.chunks
-      }
-      for future in as_completed(futures):
-        try:
-          future.result()  # We can handle results or exceptions here if needed
-        except Exception as e:
-          print(f"Error processing chunk: {e}")
+    for logitem in self.building_logs:
+      metadata = logitem.metadata
+
+      # Adding nodes to the graph
+      for entity in logitem.node_edge_json["entities"]:
+        if not self.graph.repository.get_node_by_name(
+          entity["name"].lower(), document_id=metadata.document_id
+        ):
+          self.graph.add_node(
+            name=entity["name"],
+            description=entity["description"],
+            level=0,
+            metadata=metadata,
+          )
+
+      # Adding edges to the graph
+      for edge in logitem.node_edge_json["relationships"]:
+        to_node: Optional[Node] = self.graph.repository.get_node_by_name(
+          edge["source"].lower(), document_id=metadata.document_id
+        )
+        from_node: Optional[Node] = self.graph.repository.get_node_by_name(
+          edge["target"].lower(), document_id=metadata.document_id
+        )
+        if to_node and from_node:
+          self.graph.add_edge(
+            frm=from_node,
+            to=to_node,
+            description=edge["relationship"],
+            metadata=metadata,
+          )
+
+      # Adding properties to the nodes
+      if logitem.properties_json:
+        for entity in logitem.properties_json["entities"]:
+          for node_name_key, properties in entity.items():
+            node_name: str = node_name_key.lower()
+            node: Optional[Node] = self.graph.repository.get_node_by_name(
+              node_name, document_id=metadata.document_id
+            )
+            if not node:
+              print("This node does not yet exist")
+              print(node_name)
+              continue
+            for property in properties:
+              node.properties.append(Property(description=property, metadata=metadata))
 
   def _save_logs_to_json_file(
     self, save_location: str = "/eschergraph-storage"
