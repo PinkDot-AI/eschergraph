@@ -121,31 +121,31 @@ class Build:
       f"\nExpected completion time: {self._get_time_indication()}."
     )
 
-    # Building nodes and edges
+    # Step 1: Building nodes and edges
     self._build_node_edges()
 
-    # Building properties
+    # Step 2: Building properties
     self._build_properties()
-    # Persisting them to the graph
 
+    # Stop 3: remove_unmached_nodes
+    self.remove_unmatched_nodes()
+
+    # Stop 4: Merge nodes and remove duplicates
+    ### TO DO
+    # Step 5: Persisting them to the graph
     self._persist_to_graph()
 
-    # Merge nodes and remove duplicates
+    # Step 6 Create vector database
 
-    # Create vector database
-
-    # Save graph
+    # Step 7: Save graph
     self._save_graph()
 
-    # Save logs in location
+    # Step 8: Save logs in location
     self._save_logs_to_json_file()
 
-    # Visualize
+    # Step 9: Visualize
+    ### TO DO
     return self.graph
-
-  def remove_unmatched_nodes(self) -> None:
-    """Remove all unmatched nodes from the graph."""
-    pass
 
   def _build_node_edges(self) -> None:
     """Processes each chunk to extract nodes and edges and logs them.
@@ -281,6 +281,28 @@ class Build:
               continue
             for property in properties:
               node.properties.append(Property(description=property, metadata=metadata))
+
+  def remove_unmatched_nodes(self) -> None:
+    """Removes nodes from the building logs that do not have any matching edges.
+
+    This function iterates through the building logs and removes nodes that do not
+    have any corresponding edges in the relationships dictionary of all building log items.
+    """
+    # Collect all nodes that have edges associated with them
+    nodes_with_edges = set()
+    for logitem in self.building_logs:
+      for edge in logitem.node_edge_json["relationships"]:
+        nodes_with_edges.add(edge["source"].lower())
+        nodes_with_edges.add(edge["target"].lower())
+
+    # Filter out nodes that do not have any matching edges
+    for logitem in self.building_logs:
+      filtered_entities = [
+        entity
+        for entity in logitem.node_edge_json["entities"]
+        if entity["name"].lower() in nodes_with_edges
+      ]
+      logitem.node_edge_json["entities"] = filtered_entities
 
   def _save_logs_to_json_file(
     self, save_location: str = "/eschergraph-storage"
