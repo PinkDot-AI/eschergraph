@@ -1,4 +1,3 @@
-# TODO: rewrite these tests with assets
 # from __future__ import annotations
 # from eschergraph.tools.reader import Reader
 # def test_reader() -> None:
