@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import os
 from concurrent.futures import as_completed
 from concurrent.futures import ThreadPoolExecutor
@@ -25,14 +24,18 @@ class Merge:
   model: OpenAIProvider
   reranker: JinaReranker
 
-  def __init__(self, model: OpenAIProvider, api_key: str | None = None):
+  def __init__(
+    self,
+    model: OpenAIProvider,
+    jina_api_key: str | None = None,
+  ):
     """Initializes the Merge class with an OpenAIModel and creates an OpenAIProvider instance.
 
     :param model: The OpenAI model to use for language processing tasks.
     """
     self.model: OpenAIProvider = model
     self.reranker: JinaReranker = JinaReranker(
-      api_key=api_key or os.getenv("JINA_API_KEY") or ""
+      api_key=jina_api_key or os.getenv("JINA_API_KEY") or ""
     )
 
   def _match_nodes(self, node_names: list[str]) -> dict[str, list[str]]:
@@ -46,7 +49,7 @@ class Merge:
 
     with ThreadPoolExecutor() as executor:
       futures = {
-        executor.submit(self.find_matches, name, node_names): name
+        executor.submit(self._find_matches, name, node_names): name
         for name in node_names
       }
       for future in as_completed(futures):
@@ -56,7 +59,7 @@ class Merge:
     return result
 
   @staticmethod
-  def is_similar(name1: str, name2: str) -> bool:
+  def _is_similar(name1: str, name2: str) -> bool:
     """Checks if two node names are sufficiently similar using fuzzy matching.
 
     :param name1: The first node name.
@@ -67,7 +70,7 @@ class Merge:
     prediction: bool = similarity >= 95
     return prediction
 
-  def find_matches(self, query: str, names: list[str]) -> tuple[str, list[str]]:
+  def _find_matches(self, query: str, names: list[str]) -> tuple[str, list[str]]:
     """Finds matches for a given query string within a list of names.
 
     :param query: The query string to find matches for.
@@ -76,7 +79,7 @@ class Merge:
     """
     matches = []
     for name in names:
-      if self.is_similar(query, name) and query != name:
+      if self._is_similar(query, name) and query != name:
         matches.append(name)
     return query, matches
 
@@ -137,10 +140,10 @@ class Merge:
     prompt: str = process_template(
       template_file=JSON_UNIQUE_NODES, data={"entities": ", ".join(suggested_match)}
     )
-    response: Any = self.model.get_json_response(
-      prompt=prompt, model=self.model.model.value
+    response: Any = self.model.get_formatted_response(
+      prompt=prompt, response_format={"type": "json_object"}
     )
-    return json.loads(response)
+    return response
 
   def _get_unique_nodes(self, suggested_matches: list[set[str]]) -> list[Any]:
     """Process suggested matches in parallel with 10 threads, send each to GPT, and collect JSON responses.
@@ -199,12 +202,14 @@ class Merge:
             node_info[node].append(relationship.get("description", ""))
 
       # Extracting data from properties_json
-      if item.properties_json and isinstance(item.properties_json, dict):
-        entities = item.properties_json.get("entities", [])
-        for entity in entities:
-          for entity_name, descriptions in entity.items():
-            if entity_name.lower() in nodes:
-              node_info[entity_name.lower()].extend(descriptions)
+      if item.properties_json:
+        for entity_dict in item.properties_json["entities"]:
+          for entity_name, property_list in entity_dict.items():
+            entity_name_lower = entity_name.lower()
+            if entity_name_lower in nodes:
+              for property in property_list:
+                node_info[entity_name_lower].extend(property)
+
     return node_info
 
   def handle_merge(
@@ -220,11 +225,14 @@ class Merge:
 
       # Check for LLM extraction error
       if set(entity_to_nodes.keys()) != suggestion:
-        print("LLM extraction error")
+        print("LLM extraction error", set(entity_to_nodes.keys()))
+        print("suggestions", suggestion)
 
       # If true nodes match the suggestion, no merge is needed
       if true_nodes == suggestion:
-        print("No need for any merging")
+        print(
+          "No need for any merging because levenstien suggestion is the same as the gpt suggestion"
+        )
         continue
 
       self._process_entities_for_logs(building_logs, entity_to_nodes)
@@ -241,7 +249,7 @@ class Merge:
     for entity in identified_matches["entities"]:
       node_name = entity["name"].lower()
       for merged_entity in entity["merged entities"]:
-        entity_to_nodes.setdefault(merged_entity, set()).add(node_name)
+        entity_to_nodes.setdefault(merged_entity.lower(), set()).add(node_name)
 
     return true_nodes, entity_to_nodes
 
@@ -295,20 +303,24 @@ class Merge:
         )
 
     # Process properties_json
-    if properties_json and "entities" in properties_json:
-      if entity in properties_json["entities"]:
-        if entity not in assigned_node_cache:
-          description = ", ".join(properties_json["entities"][entity])
-          assigned_node_cache[entity] = self._assign_node(
-            description=description, node_info=node_info
-          )
-        assigned_node = assigned_node_cache[entity]
-        print(
-          f'Replacing property key "{entity}" with "{assigned_node}" in properties_json.'
-        )
-        properties_json["entities"][assigned_node] = properties_json["entities"].pop(
-          entity
-        )
+    if properties_json:
+      for entity_dict in properties_json["entities"]:
+        # Iterate over keys in entity_dict
+        for key in list(
+          entity_dict.keys()
+        ):  # Use list() to avoid issues with modifying the dictionary during iteration
+          if entity == key.lower():  # Compare both in lowercase
+            if entity not in assigned_node_cache:
+              description = ", ".join(entity_dict[key])
+              assigned_node_cache[entity] = self._assign_node(
+                description=description, node_info=node_info
+              )
+            assigned_node = assigned_node_cache[entity]
+            print(
+              f'Replacing property key "{key}" with "{assigned_node}" in properties_json.'
+            )
+            # Replace the key with the assigned node
+            entity_dict[assigned_node] = entity_dict.pop(key)
 
   def _replace_entity_name(
     self,

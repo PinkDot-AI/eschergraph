@@ -5,7 +5,6 @@ from abc import abstractmethod
 from typing import Any
 
 from attrs import define
-from attrs import field
 
 from eschergraph.agents.tools import Tool
 
@@ -34,9 +33,6 @@ class TokenUsage:
 @define
 class Model(ABC):
   """The abstract base class for all the LLMs used in the package."""
-
-  tokens: list[TokenUsage] = field(factory=list)
-  max_threads: int = field(default=10)
 
   @abstractmethod
   def get_plain_response(self, prompt: str) -> str | None:

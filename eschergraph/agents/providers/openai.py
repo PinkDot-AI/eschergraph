@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from enum import Enum
+from typing import Any
 
 from attrs import define
 from dotenv import load_dotenv
@@ -52,7 +53,8 @@ class OpenAIProvider(Model, Embedding):
 
   model: OpenAIModel
   api_key: str = field(kw_only=True)
-  tokens: list[TokenUsage] = Factory(list)
+  tokens: list[TokenUsage] = field(factory=list)
+  max_threads: int = field(default=10)
 
   @property
   def client(self) -> OpenAI:
@@ -62,7 +64,7 @@ class OpenAIProvider(Model, Embedding):
     return OpenAI(api_key=self.api_key)
 
   @retry(wait=wait_random_exponential(multiplier=1, max=40), stop=stop_after_attempt(3))
-  def get_plain_response(self, prompt: str) -> str | None:
+  def get_plain_response(self, prompt: str) -> Any:
     """Get a text response from OpenAI.
 
     Note that the model that is used is specified when instantiating the class.
@@ -76,9 +78,7 @@ class OpenAIProvider(Model, Embedding):
     return self._get_response(prompt)
 
   @retry(wait=wait_random_exponential(multiplier=1, max=40), stop=stop_after_attempt(3))
-  def get_formatted_response(
-    self, prompt: str, response_format: ResponseFormat
-  ) -> str | None:
+  def get_formatted_response(self, prompt: str, response_format: ResponseFormat) -> Any:
     """Get a formatted response from OpenAI.
 
     Args:
@@ -94,8 +94,9 @@ class OpenAIProvider(Model, Embedding):
     self,
     prompt: str,
     response_format: ResponseFormat | NotGiven = NotGiven(),
-  ) -> str | None:
+  ) -> Any:
     messages: list[ChatCompletionMessageParam] = self._get_messages(prompt)
+
     try:
       response: ChatCompletion = self.client.chat.completions.create(
         model=self.model.value,
@@ -104,6 +105,9 @@ class OpenAIProvider(Model, Embedding):
       )
       # Log the tokens that were used
       self._add_token_usage(response)
+      if response_format != NotGiven() and response.choices[0].message.content:
+        return json.loads(response.choices[0].message.content)
+
       return response.choices[0].message.content
     except Exception as e:
       raise ExternalProviderException(e)

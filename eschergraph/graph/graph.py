@@ -3,7 +3,6 @@ from __future__ import annotations
 from attrs import define
 from attrs import field
 
-from eschergraph.exceptions import NodeDoesNotExistException
 from eschergraph.graph.edge import Edge
 from eschergraph.graph.node import Node
 from eschergraph.graph.persistence import Metadata
@@ -67,10 +66,6 @@ class Graph:
     Returns:
       The edge that has been added to the graph.
     """
-    if not frm or not to:
-      raise NodeDoesNotExistException(
-        "The node you are trying to add to an edge does not exist."
-      )
     edge: Edge = Edge.create(
       frm=frm,
       to=to,
