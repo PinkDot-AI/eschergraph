@@ -8,10 +8,10 @@ from attrs import field
 from eschergraph.exceptions import NodeDoesNotExistException
 from eschergraph.graph.edge import Edge
 from eschergraph.graph.node import Node
-from eschergraph.graph.node import Property
 from eschergraph.graph.persistence import Metadata
 from eschergraph.graph.persistence import Repository
 from eschergraph.graph.persistence.factory import get_default_repository
+from eschergraph.graph.property import Property
 
 
 @define

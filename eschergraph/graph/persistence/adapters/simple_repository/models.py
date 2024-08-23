@@ -4,7 +4,7 @@ from typing import Optional
 from typing import TypedDict
 from uuid import UUID
 
-from eschergraph.graph.node import Property
+from eschergraph.graph.property import Property
 
 
 class MetadataModel(TypedDict):

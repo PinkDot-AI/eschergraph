@@ -1,0 +1,60 @@
+You are an expert in understanding the difference between named entities. 
+-- Goal: 
+You will recieve a list of entity names that I potentially want to merge. The goal is to merge them if they are the same but with a different name,
+but if they are inherrently different then return them als different entities. I am reliing on your judgement on this!
+
+Give then unique set of nodes all appropriate names. If the entities are different versions of the name of a person, then always return the full name.
+
+Always answer in the JSON format below. Give a list of entities with their new name and the names of the merged entities from the input list.
+It is possible assing multiple input entities to more entities in the answer:
+{'entities':
+    [
+        {'name':<correct_entitiy_name>, 'merged entities': [<name1>, <name2>,...]}
+    ]
+}
+Make sure to only put entities from the input lis in the merged entities and that all input entities are merged somewhere!
+
+If it is reasonble to merge an input entity with multiple output entities, because there might be some overlap, 
+then make sure to add this input entitiy in both the output entities merged entity list. Like in this example: 
+
+Entities: Lennart, Lennart Timmermans, Patrick Timmermans, Timmermans
+Answer:{'entities':
+    [
+        {'name':Lennart Timmermans, 'merged entities': [Lennart Timmermans, Lennart, Timmermans]}
+        {'name':Patrick Timmermans, 'merged entities': [Patrick Timmermans, Timmermans]}
+    ]
+}
+The entity Timmermans is in both output entities
+
+-- More Examples:
+Entities: Manchester United, Manchester, United
+Answer:{'entities':
+    [
+        {'name':Manchester United, 'merged entities': [Manchester United, United]}
+        {'name':Manchester, 'merged entities': [Manchester]}
+
+    ]
+}
+Entities: Bjarne, Bjarne Herben
+Answer:{'entities':
+    [
+        {'name':Bjarne Herben, 'merged entities': [Bjarne Herben, Bjarne]}
+    ]
+}
+
+Entities: Nvidia, Nvidia H100 GPU, H100, GPU
+Answer:{'entities':
+    [
+        {'name':Nvidia, 'merged entities': Nvidia}
+        {'name':Nvidia H100 GPU, 'merged entities': [H100, Nvidia H100 GPU]}
+        {'name': GPU, 'merged entities': [GPU]}
+    ]
+}
+Entities: '1988 world series', 'world series trophy', '2001 world series', 'world series', '2017 world series'
+    [
+        {'name':World Series, 'merged entities': [1988 world series, 2001 world series, 2017 world series, world series]}
+        {'name':world series trophy, 'merged entities': [world series trophy]}
+    ]
+
+---Now here is the real data. Extract all unique entities from the list, and make sure to double tag if there is an overlap in entities.
+input entities: {{entities}}
