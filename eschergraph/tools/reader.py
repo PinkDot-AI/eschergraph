@@ -114,7 +114,7 @@ class Reader:
   @staticmethod
   def _count_tokens(text: str) -> int:
     tokenizer = tiktoken.get_encoding("cl100k_base")
-    tokens: list[str] = tokenizer.encode(text)
+    tokens: list[int] = tokenizer.encode(text)
     return len(tokens)
 
   def _process_text_chunk(
