@@ -26,14 +26,17 @@ from eschergraph.tools.fast_pdf_parser.pdf_features import PdfFeatures
 ROOT_PATH: str = Path(__file__).parent.parent.absolute().as_posix()
 MODELS_PATH: str = ROOT_PATH + "/fast_models"
 BINS_PATH: Path = Path(__file__).parent.parent.parent / "bins"
+POPPLER_VERSION: str = "24.07.0"
 
 
+# Download poppler binaries if they are missing on Windows
 def _download_and_unzip_for_windows() -> None:
-  download_link: str = "https://github.com/oschwartz10612/poppler-windows/releases/download/v24.07.0-0/Release-24.07.0-0.zip"
-  local_filename: Path = BINS_PATH / "Release-24.07.0-0.zip"
+  release: str = POPPLER_VERSION + "-0"
+  download_link: str = f"https://github.com/oschwartz10612/poppler-windows/releases/download/v{release}/Release-{release}.zip"
+  local_filename: Path = BINS_PATH / f"Release-{release}.zip"
   urllib.request.urlretrieve(url=download_link, filename=local_filename.as_posix())
-  extract_path: Path = BINS_PATH / "Release-24.07.0-0"
-  original_path: Path = extract_path / "poppler-24.07.0"
+  extract_path: Path = BINS_PATH / f"Release-{release}"
+  original_path: Path = extract_path / f"poppler-{POPPLER_VERSION}"
 
   # Unpack the zip file
   with zipfile.ZipFile(local_filename.as_posix(), mode="r") as zip_ref:
@@ -46,9 +49,9 @@ def _download_and_unzip_for_windows() -> None:
   shutil.rmtree(extract_path.as_posix())
 
 
-# Also add a script that downloads poppler
-if platform.system() == "Windows":
-  poppler_unpacked_path: Path = BINS_PATH / "poppler-24.07.0"
+# Fix missing poppler for Windows to make the package more user-friendly
+if platform.system() == "Windows" and not shutil.which("pdftohtml"):
+  poppler_unpacked_path: Path = BINS_PATH / f"poppler-{POPPLER_VERSION}"
 
   # Check whether poppler has already been downloaded
   if not poppler_unpacked_path.exists():
@@ -61,7 +64,7 @@ if platform.system() == "Windows":
 
 if not shutil.which("pdftohtml"):
   raise ExternalDependencyException(
-    "Poppler(pdftohtml) is missing from your system! Please install this to be able to parse pdf files!"
+    "Poppler (pdftohtml) is missing from your system! Please install this to be able to parse pdf files!"
   )
 
 
