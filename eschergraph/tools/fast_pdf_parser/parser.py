@@ -10,12 +10,12 @@ from fast_trainer.model_configuration import (
 from fast_trainer.ParagraphExtractorTrainer import ParagraphExtractorTrainer
 from fast_trainer.PdfSegment import PdfSegment
 from huggingface_hub import hf_hub_download
-from pdf_features.PdfFeatures import PdfFeatures
 from pdf_features.PdfFeatures import PdfPage
 from pdf_tokens_type_trainer.ModelConfiguration import ModelConfiguration
 from pdf_tokens_type_trainer.TokenTypeTrainer import TokenTypeTrainer
 
 from eschergraph.tools.fast_pdf_parser.models import PdfParsedSegment
+from eschergraph.tools.fast_pdf_parser.pdf_features import PdfFeatures
 
 ROOT_PATH: str = Path(__file__).parent.parent.absolute().as_posix()
 MODELS_PATH: str = ROOT_PATH + "/fast_models"
