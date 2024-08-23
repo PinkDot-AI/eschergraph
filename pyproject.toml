@@ -25,8 +25,8 @@ leidenalg = "^0.10.2"
 seaborn = "^0.13.2"
 pyvis = "^0.3.2"
 pdf-document-layout-analysis = {git = "https://github.com/huridocs/pdf-document-layout-analysis.git", tag = "v0.0.11"}
-pypdf2 = "^3.0.1"
 pymupdf = "^1.24.9"
+pypdf = "^4.3.1"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.7.1"

@@ -23,8 +23,8 @@ from pdf_token_type_labels.TokenType import TokenType
 from pdf_tokens_type_trainer.config import LABELS_FILE_NAME
 from pdf_tokens_type_trainer.config import TOKEN_TYPE_RELATIVE_PATH
 from pdf_tokens_type_trainer.config import XML_NAME
-from PyPDF2 import PdfReader
-from PyPDF2 import PdfWriter
+from pypdf import PdfReader
+from pypdf import PdfWriter
 
 """
 Slightly altered code that has been copied from https://github.com/huridocs/pdf-document-layout-analysis.
