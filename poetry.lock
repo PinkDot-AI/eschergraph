@@ -4063,6 +4063,17 @@ files = [
 ]
 
 [[package]]
+name = "tomlkit"
+version = "0.12.5"
+description = "Style preserving TOML library"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "tomlkit-0.12.5-py3-none-any.whl", hash = "sha256:af914f5a9c59ed9d0762c7b64d3b5d5df007448eb9cd2edc8a46b1eafead172f"},
+    {file = "tomlkit-0.12.5.tar.gz", hash = "sha256:eef34fba39834d4d6b73c9ba7f3e4d1c417a4e56f89a7e96e090dd0d24b8fb3c"},
+]
+
+[[package]]
 name = "torch"
 version = "2.4.0"
 description = "Tensors and Dynamic neural networks in Python with strong GPU acceleration"
@@ -4384,6 +4395,20 @@ files = [
     {file = "ujson-5.10.0-pp39-pypy39_pp73-win_amd64.whl", hash = "sha256:e1402f0564a97d2a52310ae10a64d25bcef94f8dd643fcf5d310219d915484f7"},
     {file = "ujson-5.10.0.tar.gz", hash = "sha256:b3cd8f3c5d8c7738257f1018880444f7b7d9b66232c64649f562d7ba86ad4bc1"},
 ]
+
+[[package]]
+name = "update-toml"
+version = "0.2.1"
+description = "Update a toml value from a CLI"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "update_toml-0.2.1-py3-none-any.whl", hash = "sha256:90d5d9d2efbe2f273328ec78394912c33c0f741dc3b0ae744cfc4ddbe27051f7"},
+    {file = "update_toml-0.2.1.tar.gz", hash = "sha256:92870b2ef8591eeffa32df674d9b4c4fce59a428f65063e138dee253bdb5d372"},
+]
+
+[package.dependencies]
+tomlkit = ">=0.12.5,<0.13.0"
 
 [[package]]
 name = "urllib3"
@@ -4810,4 +4835,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "1fdda438eec0c50481e1e27086a2859cbfd3ef8b4aa890a7859721b9571497c7"
+content-hash = "47464bfc788b8f857d09a1b483fcecb15d21c854eb98697e87146996658930c4"
