@@ -1,6 +1,11 @@
 from __future__ import annotations
 
+import os
+import platform
+import shutil
 import tempfile
+import urllib.request
+import zipfile
 from pathlib import Path
 from typing import Optional
 
@@ -19,6 +24,40 @@ from eschergraph.tools.fast_pdf_parser.pdf_features import PdfFeatures
 
 ROOT_PATH: str = Path(__file__).parent.parent.absolute().as_posix()
 MODELS_PATH: str = ROOT_PATH + "/fast_models"
+BINS_PATH: Path = Path(__file__).parent.parent.parent / "bins"
+
+
+def _download_and_unzip_for_windows() -> None:
+  download_link: str = "https://github.com/oschwartz10612/poppler-windows/releases/download/v24.07.0-0/Release-24.07.0-0.zip"
+  local_filename: Path = BINS_PATH / "Release-24.07.0-0.zip"
+  urllib.request.urlretrieve(url=download_link, filename=local_filename.as_posix())
+  extract_path: Path = BINS_PATH / "Release-24.07.0-0"
+  original_path: Path = extract_path / "poppler-24.07.0"
+
+  # Unpack the zip file
+  with zipfile.ZipFile(local_filename.as_posix(), mode="r") as zip_ref:
+    zip_ref.extractall(path=extract_path.as_posix())
+
+  shutil.move(src=original_path.as_posix(), dst=BINS_PATH.as_posix())
+
+  # Clean up the directories that are not needed
+  os.remove(local_filename.as_posix())
+  shutil.rmtree(extract_path.as_posix())
+
+
+# Also add a script that downloads poppler
+if platform.system() == "Windows":
+  poppler_unpacked_path: Path = BINS_PATH / "poppler-24.07.0"
+
+  # Check whether poppler has already been downloaded
+  if not poppler_unpacked_path.exists():
+    BINS_PATH.mkdir(exist_ok=True)
+
+    _download_and_unzip_for_windows()
+
+  poppler_path: Path = poppler_unpacked_path / "Library" / "bin"
+  os.environ["PATH"] += ";" + poppler_path.as_posix()
+  print(os.environ["PATH"])
 
 
 class FastPdfParser:

@@ -169,3 +169,6 @@ community_visual.html
 
 # Downloaded parser models
 **/fast_models/**
+
+# Packaged binaries for the code
+**/bins/**
