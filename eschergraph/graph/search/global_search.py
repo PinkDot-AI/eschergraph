@@ -42,7 +42,7 @@ def search_global(
   """
   extracted_nodes = extract_entities_from(prompt, llm)
 
-  ans_template = "question_with_context.jinja"
+  ans_template = "search/question_with_context.jinja"
   if len(extracted_nodes) > 0:
     fnds = retrieve_similar_findings(
       graph=graph,
@@ -105,7 +105,6 @@ def retrieve_similar_findings(
         collection_name=collection_name,
       ),
     )
-
     search_res.extend([
       graph.repository.get_node_by_id(cast(UUID, nd["id"])) for nd in res
     ])
@@ -121,7 +120,8 @@ def retrieve_similar_findings(
   rank_res = reranker.rerank(
     prompt, [fd.explanation for fd in findings], findings_to_return
   )
-  return [findings[ranked.index] for ranked in rank_res]
+
+  return [findings[ranked.index] for ranked in rank_res if ranked.index < len(findings)]
 
 
 def retrieve_key_findings(
@@ -176,7 +176,7 @@ def order_findings(nd: Node, llm: Model) -> List[Finding]:
   Returns:
       Dict[str, List[dict]]: a dict with ordered findings
   """
-  template = "importance_rank.jinja"
+  template = "search/importance_rank.jinja"
   jsonized = nd.report.findings_to_json()
   prompt = process_template(template, {"json_list": jsonized})
   message = llm.get_formatted_response(
@@ -198,7 +198,7 @@ def extract_entities_from(query: str, llm: Model) -> List[str]:
   Returns:
       List[str]: list of entities
   """
-  entity_extraction_template = "entity_extraction.jinja"
+  entity_extraction_template = "search/entity_extraction.jinja"
   prompt = process_template(
     entity_extraction_template,
     {"query": query},
