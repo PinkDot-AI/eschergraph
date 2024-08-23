@@ -19,6 +19,7 @@ from pdf_features.PdfFeatures import PdfPage
 from pdf_tokens_type_trainer.ModelConfiguration import ModelConfiguration
 from pdf_tokens_type_trainer.TokenTypeTrainer import TokenTypeTrainer
 
+from eschergraph.exceptions import ExternalDependencyException
 from eschergraph.tools.fast_pdf_parser.models import PdfParsedSegment
 from eschergraph.tools.fast_pdf_parser.pdf_features import PdfFeatures
 
@@ -57,7 +58,11 @@ if platform.system() == "Windows":
 
   poppler_path: Path = poppler_unpacked_path / "Library" / "bin"
   os.environ["PATH"] += ";" + poppler_path.as_posix()
-  print(os.environ["PATH"])
+
+if not shutil.which("pdftohtml"):
+  raise ExternalDependencyException(
+    "Poppler(pdftohtml) is missing from your system! Please install this to be able to parse pdf files!"
+  )
 
 
 class FastPdfParser:
