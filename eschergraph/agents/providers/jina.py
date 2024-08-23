@@ -115,15 +115,15 @@ class JinaRerankerTurbo(Reranker):
     try:
       reranked_items = [
         RerankerResult(
-          index=r.get("corpus_id"),
-          relevance_score=r.get("score"),
-          text=r.get("text"),
+          index=int(r["corpus_id"]),
+          relevance_score=float(r["score"]),
+          text=str(r["text"]),
         )
         for r in results
       ]
 
       return reranked_items
-    except TypeError:
+    except (KeyError, TypeError):
       raise ExternalProviderException(
         "Something went wrong obtaining the reranker results."
       )
