@@ -57,7 +57,11 @@ if platform.system() == "Windows":
 
   poppler_path: Path = poppler_unpacked_path / "Library" / "bin"
   os.environ["PATH"] += ";" + poppler_path.as_posix()
-  print(os.environ["PATH"])
+else:
+  if shutil.which("pdftohtml"):
+    print("Poppler is installed")
+  else:
+    print("Poppler is missing")
 
 
 class FastPdfParser:
