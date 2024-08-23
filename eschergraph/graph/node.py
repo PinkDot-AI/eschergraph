@@ -10,6 +10,7 @@ from attrs import field
 from eschergraph.exceptions import NodeCreationException
 from eschergraph.graph.base import EscherBase
 from eschergraph.graph.community import Community
+from eschergraph.graph.community import Report
 from eschergraph.graph.loading import LoadState
 from eschergraph.graph.persistence import Metadata
 from eschergraph.graph.utils import loading_getter_setter
@@ -46,9 +47,7 @@ class Node(EscherBase):
   _child_nodes: Optional[list[Node]] = field(
     default=None, metadata={"group": LoadState.FULL}
   )
-  _report: Optional[list[dict[str, str]]] = field(
-    default=None, metadata={"group": LoadState.FULL}
-  )
+  _report: Optional[Report] = field(default=None, metadata={"group": LoadState.FULL})
 
   # Type annotations for the dynamically added properties
   name: str = field(init=False)
@@ -58,7 +57,7 @@ class Node(EscherBase):
   edges: set[Edge] = field(init=False)
   community: Community = field(init=False)
   child_nodes: list[Node] = field(init=False)
-  report: list[dict[str, str]] = field(init=False)
+  report: Report = field(init=False)
 
   @classmethod
   def create(
@@ -113,7 +112,7 @@ class Node(EscherBase):
       community=Community(),
       edges=set(),
       child_nodes=[],
-      report=[],
+      report=Report(),
       loadstate=LoadState.FULL,
     )
 

@@ -61,6 +61,15 @@ class Repository(ABC):
     raise NotImplementedError
 
   @abstractmethod
+  def get_max_level(self) -> int:
+    """Get the highest non-root level of the graph.
+
+    Returns:
+        int: The highest level
+    """
+    raise NotImplementedError
+
+  @abstractmethod
   def save(self) -> None:
     """Explicitly indicate that the repository should save the graph to its persistent storage.
 

@@ -5,6 +5,7 @@ from enum import Enum
 
 from attr import field
 from attrs import define
+from openai import NotGiven
 from openai import OpenAI
 from openai.types import CompletionUsage
 from openai.types.chat import ChatCompletionMessageParam
@@ -14,6 +15,7 @@ from openai.types.chat import ChatCompletionToolChoiceOptionParam
 from openai.types.chat import ChatCompletionToolParam
 from openai.types.chat import ChatCompletionUserMessageParam
 from openai.types.chat.chat_completion import ChatCompletion
+from openai.types.chat.completion_create_params import ResponseFormat
 from openai.types.shared_params import FunctionDefinition
 from openai.types.shared_params import FunctionParameters
 from tenacity import retry
@@ -60,7 +62,7 @@ class ChatGPT(Model, Embedding):
 
   @retry(wait=wait_random_exponential(multiplier=1, max=40), stop=stop_after_attempt(3))
   def get_plain_response(self, prompt: str) -> str | None:
-    """Get a text response from ChatGPT.
+    """Get a text response from OpenAI.
 
     Note that the model that is used is specified when instantiating the class.
 
@@ -70,6 +72,28 @@ class ChatGPT(Model, Embedding):
     Returns:
       The answer given or None.
     """
+    return self._get_response(prompt)
+
+  @retry(wait=wait_random_exponential(multiplier=1, max=40), stop=stop_after_attempt(3))
+  def get_formatted_response(
+    self, prompt: str, response_format: ResponseFormat
+  ) -> str | None:
+    """Get a formatted response from OpenAI.
+
+    Args:
+      prompt (str): The user prompt that is send to ChatGPT.
+      response_format (dict): Type of format that will be returned
+
+    Returns:
+      Formatted answer
+    """
+    return self._get_response(prompt=prompt, response_format=response_format)
+
+  def _get_response(
+    self,
+    prompt: str,
+    response_format: ResponseFormat | NotGiven = NotGiven(),
+  ) -> str | None:
     messages: list[ChatCompletionMessageParam] = self._get_messages(prompt)
     messages.append(
       ChatCompletionSystemMessageParam(role="system", content=SYSTEM_MESSAGE)
@@ -79,6 +103,7 @@ class ChatGPT(Model, Embedding):
       response: ChatCompletion = self.client.chat.completions.create(
         model=self.model.value,
         messages=messages,
+        response_format=response_format,
       )
       # Log the tokens that were used
       self._add_token_usage(response)
