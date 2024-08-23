@@ -61,11 +61,25 @@ _semversioner_release = "semversioner release"
 _semversioner_changelog = "semversioner changelog > CHANGELOG.md"
 _semversioner_update_toml_version = "update-toml update --path tool.poetry.version --value $(semversioner current-version)"
 
+_linting_package = "ruff check eschergraph --config=pyproject.toml"
+_linting_scripts = "ruff check scripts --config=pyproject.toml"
+_linting_tests = "ruff check tests --config=pyproject.toml"
+
+type_check = "mypy eschergraph tests scripts --config=pyproject.toml"
+
 [[tool.poe.tasks.release]]
 sequence = [
     '_semversioner_release',
     '_semversioner_changelog',
     '_semversioner_update_toml_version',
+]
+ignore_fail = 'return_non_zero'
+
+[[tool.poe.tasks.linting]]
+sequence = [
+    '_linting_package',
+    '_linting_scripts',
+    '_linting_tests'
 ]
 ignore_fail = 'return_non_zero'
 
