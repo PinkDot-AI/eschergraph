@@ -163,7 +163,6 @@ class TestExtractEntitiesFrom(unittest.TestCase):
     self.assertEqual(result, expected_findings)
 
   def test_retrieve_top_n_unsorted_findings(self) -> None:
-    # Simulate a graph with nodes that have unsorted findings
     mock_graph = MagicMock()
     mock_graph.repository.get_max_level.return_value = 2
     mock_graph.repository.get_all_at_level.return_value = [
