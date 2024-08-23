@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+from typing import Any
+from typing import Dict
+from typing import List
+from uuid import UUID
+
 import chromadb
 
 from eschergraph.graph.persistence.vector_db.vector_db import VectorDB
@@ -53,7 +58,7 @@ class ChromaDB(VectorDB):
     self,
     embedding: list[float],
     top_n: int,
-    metadata: dict[str, str],
+    metadata: dict[str, Any],
     collection_name: str,
   ) -> dict[str, str]:
     """Search for documents in a ChromaDB collection.
@@ -76,3 +81,25 @@ class ChromaDB(VectorDB):
     )
 
     return results
+
+  def format_search_results(
+    self,
+    result: Dict[str, str],
+  ) -> List[Dict[str, UUID | int | str | float | Dict[str, Any]]]:
+    """Format search results into a standard.
+
+    Args:
+        result: The result of a search
+
+    Returns:
+        Dict[str, int | str | float | dict]: A list of dictionaries containing a standardized format
+    """
+    return [
+      {
+        "id": result["ids"][0][i],
+        "chunk": result["documents"][0][i],
+        "distance": result["distances"][0][i],
+        "metadata": result["metadatas"][0][i],
+      }
+      for i in range(len(result["ids"][0]))
+    ]
