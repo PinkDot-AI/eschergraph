@@ -125,6 +125,7 @@ class Graph:
         edges.append(new_edge)
 
     comm_template = "community_prompt.jinja"
+    template_importance = "search/importance_rank.jinja"
     for k, v in nodes_tmp.items():
       idx = node_comm[v.id]
       prop_format = "node_name,property\n" + "\n".join(
@@ -160,14 +161,25 @@ class Graph:
         raise ExternalProviderException(
           "LLM JSON Response did not contain correct keys"
         )
+      jsonized = json.dumps(parsed_json["findings"], indent=4)
+      prompt = process_template(template_importance, {"json_list": jsonized})
 
-      for finding in parsed_json["findings"]:
+      res_reorder = llm.get_formatted_response(
+        prompt=prompt, response_format={"type": "json_schema"}
+      )
+      if res_reorder is None:
+        raise ExternalProviderException("Invalid response from LLM for reordering")
+      findings = json.loads(res_reorder)
+      if not isinstance(findings, list):
+        raise ExternalProviderException("Invalid response from LLM for reordering")
+
+      for finding in findings:
         Property.create(nodes_tmp[k], description=finding["explanation"])
-
       nodes_tmp[k].name = parsed_json["title"]
       nodes_tmp[k].description = parsed_json["summary"]
 
       self.repository.add(nodes_tmp[k])
+
     for edge in edges:
       self.repository.add(edge)
 
