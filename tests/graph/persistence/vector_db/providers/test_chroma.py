@@ -54,3 +54,9 @@ def test_chroma() -> None:
 
   assert results_1["documents"][0][0] == "correct"
   assert results_2["documents"][0][0] == "hello"
+
+  vector_db.delete_with_id(collection_name=collection_name, ids=["2"])
+
+  vector_db.delete_with_metadata(
+    collection_name=collection_name, metadata={"graph_type": "Node"}
+  )
