@@ -62,9 +62,25 @@ class Property(EscherBase):
     )
 
     # Add the property to the node
-    node.properties.add(property)
+    node.properties.append(property)
 
     return property
+
+  def __eq__(self, other: object) -> bool:
+    """The equals method for a property.
+
+    Two property objects are considered equal if they have the same description, and
+    if they belong to the same node.
+
+    Args:
+      other (object): The object to compare the property to.
+
+    Returns:
+      True if equal and False otherwise.
+    """
+    if isinstance(other, Property):
+      return self.description == other.description and self.node.id == other.node.id
+    return False
 
   def __hash__(self) -> int:
     """The hash function for a property.

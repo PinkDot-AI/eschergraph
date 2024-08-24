@@ -12,6 +12,7 @@ if TYPE_CHECKING:
   from eschergraph.graph.base import EscherBase
   from eschergraph.graph.node import Node
   from eschergraph.graph.edge import Edge
+  from eschergraph.graph.property import Property
 
 
 class Repository(ABC):
@@ -103,6 +104,20 @@ class Repository(ABC):
 
     Returns:
       The edge or None if no edge is found.
+    """
+    raise NotImplementedError
+
+  @abstractmethod
+  def get_property_by_id(self, id: UUID) -> Optional[Property]:
+    """Get a property by id.
+
+    If no property with this id is found, then None is returned.
+
+    Args:
+      id (UUID): The property's id.
+
+    Returns:
+      The property of None if no property is found.
     """
     raise NotImplementedError
 

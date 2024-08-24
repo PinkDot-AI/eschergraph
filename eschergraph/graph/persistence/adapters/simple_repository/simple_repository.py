@@ -166,10 +166,10 @@ class SimpleRepository(Repository):
           for node_id in node_model["child_nodes"]
         ]
       elif attr == "properties":
-        node._properties = {
+        node._properties = [
           Property(id=p_id, node=node, repository=self)
           for p_id in node_model["properties"]
-        }
+        ]
       else:
         setattr(node, "_" + attr, node_model[attr])  # type: ignore
 
@@ -246,6 +246,8 @@ class SimpleRepository(Repository):
       self._add_node(node=object)
     elif isinstance(object, Edge):
       self._add_edge(edge=object)
+    elif isinstance(object, Property):
+      self._add_property(property=object)
 
   def _add_node(self, node: Node) -> None:
     # Check if the node already exists
@@ -261,9 +263,12 @@ class SimpleRepository(Repository):
           node_model["metadata"] = [
             cast(MetadataModel, asdict(md)) for md in node.metadata
           ]
-        elif attr == "community" and node.community.node:
-          node_model["community"] = node.community.node.id
-          self._add_node(node.community.node)
+        elif attr == "community":
+          if not node.community.node:
+            node_model["community"] = None
+          else:
+            node_model["community"] = node.community.node.id
+            self._add_node(node.community.node)
         elif attr == "child_nodes":
           node_model["child_nodes"] = {child.id for child in node.child_nodes}
         elif attr == "properties":
@@ -303,6 +308,10 @@ class SimpleRepository(Repository):
       node_model["edges"] = set()
     self.nodes[node.id] = node_model
 
+    # Add the properties
+    for prop in node.properties:
+      self._add_property(property=prop, through_node=True)
+
     # Keep the node-name index updated
     for mtd in node.metadata:
       if not mtd.document_id in self.node_name_index:
@@ -318,9 +327,14 @@ class SimpleRepository(Repository):
       )
 
     if not property.id in self.properties:
-      property_model: PropertyModel = self._new_property_to_property_model(property)
-      self.properties[property.id] = property_model
+      new_model: PropertyModel = self._new_property_to_property_model(property)
+      self.properties[property.id] = new_model
+
+      # Only add to the node's properties if not called from a node
+      if not through_node:
+        self.nodes[property.node.id]["properties"].append(property.id)
     else:
+      property_model: PropertyModel = self.properties[property.id]
       attributes: list[str] = self._select_attributes_to_add(property)
       for attr in attributes:
         if attr == "metadata":
@@ -450,6 +464,25 @@ class SimpleRepository(Repository):
       to=Node(id=edge_model["to"], repository=self),
       repository=self,
     )
+
+  def get_property_by_id(self, id: UUID) -> Optional[Property]:
+    """Get a property by id.
+
+    If no property with this id is found, then None is returned.
+
+    Args:
+      id (UUID): The property's id.
+
+    Returns:
+      The property of None if no property is found.
+    """
+    property_model: Optional[PropertyModel] = self.properties.get(id)
+    if not property_model:
+      return None
+    else:
+      return Property(
+        id=id, node=Node(id=property_model["node"], repository=self), repository=self
+      )
 
   def get_all_at_level(self, level: int) -> list[Node]:
     """Get all nodes at a certain level.
