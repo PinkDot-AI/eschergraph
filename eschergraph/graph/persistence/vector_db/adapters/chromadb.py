@@ -7,6 +7,7 @@ from uuid import UUID
 
 import chromadb
 
+from eschergraph.graph.persistence.change_log import ChangeLog
 from eschergraph.graph.persistence.vector_db.vector_db import VectorDB
 
 
@@ -18,8 +19,8 @@ class ChromaDB(VectorDB):
     self.client = chromadb.Client()
 
   def connect(self) -> None:
-    """Connect to ChromaDB. Currently a placeholder function."""
-    pass
+    """Connect to ChromaDB. Currently not used."""
+    ...
 
   def create_collection(self, name: str) -> None:
     """Create a new collection in ChromaDB.
@@ -103,3 +104,15 @@ class ChromaDB(VectorDB):
       }
       for i in range(len(result["ids"][0]))
     ]
+
+  # TODO: implement this method
+  def sync(self, change_log: List[ChangeLog]) -> None:
+    """Sync the vector database to the repository.
+
+    The vector database updates its embeddings based on the logged
+    changes to EscherBase objects.
+
+    Args:
+      change_log (list[ChangeLog]): The list of logged changes.
+    """
+    raise NotImplementedError

@@ -27,6 +27,8 @@ from eschergraph.graph.persistence.adapters.simple_repository.models import Node
 from eschergraph.graph.persistence.adapters.simple_repository.models import (
   PropertyModel,
 )
+from eschergraph.graph.persistence.change_log import Action
+from eschergraph.graph.persistence.change_log import ChangeLog
 from eschergraph.graph.persistence.exceptions import DirectoryDoesNotExistException
 from eschergraph.graph.persistence.exceptions import FilesMissingException
 from eschergraph.graph.persistence.exceptions import PersistenceException
@@ -46,6 +48,7 @@ class SimpleRepository(Repository):
   edges: dict[UUID, EdgeModel] = field(init=False)
   properties: dict[UUID, PropertyModel] = field(init=False)
   node_name_index: dict[UUID, dict[str, UUID]] = field(init=False)
+  change_log: list[ChangeLog] = field(init=False)
 
   def __init__(
     self, name: Optional[str] = None, save_location: Optional[str] = None
@@ -68,6 +71,9 @@ class SimpleRepository(Repository):
 
     self.name = name
     self.save_location = save_location
+
+    # Initialize the (empty) changelog
+    self.change_log = []
 
     if not os.path.isdir(save_location):
       raise DirectoryDoesNotExistException(
@@ -253,8 +259,14 @@ class SimpleRepository(Repository):
     # Check if the node already exists
     if not node.id in self.nodes:
       self._add_new_node(node)
+      self.change_log.append(ChangeLog(id=node.id, action=Action.CREATE, type=Node))
     else:
       attributes_to_check: list[str] = self._select_attributes_to_add(node)
+      self.change_log.append(
+        ChangeLog(
+          id=node.id, action=Action.UPDATE, type=Node, attributes=attributes_to_check
+        )
+      )
       node_model: NodeModel = self.nodes[node.id]
       for attr in attributes_to_check:
         if attr == "edges":
@@ -329,6 +341,9 @@ class SimpleRepository(Repository):
     if not property.id in self.properties:
       new_model: PropertyModel = self._new_property_to_property_model(property)
       self.properties[property.id] = new_model
+      self.change_log.append(
+        ChangeLog(id=property.id, action=Action.CREATE, type=Property)
+      )
 
       # Only add to the node's properties if not called from a node
       if not through_node:
@@ -336,6 +351,11 @@ class SimpleRepository(Repository):
     else:
       property_model: PropertyModel = self.properties[property.id]
       attributes: list[str] = self._select_attributes_to_add(property)
+      self.change_log.append(
+        ChangeLog(
+          id=property.id, action=Action.UPDATE, type=Property, attributes=attributes
+        )
+      )
       for attr in attributes:
         if attr == "metadata":
           property_model["metadata"] = [
@@ -384,12 +404,18 @@ class SimpleRepository(Repository):
     # Check if the edge already exists
     if not edge.id in self.edges:
       self.edges[edge.id] = self._new_edge_to_edge_model(edge)
+      self.change_log.append(ChangeLog(id=edge.id, action=Action.CREATE, type=Edge))
 
       # Making sure that the edges can also be found on the nodes
       self.nodes[edge.frm.id]["edges"].add(edge.id)
       self.nodes[edge.to.id]["edges"].add(edge.id)
     else:
       attributes_to_check: list[str] = self._select_attributes_to_add(edge)
+      self.change_log.append(
+        ChangeLog(
+          id=edge.id, action=Action.UPDATE, type=Edge, attributes=attributes_to_check
+        )
+      )
       edge_model: EdgeModel = self.edges[edge.id]
       for attr in attributes_to_check:
         if attr == "frm":
@@ -522,3 +548,23 @@ class SimpleRepository(Repository):
     for key, value in filenames.items():
       with open(value, "wb") as file:
         pickle.dump(getattr(self, key), file)
+
+  def get_change_log(self) -> list[ChangeLog]:
+    """Get the list of change logs.
+
+    The logs contain all the add operations that are performed for
+    EscherBase objects. These can be used to sync other systems such as
+    the vector database.
+
+    Returns:
+      A list of all changelogs.
+    """
+    return self.change_log
+
+  def clear_change_log(self) -> None:
+    """Clear all change logs.
+
+    Use with caution. Should only be performed after syncing to external
+    systems such as a vector database.
+    """
+    self.change_log = []
