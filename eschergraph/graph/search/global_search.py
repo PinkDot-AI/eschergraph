@@ -32,13 +32,13 @@ def search_global(
   Note that the findings for a community should be sorted, this is the default behavior when building a graph.
 
   Args:
-      graph (Graph): A graph object
-      prompt (str): The question to answer
-      llm (Model): The large language model to use
-      reranker (Reranker): The reranker model to use
-      embedder (Embed): The embedding model
-      vecdb (VectorDB): The vector database
-      collection_name (str): The collection of the vector database to use
+    graph (Graph): A graph object
+    prompt (str): The question to answer
+    llm (Model): The large language model to use
+    reranker (Reranker): The reranker model to use
+    embedder (Embed): The embedding model
+    vecdb (VectorDB): The vector database
+    collection_name (str): The collection of the vector database to use
   """
   extracted_nodes = extract_entities_from(prompt, llm)
 
@@ -76,19 +76,19 @@ def retrieve_similar_findings(
   """A search of the graph based on the similarity of prompt and nodes.
 
   Args:
-      graph (Graph): Graph object
-      prompt (str): Question or statement to be searched for in the graph
-      embedder (Embed): Embedding model for vector search
-      vecdb (VectorDB): The vector database
-      collection_name (str): The collection of the vector database to use
-      reranker (Reranker): The reranker model
-      levels_to_search (int): How many graph levels to search from the max. Defaults to 3.
-      findings_to_return (int): Maximum findings to return. Defaults to 10.
-      top_vec_results (int): Maximum nodes to be used per level. Defaults to 5.
-      top_node_findings (int): Maximum findings to use per node. Defaults to 3.
+    graph (Graph): Graph object
+    prompt (str): Question or statement to be searched for in the graph
+    embedder (Embed): Embedding model for vector search
+    vecdb (VectorDB): The vector database
+    collection_name (str): The collection of the vector database to use
+    reranker (Reranker): The reranker model
+    levels_to_search (int): How many graph levels to search from the max. Defaults to 3.
+    findings_to_return (int): Maximum findings to return. Defaults to 10.
+    top_vec_results (int): Maximum nodes to be used per level. Defaults to 5.
+    top_node_findings (int): Maximum findings to use per node. Defaults to 3.
 
   Returns:
-      List[Finding]: A list of findings
+    List[Finding]: A list of findings
   """
   # Search is done from top level
   curr_level = graph.repository.get_max_level()
@@ -134,14 +134,14 @@ def retrieve_key_findings(
   """Retrieve most important findings of a level.
 
   Args:
-      graph (Graph): A graph with at least a depth of _level_
-      llm (Model): Model to use when _sorted_=False
-      n (int): Top findings to retrieve per node. Defaults to 2.
-      sorted (bool): Sort the findings in nodes on impact/importance if this has not been done yet at graph creation. Defaults to True.
-      level (Optional[int]): Specify specific node level other than max level.
+    graph (Graph): A graph with at least a depth of _level_
+    llm (Model): Model to use when _sorted_=False
+    n (int): Top findings to retrieve per node. Defaults to 2.
+    sorted (bool): Sort the findings in nodes on impact/importance if this has not been done yet at graph creation. Defaults to True.
+    level (Optional[int]): Specify specific node level other than max level.
 
   Returns:
-      List[str]: A list of findings
+    List[str]: A list of findings
   """
   node_level = level if level is not None else graph.repository.get_max_level()
   nodes = graph.repository.get_all_at_level(node_level)
@@ -170,11 +170,11 @@ def order_findings(nd: Node, llm: Model) -> List[Finding]:
   """Order the findings of a node.
 
   Args:
-      nd (Node): The node of which to order the findings
-      llm (Model): The llm with which to order the findings
+    nd (Node): The node of which to order the findings
+    llm (Model): The llm with which to order the findings
 
   Returns:
-      Dict[str, List[dict]]: a dict with ordered findings
+    Dict[str, List[dict]]: a dict with ordered findings
   """
   template = "search/importance_rank.jinja"
   jsonized = nd.report.findings_to_json()
