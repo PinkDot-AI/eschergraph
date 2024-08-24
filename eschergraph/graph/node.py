@@ -12,13 +12,13 @@ from eschergraph.graph.base import EscherBase
 from eschergraph.graph.community import Community
 from eschergraph.graph.loading import LoadState
 from eschergraph.graph.persistence import Metadata
+from eschergraph.graph.property import Property
 from eschergraph.graph.utils import loading_getter_setter
 
 # To prevent circular import errors
 if TYPE_CHECKING:
   from eschergraph.graph.edge import Edge
   from eschergraph.graph.persistence import Repository
-  from eschergraph.graph.property import Property
 
 
 @loading_getter_setter
@@ -35,7 +35,7 @@ class Node(EscherBase):
   _level: Optional[int] = field(default=None, metadata={"group": LoadState.CORE})
   """The level at which the node occurs. Level 0 refers to directly extracted entities, and levels
   above that are aggregated communities."""
-  _properties: Optional[set[Property]] = field(
+  _properties: Optional[list[Property]] = field(
     default=None, metadata={"group": LoadState.CORE}
   )
   _edges: Optional[set[Edge]] = field(
@@ -52,7 +52,7 @@ class Node(EscherBase):
   name: str = field(init=False)
   description: str = field(init=False)
   level: int = field(init=False)
-  properties: set[Property] = field(init=False)
+  properties: list[Property] = field(init=False)
   edges: set[Edge] = field(init=False)
   community: Community = field(init=False)
   child_nodes: list[Node] = field(init=False)
@@ -64,7 +64,6 @@ class Node(EscherBase):
     description: str,
     level: int,
     repository: Repository,
-    properties: Optional[set[Property]] = None,
     metadata: Optional[set[Metadata]] = None,
   ) -> Node:
     """The method that allows for the creation of a new node.
@@ -77,7 +76,6 @@ class Node(EscherBase):
       description (str): The node description.
       level (int): The level of the node.
       repository (Repository): The repository that will store the node.
-      properties (Optional[set[Property]]): The optional properties for the node.
       metadata (Optional[set[Metadata]]): The optional metadata for the node.
 
     Returns:
@@ -104,7 +102,7 @@ class Node(EscherBase):
       name=name,
       description=description,
       level=level,
-      properties=properties if properties else set(),
+      properties=[],
       metadata=metadata if metadata else set(),
       repository=repository,
       community=Community(),
@@ -112,6 +110,22 @@ class Node(EscherBase):
       child_nodes=[],
       loadstate=LoadState.FULL,
     )
+
+  def add_property(self, description: str, metadata: Metadata) -> None:
+    """Add a property to a node.
+
+    The property is also added the the list of a node's properties.
+    At the end of the method the property is also persisted.
+
+    Args:
+      description (str): The property's description.
+      metadata (Metadata): The property's metadata.
+    """
+    property: Property = Property.create(
+      node=self, description=description, metadata={metadata}
+    )
+
+    self.repository.add(property)
 
   def __eq__(self, other: object) -> bool:
     """The equals method for a node.
