@@ -11,9 +11,6 @@ class CommunityGraphResult:
 
   This community graph is returned after applying
   the Leiden algorithm, for example.
-
-
-
   """
 
   partitions: list[list[UUID]]

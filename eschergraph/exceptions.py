@@ -39,8 +39,10 @@ class CredentialException(BaseEscherGraphException):
 class FileTypeNotProcessableException(BaseEscherGraphException):
   """When a file is not processable due to its type."""
 
-  pass
-
 
 class EdgeDoesNotExistException(BaseEscherGraphException):
   """The specified edge could not be found."""
+
+
+class RepositoryException(BaseEscherGraphException):
+  """When something unexpected happens with the repository."""
