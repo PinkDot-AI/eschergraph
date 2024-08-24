@@ -103,3 +103,27 @@ class ChromaDB(VectorDB):
       }
       for i in range(len(result["ids"][0]))
     ]
+
+  def delete_with_id(self, ids: list[str], collection_name: str) -> None:
+    """Deletes records from a specified collection using their unique IDs.
+
+    Args:
+        ids (list[str]): A list of unique identifiers corresponding to the records to be deleted.
+        collection_name (str): The name of the collection from which the records will be deleted.
+    """
+    collection = self.client.get_collection(name=collection_name)
+    collection.delete(ids=ids)
+
+  def delete_with_metadata(
+    self, metadata: Dict[str, Any], collection_name: str
+  ) -> None:
+    """Deletes records from a specified collection based on metadata conditions.
+
+    Args:
+        metadata (Dict[str, Any]): A dictionary specifying the metadata conditions that must be met
+                                   for the records to be deleted. The keys are metadata field names,
+                                   and the values are the required values for deletion.
+        collection_name (str): The name of the collection from which the records will be deleted.
+    """
+    collection = self.client.get_collection(name=collection_name)
+    collection.delete(where=metadata)
