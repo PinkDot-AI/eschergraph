@@ -15,6 +15,17 @@ tenacity = "^8.4.2"
 openai = "^1.35.7"
 chromadb = "^0.5.5"
 pymilvus = "^2.4.4"
+sentence-transformers = "^3.0.1"
+requests = "^2.32.3"
+types-requests = "^2.32.0.20240712"
+tiktoken = "^0.7.0"
+langchain-text-splitters = "^0.2.2"
+igraph = "^0.11.6"
+leidenalg = "^0.10.2"
+seaborn = "^0.13.2"
+pyvis = "^0.3.2"
+pdf-document-layout-analysis = {git = "https://github.com/huridocs/pdf-document-layout-analysis.git", tag = "v0.0.11"}
+
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.7.1"
 pytest = "^8.2.2"

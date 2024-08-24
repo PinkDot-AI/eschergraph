@@ -75,3 +75,31 @@ class VectorDB(ABC):
         Dict[str, int | str | float | dict]: A list of dictionaries containing a standardized format
     """
     pass
+
+  @abstractmethod
+  def delete_with_metadata(
+    self,
+    metadata: Dict[str, Any],
+    collection_name: str,
+  ) -> None:
+    """Delete an item in the vectordb by metadata filters.
+
+    Args:
+      metadata (dict[str, str]): Metadata to filter the search results.
+      collection_name (str): The name of the collection.
+    """
+    pass
+
+  @abstractmethod
+  def delete_with_id(
+    self,
+    ids: list[str],
+    collection_name: str,
+  ) -> None:
+    """Delete an item in the vectordb by its id.
+
+    Args:
+      ids (str): list of ids that need to be removed
+      collection_name (str): The name of the collection.
+    """
+    pass
