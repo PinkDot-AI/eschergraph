@@ -191,10 +191,19 @@ def extract_entities_from(query: str, llm: Model) -> List[str]:
     entity_extraction_template,
     {"query": query},
   )
-  res = llm.get_plain_response(prompt=prompt)
+  res = llm.get_formatted_response(
+    prompt=prompt, response_format={"type": "json_object"}
+  )
   if res is None:
     raise ExternalProviderException("Empty message response while extracting entities")
   data = json.loads(res)
-  if not isinstance(data, list) or not all(isinstance(item, str) for item in data):
-    raise ValueError("Expected a list of strings")
-  return data
+  if (
+    "entities" not in data
+    or not all(isinstance(item, str) for item in data["entities"])
+    or not isinstance(data["entities"], list)
+  ):
+    raise ValueError(
+      "Something went wrong with the LLM output, expected a {'entities': []} but got: ",
+      data,
+    )
+  return data["entities"]

@@ -9,27 +9,27 @@ Query: <query>
 
 3. Create a list of all identified entities.
 
-4. Output the list in JSON format, enclosed in square brackets. Each node/entity should be a separate string within the list.
+4. Output the list in JSON format. Each node/entity should be a separate string within the list.
 
-5. If there are no nodes/entities in the query, output an empty list: []
+5. If there are no nodes/entities in the query, output an empty list: {"entities": []}
 
 Here are some examples:
 
 Example 1:
 Query: "Compare the market share of Google and Microsoft in the cloud computing industry."
-Output: ["Google", "Microsoft"]
+Output: {"entities": ["Google", "Microsoft"]}
 
 Example 2:
 Query: "How many planets are in the solar system?"
-Output: []
+Output: {"entities": []}
 
 Example 3:
 Query: "What is the capital of France?"
-Output: ["France"]
+Output: {"entities": ["France"]}
 
 Example 4:
 Query: "Describe the 5 main themes in the article"
-Output: []
+Output: {"entities": []}
 
 6. Important notes:
    - If the same entity is mentioned multiple times, include it only once in the output.

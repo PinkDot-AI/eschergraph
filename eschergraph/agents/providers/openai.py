@@ -3,8 +3,6 @@ from __future__ import annotations
 import json
 from enum import Enum
 
-from attr import Factory
-from attr import field
 from attrs import define
 from dotenv import load_dotenv
 from openai import NotGiven
@@ -98,10 +96,6 @@ class OpenAIProvider(Model, Embedding):
     response_format: ResponseFormat | NotGiven = NotGiven(),
   ) -> str | None:
     messages: list[ChatCompletionMessageParam] = self._get_messages(prompt)
-    messages.append(
-      ChatCompletionSystemMessageParam(role="system", content=SYSTEM_MESSAGE)
-    )
-    messages.append(ChatCompletionUserMessageParam(role="user", content=prompt))
     try:
       response: ChatCompletion = self.client.chat.completions.create(
         model=self.model.value,
