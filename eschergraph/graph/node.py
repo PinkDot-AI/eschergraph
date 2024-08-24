@@ -68,6 +68,7 @@ class Node(EscherBase):
     repository: Repository,
     properties: Optional[list[str]] = None,
     metadata: Optional[set[Metadata]] = None,
+    child_nodes: Optional[list[Node]] = None,
   ) -> Node:
     """The method that allows for the creation of a new node.
 
@@ -81,6 +82,7 @@ class Node(EscherBase):
       repository (Repository): The repository that will store the node.
       properties (Optional[list[str]]): The optional properties for the node.
       metadata (Optional[set[Metadata]]): The optional metadata for the node.
+      child_nodes (Optional[list[UUID]]): The optional child nodes for the node
 
     Returns:
       The node that has been created.
@@ -111,7 +113,7 @@ class Node(EscherBase):
       repository=repository,
       community=Community(),
       edges=set(),
-      child_nodes=[],
+      child_nodes=child_nodes if child_nodes else [],
       report=Report(),
       loadstate=LoadState.FULL,
     )
