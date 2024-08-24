@@ -40,3 +40,7 @@ class FileTypeNotProcessableException(BaseEscherGraphException):
   """When a file is not processable due to its type."""
 
   pass
+
+
+class EdgeDoesNotExistException(BaseEscherGraphException):
+  """The specified edge could not be found."""
