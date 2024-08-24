@@ -10,7 +10,6 @@ from attrs import field
 from eschergraph.exceptions import NodeCreationException
 from eschergraph.graph.base import EscherBase
 from eschergraph.graph.community import Community
-from eschergraph.graph.community import Report
 from eschergraph.graph.loading import LoadState
 from eschergraph.graph.persistence import Metadata
 from eschergraph.graph.utils import loading_getter_setter
@@ -19,6 +18,7 @@ from eschergraph.graph.utils import loading_getter_setter
 if TYPE_CHECKING:
   from eschergraph.graph.edge import Edge
   from eschergraph.graph.persistence import Repository
+  from eschergraph.graph.property import Property
 
 
 @loading_getter_setter
@@ -35,7 +35,7 @@ class Node(EscherBase):
   _level: Optional[int] = field(default=None, metadata={"group": LoadState.CORE})
   """The level at which the node occurs. Level 0 refers to directly extracted entities, and levels
   above that are aggregated communities."""
-  _properties: Optional[list[str]] = field(
+  _properties: Optional[set[Property]] = field(
     default=None, metadata={"group": LoadState.CORE}
   )
   _edges: Optional[set[Edge]] = field(
@@ -47,17 +47,15 @@ class Node(EscherBase):
   _child_nodes: Optional[list[Node]] = field(
     default=None, metadata={"group": LoadState.FULL}
   )
-  _report: Optional[Report] = field(default=None, metadata={"group": LoadState.FULL})
 
   # Type annotations for the dynamically added properties
   name: str = field(init=False)
   description: str = field(init=False)
   level: int = field(init=False)
-  properties: list[str] = field(init=False)
+  properties: set[Property] = field(init=False)
   edges: set[Edge] = field(init=False)
   community: Community = field(init=False)
   child_nodes: list[Node] = field(init=False)
-  report: Report = field(init=False)
 
   @classmethod
   def create(
@@ -66,7 +64,7 @@ class Node(EscherBase):
     description: str,
     level: int,
     repository: Repository,
-    properties: Optional[list[str]] = None,
+    properties: Optional[set[Property]] = None,
     metadata: Optional[set[Metadata]] = None,
   ) -> Node:
     """The method that allows for the creation of a new node.
@@ -79,7 +77,7 @@ class Node(EscherBase):
       description (str): The node description.
       level (int): The level of the node.
       repository (Repository): The repository that will store the node.
-      properties (Optional[list[str]]): The optional properties for the node.
+      properties (Optional[set[Property]]): The optional properties for the node.
       metadata (Optional[set[Metadata]]): The optional metadata for the node.
 
     Returns:
@@ -106,13 +104,12 @@ class Node(EscherBase):
       name=name,
       description=description,
       level=level,
-      properties=properties if properties else [],
+      properties=properties if properties else set(),
       metadata=metadata if metadata else set(),
       repository=repository,
       community=Community(),
       edges=set(),
       child_nodes=[],
-      report=Report(),
       loadstate=LoadState.FULL,
     )
 
