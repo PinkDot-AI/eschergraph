@@ -27,7 +27,7 @@ def test_filenames_function_default() -> None:
   filenames: dict[str, str] = SimpleRepository._filenames(
     save_location=DEFAULT_SAVE_LOCATION, name=DEFAULT_GRAPH_NAME
   )
-  base_filename: str = "./eschergraph-storage/escher_default"
+  base_filename: str = "./eschergraph_storage/escher_default"
   assert filenames == {
     "nodes": base_filename + "-nodes.pkl",
     "edges": base_filename + "-edges.pkl",
