@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from typing import List
 from typing import Optional
 from typing import TypedDict
 from uuid import UUID
@@ -13,19 +12,12 @@ class MetadataModel(TypedDict):
   chunk_id: int
 
 
-class FindingModel(TypedDict):
-  """The persistent data model for a finding."""
+class PropertyModel(TypedDict):
+  """The persistent data model for a property."""
 
-  summary: str
-  explanation: str
-
-
-class ReportModel(TypedDict):
-  """The persistent data model for a report."""
-
-  title: Optional[str]
-  summary: Optional[str]
-  findings: Optional[List[FindingModel]]
+  description: str
+  node: UUID
+  metadata: list[MetadataModel]
 
 
 class NodeModel(TypedDict):
@@ -34,10 +26,9 @@ class NodeModel(TypedDict):
   name: str
   description: str
   level: int
-  properties: list[Property]
+  properties: list[UUID]
   edges: set[UUID]
   community: Optional[UUID]
-  report: ReportModel
   metadata: list[MetadataModel]
   child_nodes: set[UUID]
 

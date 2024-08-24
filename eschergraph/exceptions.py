@@ -38,3 +38,7 @@ class CredentialException(BaseEscherGraphException):
 
 class FileTypeNotProcessableException(BaseEscherGraphException):
   """When a file is not processable due to its type."""
+
+
+class RepositoryException(BaseEscherGraphException):
+  """When something unexpected happens with the repository."""
