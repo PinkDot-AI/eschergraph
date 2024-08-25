@@ -14,7 +14,6 @@ jinja2 = "^3.1.4"
 tenacity = "^8.4.2"
 openai = "^1.35.7"
 chromadb = "^0.5.5"
-pymilvus = "^2.4.4"
 sentence-transformers = "^3.0.1"
 requests = "^2.32.3"
 types-requests = "^2.32.0.20240712"
@@ -24,8 +23,9 @@ igraph = "^0.11.6"
 leidenalg = "^0.10.2"
 seaborn = "^0.13.2"
 pyvis = "^0.3.2"
-pdf-document-layout-analysis = {git = "https://github.com/huridocs/pdf-document-layout-analysis.git", tag = "v0.0.11"}
 pypdf = "^4.3.1"
+lxml = "^5.3.0"
+lightgbm = "^4.5.0"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.7.1"
@@ -127,7 +127,7 @@ select = [
     "E228",
 ]
 # Altered external code
-exclude = ["eschergraph/tools/fast_pdf_parser/pdf_features.py"]
+exclude = ["eschergraph/tools/pdf_document_layout_analysis/**/*"]
 [tool.ruff.lint.extend-per-file-ignores]
 # Ignore all docstrings in tests
 "tests/*" = ["D"]
@@ -146,6 +146,11 @@ docstring-code-format = true
 docstring-code-line-length = 40
 
 [tool.mypy]
+exclude = [
+    'eschergraph/tools/pdf_document_layout_analysis/.*\.py$',
+    'eschergraph/graph/persistence/vector_db/providers/chromadb.py$',
+    'eschergraph/tools/fast_pdf_parser/parser.py'
+]
 # The strictest settings extracted from the mypy docs
 # Start off with these
 warn_unused_configs = true
@@ -176,6 +181,3 @@ no_implicit_reexport = true
 
 # This one can be tricky to get passing if you use a lot of untyped libraries
 warn_return_any = true
-
-# Ignore the type-checking with the ChromaDB provider
-exclude = "eschergraph/graph/persistence/vector_db/providers/chromadb.py"
