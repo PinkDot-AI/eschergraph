@@ -162,7 +162,13 @@ cython_debug/
 #.idea/
 
 # The default graph save location
-**/eschergraph-storage/**
+**/eschergraph_storage/**
 
 # The visualization files
 community_visual.html
+
+# Downloaded parser models
+**/fast_models/**
+
+# Packaged binaries for the code
+**/bins/**
