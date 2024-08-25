@@ -19,6 +19,7 @@ from eschergraph.graph.persistence.exceptions import DirectoryDoesNotExistExcept
 from eschergraph.graph.persistence.exceptions import FilesMissingException
 from tests.graph.help import create_basic_node
 from tests.graph.help import create_edge
+from tests.graph.help import create_node_only_multi_level_graph
 from tests.graph.help import create_simple_extracted_graph
 
 
@@ -26,11 +27,12 @@ def test_filenames_function_default() -> None:
   filenames: dict[str, str] = SimpleRepository._filenames(
     save_location=DEFAULT_SAVE_LOCATION, name=DEFAULT_GRAPH_NAME
   )
-  base_filename: str = "./eschergraph-storage/escher_default"
+  base_filename: str = "./eschergraph_storage/escher_default"
   assert filenames == {
     "nodes": base_filename + "-nodes.pkl",
     "edges": base_filename + "-edges.pkl",
     "node_name_index": base_filename + "-nnindex.pkl",
+    "properties": base_filename + "-properties.pkl",
   }
 
 
@@ -45,6 +47,7 @@ def test_filenames_function_specified() -> None:
     "nodes": base_filename + "-nodes.pkl",
     "edges": base_filename + "-edges.pkl",
     "node_name_index": base_filename + "-nnindex.pkl",
+    "properties": base_filename + "-properties.pkl",
   }
 
 
@@ -78,7 +81,7 @@ def test_node_to_node_model() -> None:
 
   assert node_model["name"] == node.name
   assert node_model["description"] == node.description
-  assert node_model["properties"] == node.properties
+  assert node_model["properties"] == [prop.id for prop in node.properties]
   assert node_model["level"] == node.level
   assert {Metadata(**md) for md in node_model["metadata"]} == node.metadata
   assert "child_nodes" in node_model
@@ -108,11 +111,7 @@ def test_attributes_to_add_node() -> None:
 
   node_full: Node = create_basic_node()
   node_full._loadstate = LoadState.FULL
-  full_attributes: set[str] = connected_attributes | {
-    "community",
-    "child_nodes",
-    "report",
-  }
+  full_attributes: set[str] = connected_attributes | {"community", "child_nodes"}
 
   assert SimpleRepository._select_attributes_to_add(node_reference) == []
   assert set(SimpleRepository._select_attributes_to_add(node_core)) == core_attributes
@@ -144,11 +143,7 @@ def test_attributes_to_load_node() -> None:
     0: set(),
     1: {"name", "description", "level", "properties", "metadata"},
     2: {"edges"},
-    3: {
-      "community",
-      "child_nodes",
-      "report",
-    },
+    3: {"community", "child_nodes"},
   }
   all_load_combinations(create_basic_node, attributes_state)
 
@@ -210,3 +205,14 @@ def test_get_all_at_level(saved_graph_dir: Path) -> None:
 
   assert {n.id for n in nodes} == {n.id for n in level_0}
   assert not level_1
+
+
+def test_get_max_level(saved_graph_dir: Path) -> None:
+  repository: SimpleRepository = SimpleRepository(
+    save_location=saved_graph_dir.as_posix()
+  )
+
+  max_level = 7
+  _ = create_node_only_multi_level_graph(max_level=max_level, repository=repository)
+
+  assert repository.get_max_level() == max_level

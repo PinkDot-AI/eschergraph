@@ -28,7 +28,6 @@ def test_create(edges_mock_repository: Mock) -> None:
   edge: Edge = Edge.create(
     frm=Node(repository=edges_mock_repository),
     to=Node(repository=edges_mock_repository),
-    repository=edges_mock_repository,
     description="This is the description.",
   )
   assert edge.id
@@ -45,7 +44,6 @@ def test_create_exception(mock_repository: Mock) -> None:
       frm=node,
       to=node,
       description="This is the description.",
-      repository=mock_repository,
     )
 
 
@@ -55,26 +53,15 @@ def test_edge_equality(edges_mock_repository: Mock) -> None:
   node3: Node = Node(repository=edges_mock_repository)
   node4: Node = Node(repository=edges_mock_repository)
 
-  edge1: Edge = Edge.create(
-    frm=node1, to=node2, description="This is an edge", repository=edges_mock_repository
-  )
-  edge2: Edge = Edge.create(
-    frm=node1, to=node2, description="This is an edge", repository=edges_mock_repository
-  )
-  edge3: Edge = Edge.create(
-    frm=node2, to=node1, description="This is an edge", repository=edges_mock_repository
-  )
-  edge4: Edge = Edge.create(
-    frm=node3, to=node4, description="This is an edge", repository=edges_mock_repository
-  )
-  edge5: Edge = Edge.create(
-    frm=node2, to=node4, description="This is an edge", repository=edges_mock_repository
-  )
+  edge1: Edge = Edge.create(frm=node1, to=node2, description="This is an edge")
+  edge2: Edge = Edge.create(frm=node1, to=node2, description="This is an edge")
+  edge3: Edge = Edge.create(frm=node2, to=node1, description="This is an edge")
+  edge4: Edge = Edge.create(frm=node3, to=node4, description="This is an edge")
+  edge5: Edge = Edge.create(frm=node2, to=node4, description="This is an edge")
   edge6: Edge = Edge.create(
     frm=node1,
     to=node2,
     description="This is a different edge",
-    repository=edges_mock_repository,
   )
 
   assert edge1 == edge1

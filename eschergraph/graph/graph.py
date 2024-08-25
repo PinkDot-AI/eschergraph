@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Optional
-
 from attrs import define
 from attrs import field
 
@@ -25,7 +23,6 @@ class Graph:
     description: str,
     level: int,
     metadata: Metadata,
-    properties: Optional[list[str]] = None,
   ) -> Node:
     """Add a node to the graph.
 
@@ -37,7 +34,6 @@ class Graph:
       description (str): A description of the node.
       level (int): The level of the node.
       metadata (Metadata): The metadata of the node.
-      properties (Optional[list[str]]): The optional properties of the node.
 
     Returns:
       The node that has been created.
@@ -47,7 +43,6 @@ class Graph:
       description=description,
       level=level,
       repository=self.repository,
-      properties=properties,
       metadata={metadata},
     )
 
@@ -74,7 +69,6 @@ class Graph:
       frm=frm,
       to=to,
       description=description,
-      repository=self.repository,
       metadata={metadata},
     )
 

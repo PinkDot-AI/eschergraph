@@ -24,6 +24,8 @@ igraph = "^0.11.6"
 leidenalg = "^0.10.2"
 seaborn = "^0.13.2"
 pyvis = "^0.3.2"
+pdf-document-layout-analysis = {git = "https://github.com/huridocs/pdf-document-layout-analysis.git", tag = "v0.0.11"}
+pypdf = "^4.3.1"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.7.1"
@@ -125,6 +127,8 @@ select = [
     "E227",
     "E228",
 ]
+# Altered external code
+exclude = ["eschergraph/tools/fast_pdf_parser/pdf_features.py"]
 [tool.ruff.lint.extend-per-file-ignores]
 # Ignore all docstrings in tests
 "tests/*" = ["D"]

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from typing import Any
-from typing import Optional
 
 import requests
 from attr import define
@@ -28,7 +27,7 @@ class JinaReranker(Reranker):
 
   def rerank(
     self, query: str, texts_list: list[str], top_n: int
-  ) -> Optional[list[RerankerResult]]:
+  ) -> list[RerankerResult]:
     """Reranks a list of text documents based on their relevance to the query using Jina's API.
 
     Args:

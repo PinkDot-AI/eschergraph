@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+from typing import Any
+from typing import Dict
+from typing import List
+from uuid import UUID
+
 import chromadb
 
 from eschergraph.graph.persistence.vector_db.vector_db import VectorDB
@@ -53,7 +58,7 @@ class ChromaDB(VectorDB):
     self,
     embedding: list[float],
     top_n: int,
-    metadata: dict[str, str],
+    metadata: dict[str, Any],
     collection_name: str,
   ) -> dict[str, str]:
     """Search for documents in a ChromaDB collection.
@@ -76,3 +81,49 @@ class ChromaDB(VectorDB):
     )
 
     return results
+
+  def format_search_results(
+    self,
+    result: Dict[str, str],
+  ) -> List[Dict[str, UUID | int | str | float | Dict[str, Any]]]:
+    """Format search results into a standard.
+
+    Args:
+        result: The result of a search
+
+    Returns:
+        Dict[str, int | str | float | dict]: A list of dictionaries containing a standardized format
+    """
+    return [
+      {
+        "id": result["ids"][0][i],
+        "chunk": result["documents"][0][i],
+        "distance": result["distances"][0][i],
+        "metadata": result["metadatas"][0][i],
+      }
+      for i in range(len(result["ids"][0]))
+    ]
+
+  def delete_with_id(self, ids: list[str], collection_name: str) -> None:
+    """Deletes records from a specified collection using their unique IDs.
+
+    Args:
+        ids (list[str]): A list of unique identifiers corresponding to the records to be deleted.
+        collection_name (str): The name of the collection from which the records will be deleted.
+    """
+    collection = self.client.get_collection(name=collection_name)
+    collection.delete(ids=ids)
+
+  def delete_with_metadata(
+    self, metadata: Dict[str, Any], collection_name: str
+  ) -> None:
+    """Deletes records from a specified collection based on metadata conditions.
+
+    Args:
+        metadata (Dict[str, Any]): A dictionary specifying the metadata conditions that must be met
+                                   for the records to be deleted. The keys are metadata field names,
+                                   and the values are the required values for deletion.
+        collection_name (str): The name of the collection from which the records will be deleted.
+    """
+    collection = self.client.get_collection(name=collection_name)
+    collection.delete(where=metadata)

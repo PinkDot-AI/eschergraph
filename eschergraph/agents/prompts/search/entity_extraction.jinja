@@ -1,0 +1,39 @@
+You are tasked with extracting entities from a given query and outputting them in a specific JSON format. Follow these instructions carefully:
+
+1. You will be given a query:
+Query: <query>
+
+2. Analyze the query to identify all entities. Entities are :
+   - names of people, companies, products, places
+   - Specific objects or concepts that are central to the query
+
+3. Create a list of all identified entities.
+
+4. Output the list in JSON format. Each node/entity should be a separate string within the list.
+
+5. If there are no nodes/entities in the query, output an empty list: {"entities": []}
+
+Here are some examples:
+
+Example 1:
+Query: "Compare the market share of Google and Microsoft in the cloud computing industry."
+Output: {"entities": ["Google", "Microsoft"]}
+
+Example 2:
+Query: "How many planets are in the solar system?"
+Output: {"entities": []}
+
+Example 3:
+Query: "What is the capital of France?"
+Output: {"entities": ["France"]}
+
+Example 4:
+Query: "Describe the 5 main themes in the article"
+Output: {"entities": []}
+
+6. Important notes:
+   - If the same entity is mentioned multiple times, include it only once in the output.
+   - Do not include any explanation or additional text in your output, just the JSON list.
+
+Query: {{ query }}
+Output:
