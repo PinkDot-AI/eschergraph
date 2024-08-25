@@ -38,6 +38,7 @@ pytest-repeat = "^0.9.3"
 faker = "^26.3.0"
 update-toml = "^0.2.1"
 mypy = "^1.11.1"
+ruff = "^0.6.2"
 
 [tool.poetry_dynamic_versioning]
 enable = true
