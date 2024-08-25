@@ -1,0 +1,78 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+# Only run the latest commit for each PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+
+env:
+  POETRY_VERSION: 1.8.3
+  # For now we only run on python 3.12
+  PYTHON_VERSION: 3.12
+
+jobs:
+  ci:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+      fail-fast: false
+    
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+    
+      # TODO: add further directories if needed
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            eschergraph:
+              - 'eschergraph/**/*'
+              - 'tests/**/*'
+              - 'poetry.lock'
+              - 'pyproject.toml'
+              - '.github/workflows/*.yml'
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: $PYTHON_VERSION
+      
+      - name: Install Poetry
+        uses: abatilo/actions-poetry@v3.0.0
+        with:
+          poetry-version: $POETRY_VERSION
+      
+      - name: Ubuntu poppler set up
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get install -y poppler-utils
+      
+      - name: Install dependencies
+        shell: bash
+        run: |
+          poetry install
+      
+      - name: Check
+        run: |
+          poetry run poe linting
+          poetry run poe type_check
+      
+      - name: Build
+        run: |
+          poetry build
+      
+      - name: Unit tests
+        run:
+          poetry run pytest
+          
