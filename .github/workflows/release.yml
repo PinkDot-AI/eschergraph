@@ -40,20 +40,21 @@ jobs:
       - name: Install dependencies
         shell: bash
         run: poetry install
+ 
+      # TODO: find a solution for this
+      # - name: Create release
+      #   run: poetry run poe release
       
-      - name: Create release
-        run: poetry run poe release
-      
-      - name: Commit new release
-        uses: EndBug/add-and-commit@v9
-        with:
-          default_author: github_actions
-          message: Add new release and changelog
+      # - name: Commit new release
+      #   uses: EndBug/add-and-commit@v9
+      #   with:
+      #     default_author: github_actions
+      #     message: Add new release and changelog
       
       - name: Export publication version
         run: echo "version=`poetry version --short`" >> $GITHUB_OUTPUT
       
-      - name: build
+      - name: Build
         shell: bash
         run: poetry build
 
