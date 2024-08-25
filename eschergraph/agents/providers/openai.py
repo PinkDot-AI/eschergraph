@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 from enum import Enum
 
-from attr import field
 from attrs import define
 from openai import NotGiven
 from openai import OpenAI
@@ -46,12 +45,12 @@ class OpenAIModel(Enum):
   TEXT_EMBEDDING_LARGE: str = "text-embedding-3-large"
 
 
-@define
+@define(kw_only=True)
 class ChatGPT(Model, Embedding):
   """The class that handles communication with the OpenAI API."""
 
   model: OpenAIModel
-  api_key: str = field(kw_only=True)
+  api_key: str
 
   @property
   def client(self) -> OpenAI:
@@ -95,10 +94,6 @@ class ChatGPT(Model, Embedding):
     response_format: ResponseFormat | NotGiven = NotGiven(),
   ) -> str | None:
     messages: list[ChatCompletionMessageParam] = self._get_messages(prompt)
-    messages.append(
-      ChatCompletionSystemMessageParam(role="system", content=SYSTEM_MESSAGE)
-    )
-    messages.append(ChatCompletionUserMessageParam(role="user", content=prompt))
     try:
       response: ChatCompletion = self.client.chat.completions.create(
         model=self.model.value,
