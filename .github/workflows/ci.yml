@@ -53,12 +53,6 @@ jobs:
           poetry-version: $POETRY_VERSION
           poetry-plugins: 'poetry-dynamic-versioning'
       
-      - uses: actions/cache@v3
-        name: Define a cache for the virtual environment based on the dependencies lock file
-        with:
-          path: ./.venv
-          key: venv-${{ matrix.python-version }}-${{ hashFiles('poetry.lock') }}
-      
       - name: Ubuntu poppler set up
         if: matrix.os == 'ubuntu-latest'
         run: |
