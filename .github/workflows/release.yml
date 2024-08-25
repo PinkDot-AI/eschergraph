@@ -42,7 +42,7 @@ jobs:
         run: poetry install
       
       - name: Create release
-        run: peotry run poe release
+        run: poetry run poe release
       
       - name: Commit new release
         uses: EndBug/add-and-commit@v9
