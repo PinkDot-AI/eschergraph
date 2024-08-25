@@ -77,29 +77,29 @@ def setup_mocks() -> MagicMockTuple:
 
 def test_correct_entity_extraction(setup_mocks: MagicMockTuple) -> None:
   mock_llm, *_ = setup_mocks
-  entities = ["entity1", "entity2", "entity3"]
-  mock_llm.get_plain_response.return_value = json.dumps(entities)
+  entities = {"entities": ["entity1", "entity2", "entity3"]}
+  mock_llm.get_formatted_response.return_value = json.dumps(entities)
   result = extract_entities_from("Find entities in this query.", mock_llm)
-  assert result == entities
+  assert result == entities["entities"]
 
 
 def test_empty_response_raises_exception(setup_mocks: MagicMockTuple) -> None:
   mock_llm, *_ = setup_mocks
-  mock_llm.get_plain_response.return_value = None
+  mock_llm.get_formatted_response.return_value = None
   with pytest.raises(ExternalProviderException):
     extract_entities_from("Find entities in this query.", mock_llm)
 
 
 def test_invalid_json_raises_value_error(setup_mocks: MagicMockTuple) -> None:
   mock_llm, *_ = setup_mocks
-  mock_llm.get_plain_response.return_value = "not a json"
+  mock_llm.get_formatted_response.return_value = "not a json"
   with pytest.raises(ValueError):
     extract_entities_from("Find entities in this query.", mock_llm)
 
 
 def test_non_list_json_raises_value_error(setup_mocks: MagicMockTuple) -> None:
   mock_llm, *_ = setup_mocks
-  mock_llm.get_plain_response.return_value = json.dumps({"entity": "not a list"})
+  mock_llm.get_formatted_response.return_value = json.dumps({"entity": "not a list"})
   with pytest.raises(ValueError):
     extract_entities_from("Find entities in this query.", mock_llm)
 
@@ -108,14 +108,14 @@ def test_list_with_non_string_elements_raises_value_error(
   setup_mocks: MagicMockTuple,
 ) -> None:
   mock_llm, *_ = setup_mocks
-  mock_llm.get_plain_response.return_value = json.dumps(["entity1", 42, "entity3"])
+  mock_llm.get_formatted_response.return_value = json.dumps(["entity1", 42, "entity3"])
   with pytest.raises(ValueError):
     extract_entities_from("Find entities in this query.", mock_llm)
 
 
 def test_empty_list_response(setup_mocks: MagicMockTuple) -> None:
   mock_llm, *_ = setup_mocks
-  mock_llm.get_plain_response.return_value = json.dumps([])
+  mock_llm.get_formatted_response.return_value = json.dumps({"entities": []})
   result = extract_entities_from("Find entities in this query.", mock_llm)
   assert len(result) == 0
 
