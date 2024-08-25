@@ -31,10 +31,12 @@ class TokenUsage:
   total_tokens: int
 
 
+@define
 class Model(ABC):
   """The abstract base class for all the LLMs used in the package."""
 
   tokens: list[TokenUsage] = field(factory=list)
+  max_threads: int = field(default=10)
 
   @abstractmethod
   def get_plain_response(self, prompt: str) -> str | None:
@@ -45,6 +47,19 @@ class Model(ABC):
 
     Returns:
       The response from the LLM.
+    """
+    ...
+
+  @abstractmethod
+  def get_formatted_response(self, prompt: str, response_format: Any) -> str | None:
+    """Get a formatted response from an LLM.
+
+    Args:
+      prompt (str): The user prompt that is send to ChatGPT.
+      response_format (dict): Type of format that will be returned
+
+    Returns:
+      Formatted answer
     """
     ...
 

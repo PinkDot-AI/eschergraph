@@ -1,0 +1,21 @@
+You will be given a JSON-formatted list of dictionaries, where each dictionary represents a key finding. Each dictionary contains a "summary" (which is like a title) and an "explanation" (which provides a more detailed and useful description of the finding). Your task is to rank these findings based on their overall impact and importance of the explanations.
+
+Here is the JSON list of findings:
+<json_list>
+{{ json_list }}
+</json_list>
+
+Carefully analyze each finding's summary and explanation. Consider the following factors when determining the importance and impact of each finding:
+- Scope of influence (how many people or systems are affected)
+- Magnitude of effect (how significant the impact is)
+- Long-term consequences
+- Relevance to core business objectives or societal issues
+- Urgency or time-sensitivity of the finding
+
+Based on your analysis, create a ranking of the findings from most important/impactful to least important/impactful.
+
+Your output should be a JSON-formatted list of the findings in order of importance, with the first being the most important and the last being the least important of the given findings. You are not allowed to change any of the text itself, just the order of the list.
+
+
+Provide only the JSON list as your response, without any additional text or explanation.
+Output:

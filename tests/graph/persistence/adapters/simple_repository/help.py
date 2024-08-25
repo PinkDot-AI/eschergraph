@@ -6,11 +6,15 @@ from attrs import asdict
 
 from eschergraph.graph import Edge
 from eschergraph.graph import Node
+from eschergraph.graph import Property
 from eschergraph.graph.persistence.adapters.simple_repository.models import EdgeModel
 from eschergraph.graph.persistence.adapters.simple_repository.models import (
   MetadataModel,
 )
 from eschergraph.graph.persistence.adapters.simple_repository.models import NodeModel
+from eschergraph.graph.persistence.adapters.simple_repository.models import (
+  PropertyModel,
+)
 
 
 def compare_node_to_node_model(node: Node, node_model: NodeModel) -> bool:
@@ -27,9 +31,8 @@ def compare_node_to_node_model(node: Node, node_model: NodeModel) -> bool:
     node.name == node_model["name"]
     and node.description == node_model["description"]
     and node.level == node_model["level"]
-    and node.properties == node_model["properties"]
     and {edge.id for edge in node.edges} == node_model["edges"]
-    and node.report == node_model["report"]
+    and [property.id for property in node.properties] == node_model["properties"]
     and [cast(MetadataModel, asdict(md)) for md in node.metadata]
     == node_model["metadata"]
   )
@@ -42,4 +45,13 @@ def compare_edge_to_edge_model(edge: Edge, edge_model: EdgeModel) -> bool:
     and edge.description == edge_model["description"]
     and [cast(MetadataModel, asdict(md)) for md in edge.metadata]
     == edge_model["metadata"]
+  )
+
+
+def compare_property_to_property_model(
+  property: Property, property_model: PropertyModel
+) -> bool:
+  return (
+    property.node.id == property_model["node"]
+    and property.description == property_model["description"]
   )

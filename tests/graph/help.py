@@ -11,6 +11,8 @@ from faker import Faker
 from eschergraph.graph import Edge
 from eschergraph.graph import Graph
 from eschergraph.graph import Node
+from eschergraph.graph import Property
+from eschergraph.graph.loading import LoadState
 from eschergraph.graph.persistence import Metadata
 from eschergraph.graph.persistence import Repository
 
@@ -35,20 +37,28 @@ def create_basic_node(repository: Optional[Repository] = None) -> Node:
     repository.get_node_by_name.return_value = None
 
   num_properties: int = random.randint(0, 150)
+  metadata: Metadata = Metadata(document_id=uuid4(), chunk_id=random.randint(1, 120))
 
-  if num_properties == 0:
-    properties: None | list[str] = None
-  else:
-    properties = [faker.text(max_nb_chars=100) for _ in range(num_properties)]
-
-  return Node.create(
+  node: Node = Node.create(
     name=faker.name(),
     description=faker.text(max_nb_chars=400),
     level=0,
     repository=repository,
-    properties=properties,
-    metadata={Metadata(document_id=uuid4(), chunk_id=random.randint(1, 120))},
+    metadata={metadata},
   )
+
+  node._properties = [
+    Property(
+      node=node,
+      repository=repository,
+      description=faker.text(max_nb_chars=80),
+      metadata={metadata},
+      loadstate=LoadState.FULL,
+    )
+    for _ in range(num_properties)
+  ]
+
+  return node
 
 
 def create_edge(
@@ -71,7 +81,6 @@ def create_edge(
   return Edge.create(
     frm=frm,
     to=to,
-    repository=repository,
     description=faker.text(max_nb_chars=80),
     metadata={Metadata(document_id=uuid4(), chunk_id=random.randint(1, 120))},
   )
@@ -99,17 +108,18 @@ def create_simple_extracted_graph(
 
   num_nodes: int = random.randint(35, 100)
   for _ in range(num_nodes):
-    node_data: Node = create_basic_node(repository=repository)
+    # Create the node data with the mock repository
+    node_data: Node = create_basic_node()
 
-    nodes.append(
-      graph.add_node(
-        name=node_data.name,
-        description=node_data.description,
-        level=node_data.level,
-        metadata=random.choice(metadata),
-        properties=node_data.properties,
-      )
+    node: Node = graph.add_node(
+      name=node_data.name,
+      description=node_data.description,
+      level=node_data.level,
+      metadata=random.choice(metadata),
     )
+    # TODO: add the properties to the node
+
+    nodes.append(node)
 
   num_edges: int = random.randint(80, 200)
   valid_pairs: list[tuple[int, int]] = [
@@ -130,3 +140,42 @@ def create_simple_extracted_graph(
     )
 
   return graph, nodes, edges
+
+
+def create_node_only_multi_level_graph(
+  max_level: int,
+  repository: Optional[Repository] = None,
+) -> Graph:
+  """Create a graph with multiple levels, the graph makes no sense, as the nodes are not connected
+  in any way.
+
+  Args:
+      max_level (int): Max level of a node
+      repository (Optional[Repository], optional): Repository to be used. Defaults to None.
+
+  Returns:
+      Graph: The created graph
+  """
+  if not repository:
+    repository = MagicMock(spec=Repository)
+
+  graph: Graph = Graph(name="multi_level_graph", repository=repository)
+  document_id: UUID = uuid4()
+  num_chunks: int = random.randint(5, 20)
+
+  metadata: list[Metadata] = [
+    Metadata(document_id=document_id, chunk_id=i) for i in range(num_chunks)
+  ]
+  # Make max_level occur multiple times and increase by one because of modulo operation
+  num_nodes: int = random.randint((max_level + 1) * 4, 100)
+  for i in range(num_nodes):
+    node_data: Node = create_basic_node(repository=repository)
+
+    graph.add_node(
+      name=node_data.name,
+      description=node_data.description,
+      level=i % (max_level + 1),
+      metadata=random.choice(metadata),
+    )
+
+  return graph

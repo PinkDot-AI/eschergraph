@@ -12,16 +12,23 @@ class MetadataModel(TypedDict):
   chunk_id: int
 
 
+class PropertyModel(TypedDict):
+  """The persistent data model for a property."""
+
+  description: str
+  node: UUID
+  metadata: list[MetadataModel]
+
+
 class NodeModel(TypedDict):
   """The persistent data model for a node."""
 
   name: str
   description: str
   level: int
-  properties: list[str]
+  properties: list[UUID]
   edges: set[UUID]
   community: Optional[UUID]
-  report: list[dict[str, str]]
   metadata: list[MetadataModel]
   child_nodes: set[UUID]
 

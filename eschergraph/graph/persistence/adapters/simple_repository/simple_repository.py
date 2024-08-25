@@ -24,12 +24,16 @@ from eschergraph.graph.persistence.adapters.simple_repository.models import (
   MetadataModel,
 )
 from eschergraph.graph.persistence.adapters.simple_repository.models import NodeModel
+from eschergraph.graph.persistence.adapters.simple_repository.models import (
+  PropertyModel,
+)
 from eschergraph.graph.persistence.exceptions import DirectoryDoesNotExistException
 from eschergraph.graph.persistence.exceptions import FilesMissingException
 from eschergraph.graph.persistence.exceptions import PersistenceException
 from eschergraph.graph.persistence.exceptions import PersistingEdgeException
 from eschergraph.graph.persistence.metadata import Metadata
 from eschergraph.graph.persistence.repository import Repository
+from eschergraph.graph.property import Property
 
 
 @define
@@ -40,6 +44,7 @@ class SimpleRepository(Repository):
   save_location: str = field(default=None)
   nodes: dict[UUID, NodeModel] = field(init=False)
   edges: dict[UUID, EdgeModel] = field(init=False)
+  properties: dict[UUID, PropertyModel] = field(init=False)
   node_name_index: dict[UUID, dict[str, UUID]] = field(init=False)
 
   def __init__(
@@ -75,10 +80,12 @@ class SimpleRepository(Repository):
     if (
       not os.path.isfile(filenames["nodes"])
       and not os.path.isfile(filenames["edges"])
+      and not os.path.isfile(filenames["properties"])
       and not os.path.isfile(filenames["node_name_index"])
     ):
       self.nodes = dict()
       self.edges = dict()
+      self.properties = dict()
       self.node_name_index = dict()
       return
 
@@ -86,6 +93,7 @@ class SimpleRepository(Repository):
     if (
       not os.path.isfile(filenames["nodes"])
       or not os.path.isfile(filenames["edges"])
+      or not os.path.isfile(filenames["properties"])
       or not os.path.isfile(filenames["node_name_index"])
     ):
       raise FilesMissingException("Some files are missing or corrupted.")
@@ -100,6 +108,7 @@ class SimpleRepository(Repository):
     return {
       "nodes": base_filename + "-nodes.pkl",
       "edges": base_filename + "-edges.pkl",
+      "properties": base_filename + "-properties.pkl",
       "node_name_index": base_filename + "-nnindex.pkl",
     }
 
@@ -115,6 +124,8 @@ class SimpleRepository(Repository):
       self._load_node(node=object, loadstate=loadstate)
     elif isinstance(object, Edge):
       self._load_edge(edge=object, loadstate=loadstate)
+    elif isinstance(object, Property):
+      self._load_property(property=object, loadstate=loadstate)
 
   def _load_node(self, node: Node, loadstate: LoadState) -> None:
     # Check if the node exists in the persistence data
@@ -122,19 +133,19 @@ class SimpleRepository(Repository):
       raise PersistenceException(
         "A node with this ID does not exist in the persistent storage."
       )
-    nodeModel: NodeModel = self.nodes[node.id]
+    node_model: NodeModel = self.nodes[node.id]
     attributes: list[str] = self._select_attributes_to_load(
       object=node, loadstate=loadstate
     )
     # Load all the attributes
     for attr in attributes:
       if attr == "metadata":
-        node._metadata = {Metadata(**mdt) for mdt in nodeModel["metadata"]}
+        node._metadata = {Metadata(**mdt) for mdt in node_model["metadata"]}
       elif attr == "community":
-        if nodeModel["community"]:
+        if node_model["community"]:
           # Add the reference of the community node if in a community
           node._community = Community(
-            node=Node(id=nodeModel["community"], repository=node.repository)
+            node=Node(id=node_model["community"], repository=node.repository)
           )
         else:
           node._community = Community()
@@ -147,15 +158,20 @@ class SimpleRepository(Repository):
             to=Node(id=self.edges[edge_id]["to"], repository=node.repository),
             repository=node.repository,
           )
-          for edge_id in nodeModel["edges"]
+          for edge_id in node_model["edges"]
         }
       elif attr == "child_nodes":
         node._child_nodes = [
           Node(id=node_id, repository=node.repository)
-          for node_id in nodeModel["child_nodes"]
+          for node_id in node_model["child_nodes"]
+        ]
+      elif attr == "properties":
+        node._properties = [
+          Property(id=p_id, node=node, repository=self)
+          for p_id in node_model["properties"]
         ]
       else:
-        setattr(node, "_" + attr, nodeModel[attr])  # type: ignore
+        setattr(node, "_" + attr, node_model[attr])  # type: ignore
 
   def _load_edge(self, edge: Edge, loadstate: LoadState) -> None:
     # Check if the edge exists in the persistent data
@@ -163,20 +179,33 @@ class SimpleRepository(Repository):
       raise PersistenceException(
         "An edge with this ID does not exist in the persistent storage."
       )
-    edgeModel: EdgeModel = self.edges[edge.id]
+    edge_model: EdgeModel = self.edges[edge.id]
     # Select the attributes that need to be loaded between the current and the needed one
     attributes: list[str] = self._select_attributes_to_load(
       object=edge, loadstate=loadstate
     )
     for attr in attributes:
       if attr == "metadata":
-        edge._metadata = {Metadata(**mtd) for mtd in edgeModel["metadata"]}
+        edge._metadata = {Metadata(**mtd) for mtd in edge_model["metadata"]}
       else:
-        setattr(edge, "_" + attr, edgeModel[attr])  # type: ignore
+        setattr(edge, "_" + attr, edge_model[attr])  # type: ignore
 
-    # Load the referenced nodes in the same loadstate as the edge itself
-    self._load_node(edge.frm, loadstate=loadstate)
-    self._load_node(edge.to, loadstate=loadstate)
+  def _load_property(self, property: Property, loadstate: LoadState) -> None:
+    # Check if the property exists in the persistent data
+    if not property.id in self.properties:
+      raise PersistenceException(
+        "A property with this ID does not exist in the persistent storage."
+      )
+
+    property_model: PropertyModel = self.properties[property.id]
+    attributes: list[str] = self._select_attributes_to_load(
+      object=property, loadstate=loadstate
+    )
+    for attr in attributes:
+      if attr == "metadata":
+        property._metadata = {Metadata(**mtd) for mtd in property_model["metadata"]}
+      else:
+        setattr(property, "_" + attr, property_model[attr])  # type: ignore
 
   @staticmethod
   def _select_attributes_to_load(object: EscherBase, loadstate: LoadState) -> list[str]:
@@ -217,6 +246,8 @@ class SimpleRepository(Repository):
       self._add_node(node=object)
     elif isinstance(object, Edge):
       self._add_edge(edge=object)
+    elif isinstance(object, Property):
+      self._add_property(property=object)
 
   def _add_node(self, node: Node) -> None:
     # Check if the node already exists
@@ -232,11 +263,18 @@ class SimpleRepository(Repository):
           node_model["metadata"] = [
             cast(MetadataModel, asdict(md)) for md in node.metadata
           ]
-        elif attr == "community" and node.community.node:
-          node_model["community"] = node.community.node.id
-          self._add_node(node.community.node)
+        elif attr == "community":
+          if not node.community.node:
+            node_model["community"] = None
+          else:
+            node_model["community"] = node.community.node.id
+            self._add_node(node.community.node)
         elif attr == "child_nodes":
           node_model["child_nodes"] = {child.id for child in node.child_nodes}
+        elif attr == "properties":
+          node_model["properties"] = [p.id for p in node.properties]
+          for property in node.properties:
+            self._add_property(property=property, through_node=True)
         else:
           node_model[attr] = Node.__dict__[attr].fget(node)  # type: ignore
 
@@ -270,6 +308,10 @@ class SimpleRepository(Repository):
       node_model["edges"] = set()
     self.nodes[node.id] = node_model
 
+    # Add the properties
+    for prop in node.properties:
+      self._add_property(property=prop, through_node=True)
+
     # Keep the node-name index updated
     for mtd in node.metadata:
       if not mtd.document_id in self.node_name_index:
@@ -277,16 +319,40 @@ class SimpleRepository(Repository):
 
       self.node_name_index[mtd.document_id][node.name] = node.id
 
+  def _add_property(self, property: Property, through_node: bool = False) -> None:
+    # Check if the property has been added to the repository directly
+    if not through_node and not property.node.id in self.nodes:
+      raise PersistenceException(
+        "The referenced node in a property needs to exist when a property is persisted directly."
+      )
+
+    if not property.id in self.properties:
+      new_model: PropertyModel = self._new_property_to_property_model(property)
+      self.properties[property.id] = new_model
+
+      # Only add to the node's properties if not called from a node
+      if not through_node:
+        self.nodes[property.node.id]["properties"].append(property.id)
+    else:
+      property_model: PropertyModel = self.properties[property.id]
+      attributes: list[str] = self._select_attributes_to_add(property)
+      for attr in attributes:
+        if attr == "metadata":
+          property_model["metadata"] = [
+            cast(MetadataModel, asdict(md)) for md in property.metadata
+          ]
+        else:
+          property_model[attr] = Node.__dict__[attr].fget(property)  # type: ignore
+
   @staticmethod
   def _new_node_to_node_model(node: Node) -> NodeModel:
     return {
       "name": node.name,
       "description": node.description,
       "level": node.level,
-      "properties": node.properties,
+      "properties": [p.id for p in node.properties],
       "edges": {edge.id for edge in node.edges},
       "community": node.community.node.id if node.community.node else None,
-      "report": [],
       "metadata": [cast(MetadataModel, asdict(md)) for md in node.metadata],
       "child_nodes": {child.id for child in node.child_nodes},
     }
@@ -298,6 +364,14 @@ class SimpleRepository(Repository):
       "to": edge.to.id,
       "description": edge.description,
       "metadata": [cast(MetadataModel, asdict(md)) for md in edge.metadata],
+    }
+
+  @staticmethod
+  def _new_property_to_property_model(property: Property) -> PropertyModel:
+    return {
+      "node": property.node.id,
+      "description": property.description,
+      "metadata": [cast(MetadataModel, asdict(md)) for md in property.metadata],
     }
 
   def _add_edge(self, edge: Edge) -> None:
@@ -391,6 +465,25 @@ class SimpleRepository(Repository):
       repository=self,
     )
 
+  def get_property_by_id(self, id: UUID) -> Optional[Property]:
+    """Get a property by id.
+
+    If no property with this id is found, then None is returned.
+
+    Args:
+      id (UUID): The property's id.
+
+    Returns:
+      The property of None if no property is found.
+    """
+    property_model: Optional[PropertyModel] = self.properties.get(id)
+    if not property_model:
+      return None
+    else:
+      return Property(
+        id=id, node=Node(id=property_model["node"], repository=self), repository=self
+      )
+
   def get_all_at_level(self, level: int) -> list[Node]:
     """Get all nodes at a certain level.
 
@@ -409,6 +502,14 @@ class SimpleRepository(Repository):
       for id, nm in self.nodes.items()
       if nm["level"] == level
     ]
+
+  def get_max_level(self) -> int:
+    """Get the highest non-root level of the graph.
+
+    Returns:
+        int: The highest level
+    """
+    return max(node["level"] for node in self.nodes.values())
 
   def save(self) -> None:
     """Save the graph to the persistent storage.
