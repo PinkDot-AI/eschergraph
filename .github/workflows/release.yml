@@ -42,8 +42,13 @@ jobs:
         run: poetry install
       
       - name: Create release
-        run: |
-          poetry run poe release
+        run: peotry run poe release
+      
+      - name: Commit new release
+        uses: EndBug/add-and-commit@v9
+        with:
+          default_author: github_actions
+          message: Add new release and changelog
       
       - name: Export publication version
         run: echo "version=`poetry version --short`" >> $GITHUB_OUTPUT
