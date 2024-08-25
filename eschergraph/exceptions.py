@@ -40,5 +40,9 @@ class FileTypeNotProcessableException(BaseEscherGraphException):
   """When a file is not processable due to its type."""
 
 
+class RepositoryException(BaseEscherGraphException):
+  """When something unexpected happens with the repository."""
+
+
 class ExternalDependencyException(BaseEscherGraphException):
   """When an external dependency (outside of Python) is missing."""

@@ -13,7 +13,6 @@ from attrs import fields_dict
 from eschergraph.exceptions import NodeCreationException
 from eschergraph.graph import Node
 from eschergraph.graph.community import Community
-from eschergraph.graph.community import Report
 from eschergraph.graph.loading import LoadState
 from eschergraph.graph.persistence import Metadata
 
@@ -33,11 +32,6 @@ def test_create(mock_repository: Mock) -> None:
   assert node.id
   assert node.level == 1
   assert node.edges == set()
-  assert (
-    node.report.title is None
-    and node.report.summary is None
-    and node.report.findings is None
-  )
   assert node.child_nodes == []
   assert node.loadstate == LoadState.FULL
 
@@ -108,11 +102,10 @@ property_parameters: list[tuple[str, Any]] = [
   ("name", "node_name"),
   ("description", "The node description"),
   ("level", 1),
-  ("properties", ["important", "large"]),
+  ("properties", []),
   ("edges", set()),
   ("community", Community()),
   ("child_nodes", []),
-  ("report", Report()),
 ]
 
 
