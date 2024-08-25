@@ -17,13 +17,12 @@ concurrency:
 
 env:
   POETRY_VERSION: 1.8.3
-  # For now we only run on python 3.12
-  PYTHON_VERSION: "3.12"
 
 jobs:
   ci:
     strategy:
       matrix:
+        python-version: ["3.12"]
         os: [ubuntu-latest, windows-latest]
       fail-fast: false
     
@@ -46,7 +45,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: $PYTHON_VERSION
+          python-version: ${{ matrix.python-version }}
       
       - name: Install Poetry
         uses: abatilo/actions-poetry@v3.0.0
