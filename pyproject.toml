@@ -183,6 +183,3 @@ no_implicit_reexport = true
 
 # This one can be tricky to get passing if you use a lot of untyped libraries
 warn_return_any = true
-
-# Ignore the type-checking with the ChromaDB provider
-exclude = "eschergraph/graph/persistence/vector_db/providers/chromadb.py"
