@@ -32,7 +32,7 @@ class VectorDB(ABC):
     self,
     embeddings: List[List[float]],
     documents: List[str],
-    ids: List[str],
+    ids: List[UUID],
     metadata: List[Dict[str, str]],
     collection_name: str,
   ) -> None:
@@ -112,7 +112,7 @@ class VectorDB(ABC):
   @abstractmethod
   def delete_with_id(
     self,
-    ids: list[str],
+    ids: list[UUID],
     collection_name: str,
   ) -> None:
     """Delete an item in the vectordb by its id.

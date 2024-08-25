@@ -106,7 +106,10 @@ class ChromaDB(VectorDB):
     ]
 
   # TODO: implement this method
-  def sync(self, change_log: List[ChangeLog]) -> None:
+  def sync(
+    self,
+    change_log: List[ChangeLog],
+  ) -> None:
     """Sync the vector database to the repository.
 
     The vector database updates its embeddings based on the logged
