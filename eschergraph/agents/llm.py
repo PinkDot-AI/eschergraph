@@ -34,6 +34,8 @@ class TokenUsage:
 class Model(ABC):
   """The abstract base class for all the LLMs used in the package."""
 
+  max_threads: int
+
   @abstractmethod
   def get_plain_response(self, prompt: str) -> str | None:
     """Get a plain text response from an LLM.

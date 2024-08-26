@@ -43,8 +43,19 @@ class JinaReranker(Reranker):
       return []
     results = self.model.rank(query, docs, return_documents=True, top_k=top_n)
 
-    for r in results:
-      r["relevance_score"] = r.pop("score", None)
-      r["index"] = r.pop("corpus_id", None)
+    # Convert results to list of RerankerResult
+    try:
+      reranked_items = [
+        RerankerResult(
+          index=int(r["corpus_id"]),
+          relevance_score=float(r["score"]),
+          text=str(r["text"]),
+        )
+        for r in results
+      ]
 
-    return results
+      return reranked_items
+    except (KeyError, TypeError):
+      raise ExternalProviderException(
+        "Something went wrong obtaining the reranker results."
+      )

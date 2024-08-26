@@ -32,7 +32,7 @@ repos:
     args: [--add-import, 'from __future__ import annotations']
 
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.5.5
+  rev: v0.6.2
   hooks:
   # Run the linter
   - id: ruff
@@ -40,10 +40,14 @@ repos:
   # Run the formatter
   - id: ruff-format
 
-- repo: https://github.com/pre-commit/mirrors-mypy
-  rev: 'v1.11.0'
-  hooks:
-  - id: mypy
-    files: (eschergraph/|tests/|scripts/)
-    additional_dependencies: [attrs, jinja2, openai, tenacity, pytest, types-assertpy, types-requests]
-    args: [--config=pyproject.toml, --enable-incomplete-feature=NewGenericSyntax]
+# Not suitable for now, config is not read!
+# - repo: https://github.com/pre-commit/mirrors-mypy
+#   rev: v1.11.2
+#   hooks:
+#   - id: mypy
+#     files: (eschergraph/|tests/|scripts/)
+#     exclude: |
+#       eschergraph/tools/pdf_document_layout_analysis/|
+#       eschergraph/tools/fast_pdf_parser/parser.py
+#     additional_dependencies: [attrs, jinja2, openai, tenacity, pytest, types-assertpy, types-requests]
+#     args: [--config=pyproject.toml]

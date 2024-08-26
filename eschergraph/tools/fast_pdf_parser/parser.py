@@ -9,19 +9,27 @@ import zipfile
 from pathlib import Path
 from typing import Optional
 
-from fast_trainer.model_configuration import (
-  MODEL_CONFIGURATION as PARAGRAPH_EXTRACTION_CONFIGURATION,
-)
-from fast_trainer.ParagraphExtractorTrainer import ParagraphExtractorTrainer
-from fast_trainer.PdfSegment import PdfSegment
 from huggingface_hub import hf_hub_download
-from pdf_features.PdfFeatures import PdfPage
-from pdf_tokens_type_trainer.ModelConfiguration import ModelConfiguration
-from pdf_tokens_type_trainer.TokenTypeTrainer import TokenTypeTrainer
 
 from eschergraph.exceptions import ExternalDependencyException
 from eschergraph.tools.fast_pdf_parser.models import PdfParsedSegment
-from eschergraph.tools.fast_pdf_parser.pdf_features import PdfFeatures
+from eschergraph.tools.pdf_document_layout_analysis.fast_trainer.model_configuration import (
+  MODEL_CONFIGURATION as PARAGRAPH_EXTRACTION_CONFIGURATION,
+)
+from eschergraph.tools.pdf_document_layout_analysis.fast_trainer.paragraph_extractor_trainer import (
+  ParagraphExtractorTrainer,
+)
+from eschergraph.tools.pdf_document_layout_analysis.pdf_features.pdf_features import (
+  PdfFeatures,
+)
+from eschergraph.tools.pdf_document_layout_analysis.pdf_features.pdf_page import PdfPage
+from eschergraph.tools.pdf_document_layout_analysis.pdf_segment import PdfSegment
+from eschergraph.tools.pdf_document_layout_analysis.pdf_tokens_type_trainer.model_configuration import (
+  ModelConfiguration,
+)
+from eschergraph.tools.pdf_document_layout_analysis.pdf_tokens_type_trainer.token_type_trainer import (
+  TokenTypeTrainer,
+)
 
 ROOT_PATH: str = Path(__file__).parent.parent.absolute().as_posix()
 MODELS_PATH: str = ROOT_PATH + "/fast_models"

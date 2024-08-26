@@ -1,30 +1,29 @@
-# mypy: ignore-errors
 from __future__ import annotations
 
-import json
 import os
 import subprocess
 import tempfile
-from collections import Counter
 from os.path import exists
 from os.path import join
 from pathlib import Path
-from statistics import mode
 
 from lxml import etree
 from lxml.etree import ElementBase
 from lxml.etree import XMLSyntaxError
-from pdf_features.PdfFont import PdfFont
-from pdf_features.PdfModes import PdfModes
-from pdf_features.PdfPage import PdfPage
-from pdf_features.PdfToken import PdfToken
-from pdf_token_type_labels.PdfLabels import PdfLabels
-from pdf_token_type_labels.TokenType import TokenType
-from pdf_tokens_type_trainer.config import LABELS_FILE_NAME
-from pdf_tokens_type_trainer.config import TOKEN_TYPE_RELATIVE_PATH
-from pdf_tokens_type_trainer.config import XML_NAME
 from pypdf import PdfReader
 from pypdf import PdfWriter
+
+from eschergraph.tools.pdf_document_layout_analysis.pdf_features.pdf_font import PdfFont
+from eschergraph.tools.pdf_document_layout_analysis.pdf_features.pdf_modes import (
+  PdfModes,
+)
+from eschergraph.tools.pdf_document_layout_analysis.pdf_features.pdf_page import PdfPage
+from eschergraph.tools.pdf_document_layout_analysis.pdf_token_type_labels.pdf_labels import (
+  PdfLabels,
+)
+from eschergraph.tools.pdf_document_layout_analysis.pdf_token_type_labels.token_type import (
+  TokenType,
+)
 
 """
 Slightly altered code that has been copied from https://github.com/huridocs/pdf-document-layout-analysis.
@@ -47,9 +46,6 @@ class PdfFeatures:
     self.file_name = file_name
     self.file_type = file_type
     self.pdf_modes: PdfModes = PdfModes()
-    self.get_modes()
-    self.get_mode_font()
-    self.get_tokens_context()
 
   def loop_tokens(self):
     for page in self.pages:
@@ -174,80 +170,6 @@ class PdfFeatures:
       os.remove(xml_path)
 
     return pdf_features
-
-  @staticmethod
-  def from_labeled_data(
-    pdf_labeled_data_root_path: str | Path, dataset: str, pdf_name: str
-  ):
-    xml_path = join(pdf_labeled_data_root_path, "pdfs", pdf_name, XML_NAME)
-    pdf_features = PdfFeatures.from_poppler_etree(xml_path, pdf_name, dataset)
-    token_type_label_path: str = join(
-      pdf_labeled_data_root_path, TOKEN_TYPE_RELATIVE_PATH
-    )
-    token_type_labels_path = join(
-      token_type_label_path, dataset, pdf_name, LABELS_FILE_NAME
-    )
-    token_type_labels = PdfFeatures.load_labels(token_type_labels_path)
-    pdf_features.set_token_types(token_type_labels)
-
-    return pdf_features
-
-  @staticmethod
-  def load_labels(path: str) -> PdfLabels:
-    if not exists(path):
-      print(f"No labeled data for {path}")
-      return PdfLabels(pages=[])
-
-    labels_text = Path(path).read_text()
-    labels_dict = json.loads(labels_text)
-    return PdfLabels(**labels_dict)
-
-  def get_modes(self):
-    line_spaces, right_spaces = [0], [0]
-
-    for page, token in self.loop_tokens():
-      top, bottom = token.bounding_box.top, token.bounding_box.bottom
-      left, right = token.bounding_box.left, token.bounding_box.right
-
-      on_the_bottom = [
-        page_token for page_token in page.tokens if bottom < page_token.bounding_box.top
-      ]
-
-      on_the_right = [
-        line_token
-        for line_token in PdfToken.get_same_line_tokens(token, page.tokens)
-        if right < line_token.bounding_box.left
-      ]
-
-      if len(on_the_bottom):
-        line_spaces.append(
-          min(map(lambda x: int(x.bounding_box.top - bottom), on_the_bottom))
-        )
-
-      if not on_the_right:
-        right_spaces.append(int(right))
-
-    self.pdf_modes.lines_space_mode = mode(line_spaces)
-    self.pdf_modes.right_space_mode = (
-      int(self.pages[0].page_width - mode(right_spaces)) if self.pages else 0
-    )
-
-  def get_mode_font(self):
-    fonts_counter: Counter = Counter()
-    for page, token in self.loop_tokens():
-      fonts_counter.update([token.font.font_id])
-
-    if len(fonts_counter.most_common()) == 0:
-      return
-
-    font_mode_id = fonts_counter.most_common()[0][0]
-    font_mode_token = [font for font in self.fonts if font.font_id == font_mode_id]
-    if font_mode_token:
-      self.pdf_modes.font_size_mode = float(font_mode_token[0].font_size)
-
-  def get_tokens_context(self):
-    for page, token in self.loop_tokens():
-      token.get_context(page.tokens)
 
   @staticmethod
   def get_empty():
