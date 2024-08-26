@@ -93,14 +93,14 @@ def test_empty_response_raises_exception(setup_mocks: MagicMockTuple) -> None:
 def test_invalid_json_raises_value_error(setup_mocks: MagicMockTuple) -> None:
   mock_llm, *_ = setup_mocks
   mock_llm.get_formatted_response.return_value = "not a json"
-  with pytest.raises(ValueError):
+  with pytest.raises(ExternalProviderException):
     extract_entities_from("Find entities in this query.", mock_llm)
 
 
 def test_non_list_json_raises_value_error(setup_mocks: MagicMockTuple) -> None:
   mock_llm, *_ = setup_mocks
   mock_llm.get_formatted_response.return_value = json.dumps({"entity": "not a list"})
-  with pytest.raises(ValueError):
+  with pytest.raises(ExternalProviderException):
     extract_entities_from("Find entities in this query.", mock_llm)
 
 
@@ -109,7 +109,7 @@ def test_list_with_non_string_elements_raises_value_error(
 ) -> None:
   mock_llm, *_ = setup_mocks
   mock_llm.get_formatted_response.return_value = json.dumps(["entity1", 42, "entity3"])
-  with pytest.raises(ValueError):
+  with pytest.raises(ExternalProviderException):
     extract_entities_from("Find entities in this query.", mock_llm)
 
 
