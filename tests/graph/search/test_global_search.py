@@ -315,7 +315,7 @@ def test_retrieve_similar_properties_success(setup_mocks: MagicMockTuple) -> Non
   ) = setup_mocks
   query = "This is a test query."
   result = retrieve_similar_properties(
-    mock_graph, query, mock_embedder, mock_vecdb, "Collection name", mock_reranker
+    mock_graph, query, mock_vecdb, "Collection name", mock_reranker
   )
   expected_result = [
     Property(
