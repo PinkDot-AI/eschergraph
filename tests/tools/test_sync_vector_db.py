@@ -31,7 +31,7 @@ def test_prep_sync_vector_db(mock_repository: Mock) -> None:
   mock_repository.get_change_log.return_value = change_logs
 
   # Inject the mock repository into the function
-  docs, ids, metadata, ids_to_delete = prepare_sync_data(mock_repository, level=0)
+  _, ids, metadata, ids_to_delete = prepare_sync_data(mock_repository, level=0)
   # Assertions
   assert len(ids_to_delete) == 2
   assert len(ids) == 3
