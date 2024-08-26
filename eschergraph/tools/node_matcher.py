@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 from concurrent.futures import as_completed
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
@@ -9,34 +8,41 @@ from attrs import define
 from fuzzywuzzy import fuzz
 
 from eschergraph.agents.jinja_helper import process_template
-from eschergraph.agents.providers.jina import JinaReranker
-from eschergraph.agents.providers.openai import OpenAIProvider
+from eschergraph.agents.llm import ModelProvider
+from eschergraph.agents.reranker import Reranker
 from eschergraph.agents.reranker import RerankerResult
-from eschergraph.build.buildlogsitem import BuildLogItem
+from eschergraph.builder.build_log import BuildLog
+from eschergraph.tools.reader import Chunk
 
 JSON_UNIQUE_NODES = "identifying_nodes.jinja"
 
 
 @define
-class Merge:
-  """This is the class for merging nodes that refer to the save entity."""
+class NodeMatcher:
+  """This is the class for matching nodes that refer to the same entity."""
 
-  model: OpenAIProvider
-  reranker: JinaReranker
+  model: ModelProvider
+  reranker: Reranker
 
-  def __init__(
+  def match(
     self,
-    model: OpenAIProvider,
-    jina_api_key: str | None = None,
-  ):
-    """Initializes the Merge class with an OpenAIModel and creates an OpenAIProvider instance.
+    building_logs: list[BuildLog],
+    unique_node_names: list[str],
+    chunks: list[Chunk],
+  ) -> list[BuildLog]:
+    """Match nodes that refer to the same entity together.
 
-    :param model: The OpenAI model to use for language processing tasks.
+    Args:
+      building_logs (list[BuildLog]): A list of building logs.
+      unique_node_names (list[str]): A list of unique node names as extracted.
+      chunks (list[Chunk]): All the chunks in the document.
     """
-    self.model: OpenAIProvider = model
-    self.reranker: JinaReranker = JinaReranker(
-      api_key=jina_api_key or os.getenv("JINA_API_KEY") or ""
+    matches: dict[str, list[str]] = self._match_nodes(unique_node_names)
+    suggested_matches: list[set[str]] = self._match_sets(matches)
+    updated_building_logs: list[BuildLog] = self.handle_merge(
+      building_logs, suggested_matches
     )
+    return updated_building_logs
 
   def _match_nodes(self, node_names: list[str]) -> dict[str, list[str]]:
     """Matches nodes in a graph based on similarity to provided node names.
@@ -181,7 +187,7 @@ class Merge:
     return top_result[0].text.split("---")[0]
 
   def _collect_node_info(
-    self, build_log_items: list[BuildLogItem], nodes: list[str]
+    self, build_log_items: list[BuildLog], nodes: list[str]
   ) -> dict[str, list[str]]:
     node_info: dict[str, list[str]] = {node: [] for node in nodes}
 
@@ -213,8 +219,8 @@ class Merge:
     return node_info
 
   def handle_merge(
-    self, building_logs: list[BuildLogItem], suggested_matches: list[set[str]]
-  ) -> list[BuildLogItem]:
+    self, building_logs: list[BuildLog], suggested_matches: list[set[str]]
+  ) -> list[BuildLog]:
     """Handle merging of entities based on suggested matches."""
     gpt_identified_matches: list[Any] = self._get_unique_nodes(suggested_matches)
 
@@ -254,7 +260,7 @@ class Merge:
     return true_nodes, entity_to_nodes
 
   def _process_entities_for_logs(
-    self, building_logs: list[BuildLogItem], entity_to_nodes: dict[str, set[str]]
+    self, building_logs: list[BuildLog], entity_to_nodes: dict[str, set[str]]
   ) -> None:
     """Process each entity and update the logs with the correct merged entities."""
     for entity, nodes in entity_to_nodes.items():
@@ -277,7 +283,7 @@ class Merge:
 
   def _update_log_item(
     self,
-    log_item: BuildLogItem,
+    log_item: BuildLog,
     entity: str,
     node_info: dict[str, list[str]],
     assigned_node_cache: dict[str, str],
@@ -343,21 +349,3 @@ class Merge:
         f'Replacing {key} "{entity}" with "{assigned_node}" in item {(entity_name, item.get("description", ""))}.'
       )
       item[key] = assigned_node
-
-  def merge(
-    self, building_logs: list[BuildLogItem], unique_node_names: list[str]
-  ) -> list[BuildLogItem]:
-    """Merges nodes in a graph that are identified as similar based on the matching criteria.
-
-    :param graph: The graph containing the nodes to be merged.
-    :param unique_node_names: A list of unique node names that are used to find matches.
-    :return: The graph with merged nodes.
-    """
-    matches: dict[str, list[str]] = self._match_nodes(
-      unique_node_names
-    )  # Changed to list
-    suggested_matches: list[set[str]] = self._match_sets(matches)
-    updated_building_logs: list[BuildLogItem] = self.handle_merge(
-      building_logs, suggested_matches
-    )
-    return updated_building_logs

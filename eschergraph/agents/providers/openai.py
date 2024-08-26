@@ -25,7 +25,7 @@ from tenacity import wait_random_exponential
 
 from eschergraph.agents.embedding import Embedding
 from eschergraph.agents.llm import FunctionCall
-from eschergraph.agents.llm import Model
+from eschergraph.agents.llm import ModelProvider
 from eschergraph.agents.llm import TokenUsage
 from eschergraph.agents.tools import Function
 from eschergraph.agents.tools import Tool
@@ -41,14 +41,13 @@ from any document into a refined and parsed form.
 class OpenAIModel(Enum):
   """The different models that are available at OpenAI."""
 
-  GPT_3: str = "gpt-3.5-turbo"
   GPT_4o: str = "gpt-4o"
   GPT_4o_MINI: str = "gpt-4o-mini"
   TEXT_EMBEDDING_LARGE: str = "text-embedding-3-large"
 
 
 @define
-class OpenAIProvider(Model, Embedding):
+class OpenAIProvider(ModelProvider, Embedding):
   """The class that handles communication with the OpenAI API."""
 
   model: OpenAIModel
@@ -89,6 +88,20 @@ class OpenAIProvider(Model, Embedding):
       Formatted answer
     """
     return self._get_response(prompt=prompt, response_format=response_format)
+
+  @retry(wait=wait_random_exponential(multiplier=1, max=40), stop=stop_after_attempt(3))
+  def get_json_response(self, prompt: str) -> dict[str, Any]:
+    """Get a json response.
+
+    Args:
+      prompt (str): The user prompt that is send to ChatGPT.
+
+    Returns:
+      A json object parsed into a dictionary.
+    """
+    return json.loads(
+      self._get_response(prompt=prompt, response_format={"type": "json_object"})
+    )
 
   def _get_response(
     self,

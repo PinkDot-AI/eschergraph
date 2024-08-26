@@ -39,6 +39,7 @@ faker = "^26.3.0"
 update-toml = "^0.2.1"
 mypy = "^1.11.1"
 ruff = "^0.6.2"
+python-dotenv = "^1.0.1"
 
 [tool.poetry_dynamic_versioning]
 enable = true
