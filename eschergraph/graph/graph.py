@@ -1,13 +1,27 @@
 from __future__ import annotations
 
+import json
+import logging
+from uuid import UUID
+
 from attrs import define
 from attrs import field
 
+from eschergraph.agents.jinja_helper import process_template
+from eschergraph.agents.llm import Model
+from eschergraph.exceptions import EdgeDoesNotExistException
+from eschergraph.exceptions import ExternalProviderException
+from eschergraph.graph.comm_graph import CommunityGraphResult
+from eschergraph.graph.community_alg import get_leidenalg_communities
 from eschergraph.graph.edge import Edge
 from eschergraph.graph.node import Node
 from eschergraph.graph.persistence import Metadata
 from eschergraph.graph.persistence import Repository
 from eschergraph.graph.persistence.factory import get_default_repository
+from eschergraph.graph.property import Property
+
+COMMUNITY_TEMPLATE: str = "community_prompt.jinja"
+TEMPLATE_IMPORTANCE: str = "search/importance_rank.jinja"
 
 
 @define
@@ -76,3 +90,150 @@ class Graph:
     self.repository.add(edge)
 
     return edge
+
+  def build_community_layer(self, from_level: int, llm: Model) -> None:
+    """Build a community layer in a new level of the graph.
+
+    Args:
+        from_level (int): Which level to build on top of.
+        llm (Model): LLM to create community reports
+
+    """
+    nodes: list[Node] = self.repository.get_all_at_level(from_level)
+    comms: CommunityGraphResult = get_leidenalg_communities(nodes)
+
+    # Transform nodes of graph to dict for faster lookup
+    node_lookup: dict[UUID, Node] = {nd.id: nd for nd in nodes}
+    # Map every node to its community
+    node_comm: dict[UUID, int] = {
+      nd: idx for idx, comm in enumerate(comms.partitions) for nd in comm
+    }
+
+    edges: list[Edge] = []
+    # Create an empty community node for each community
+    nodes_tmp: dict[int, Node] = {
+      idx: self._create_empty_community_node(comms.partitions[idx], from_level + 1)
+      for idx in set(node_comm.values())
+    }
+
+    # Add edges between community nodes
+    for edge_id in comms.edges:
+      edge = self.repository.get_edge_by_id(edge_id)
+      if edge is None:
+        raise EdgeDoesNotExistException(f"Edge {edge_id} could not be found")
+
+      frm: int = node_comm[edge.frm.id]
+      to: int = node_comm[edge.to.id]
+
+      # Only use the edges that exist between communities
+      if frm == to:
+        continue
+
+      new_edge = Edge.create(frm=nodes_tmp[frm], to=nodes_tmp[to], description="")
+      edges.append(new_edge)
+
+    for k, v in nodes_tmp.items():
+      idx: int = node_comm[v.id]
+      prop_format: str = "node_name,property\n" + "\n".join(
+        f"{node_lookup[nd_id].name},{prop.description}"
+        for nd_id in comms.partitions[idx]
+        for prop in node_lookup[nd_id].properties
+      )
+
+      edge_relations = self._gather_community_edges(
+        self.repository, comms.edges, comms.partitions[idx]
+      )
+      edge_format: str = "from,to,description\n" + "\n".join(
+        f"{ed.frm.name},{ed.to.name},{ed.description}" for ed in edge_relations
+      )
+
+      prompt = process_template(
+        COMMUNITY_TEMPLATE,
+        {
+          "relationships": edge_format,
+          "properties": prop_format,
+        },
+      )
+
+      res = llm.get_formatted_response(prompt, {"type": "json_schema"})
+      if res is None:
+        raise ExternalProviderException("Invalid response from LLM")
+      parsed_json = json.loads(res)
+      if (
+        "title" not in parsed_json
+        or "summary" not in parsed_json
+        or "findings" not in parsed_json
+      ):
+        raise ExternalProviderException(
+          "LLM JSON Response did not contain correct keys"
+        )
+      jsonized = json.dumps(parsed_json["findings"], indent=4)
+      prompt = process_template(TEMPLATE_IMPORTANCE, {"json_list": jsonized})
+
+      res_reorder = llm.get_formatted_response(
+        prompt=prompt, response_format={"type": "json_schema"}
+      )
+      if res_reorder is None:
+        raise ExternalProviderException("Invalid response from LLM for reordering")
+      findings = json.loads(res_reorder)
+      if not isinstance(findings, list):
+        raise ExternalProviderException("Invalid response from LLM for reordering")
+
+      for finding in findings:
+        Property.create(nodes_tmp[k], description=finding["explanation"])
+      nodes_tmp[k].name = parsed_json["title"]
+      nodes_tmp[k].description = parsed_json["summary"]
+
+      self.repository.add(nodes_tmp[k])
+
+    for edge in edges:
+      self.repository.add(edge)
+
+    logging.info("Community succesfully added")
+
+  def _create_empty_community_node(self, child_nodes: list[UUID], level: int) -> Node:
+    """Create an empty node to be used a community node. Name and description are left empty.
+
+    Args:
+        child_nodes (list[UUID]): List of child node ids.
+        level (int): At which level the community node will be.
+
+    Returns:
+        Node: The newly created node.
+    """
+    return Node.create(
+      name="",
+      description="",
+      level=level + 1,
+      repository=self.repository,
+      child_nodes=[
+        node
+        for node_id in child_nodes
+        if (node := self.repository.get_node_by_id(node_id)) and node is not None
+      ],
+    )
+
+  @staticmethod
+  def _gather_community_edges(
+    repository: Repository, edges: list[UUID], nodes: list[UUID]
+  ) -> list[Edge]:
+    """Get all edges that are connected to a node from the node list.
+
+    Args:
+        repository (Repository): The repository that is connected with the edges
+        edges (list[UUID]): Edges to be filtered.
+        nodes (list[UUID]): The nodes to which the edges should be connected
+
+    Returns:
+        list[Edge]: A list of the filtered edges.
+    """
+    node_set = set(nodes)
+    comm_edges = []
+    for edge_id in edges:
+      edge = repository.get_edge_by_id(edge_id)
+      if edge is None:
+        raise EdgeDoesNotExistException(f"Edge {edge_id} could not be found")
+      if edge.frm.id in node_set or edge.to.id in node_set:
+        comm_edges.append(edge)
+
+    return comm_edges

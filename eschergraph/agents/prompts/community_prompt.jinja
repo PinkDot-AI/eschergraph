@@ -1,0 +1,69 @@
+
+You are an AI assistant that helps a human analyst to perform general information discovery. Information discovery is the process of identifying and assessing relevant information associated with certain entities (e.g., organizations and individuals) within a network.
+
+# Goal
+Write a comprehensive report of a community, given a list of entities that belong to the community as well as their relationships and optional properties. The report will be used to inform decision-makers about information associated with the community and their potential impact. The content of this report includes an overview of the community's key entities, their legal compliance, technical capabilities, reputation, and noteworthy claims.
+
+# Report Structure
+
+The report should include the following sections:
+
+- TITLE: community's name that represents its key entities - title should be short but specific. When possible, include representative named entities in the title.
+- SUMMARY: An executive summary of the community's overall structure, how its entities are related to each other, and significant information associated with its entities.
+- DETAILED FINDINGS: A list of 5-10 key insights about the community. Each insight should have a short summary followed by multiple paragraphs of explanatory text grounded according to the grounding rules below. Be comprehensive.
+
+Return output as a well-formed JSON-formatted string with the following format:
+{
+    "title": <report_title>,
+    "summary": <executive_summary>,
+    "findings": [
+        {
+            "summary":<insight_1_summary>,
+            "explanation": <insight_1_explanation>
+        },
+        {
+            "summary":<insight_2_summary>,
+            "explanation": <insight_2_explanation>
+        }
+    ]
+}
+
+# Grounding Rules
+
+Do not include information with no supporting evidence in the data.
+
+
+# Real Data
+
+Use the following text for your answer. Do not make anything up in your answer.
+
+Edges:
+{{ relationships }}
+
+Properties:
+{{ properties }}
+
+The report should include the following sections:
+
+- TITLE: community's name that represents its key entities - title should be short but specific. When possible, include representative named entities in the title.
+- SUMMARY: An executive summary of the community's overall structure, how its entities are related to each other, and significant information associated with its entities.
+- DETAILED FINDINGS: A list of 5-10 key insights about the community. Each insight should have a short summary followed by multiple paragraphs of explanatory text grounded according to the grounding rules below. Be comprehensive.
+
+Return output as a well-formed JSON only formatted string with the following format:
+{
+    "title": <report_title>,
+    "summary": <executive_summary>,
+    "findings": [
+        {
+            "summary":<insight_1_summary>,
+            "explanation": <insight_1_explanation>
+        },
+        {
+            "summary":<insight_2_summary>,
+            "explanation": <insight_2_explanation>
+        }
+    ]
+}
+
+
+Output:
