@@ -10,60 +10,61 @@ from eschergraph.agents.jinja_helper import extract_variables
 from eschergraph.agents.jinja_helper import process_template
 from eschergraph.exceptions import PromptFormattingException
 
-property_template: str = """Add the properties as described in the execution plan to each of the entities exactly as listed.
+json_build_template: str = """-Goal-
+Extract all relevant information from the provided text into a graph representation containing entities and relations.
 
-The execution plan:
-{execution_plan}
+-Steps-
+1. Identify all named entities in singular form. For people please include the entire name.
+For each identified entity, extract the following information:
+- entity_name: Name of the entity
+- entity_description: Comprehensive description of the entity's attributes and activities
 
-Add the listed properties to each node with a function call! Do not miss a single one!!
-Lives may depend on it!!! Mistakes are extremely costly for me and my career!"""
+Format each entity output as a JSON entry with the following format:
 
-elaboration_plan_template: str = """You need to expand the existing knowledge graph based on the new context that is provided.
-It is your task to devise an extensive execution plan for doing this.
+{"name": <entity name>, "description": <entity description>}
 
-Please specify the following steps:
-1. Extracting the entities
-2. Indicating the importance of the entity in the provided text as: small, medium or large
-3. Adding relevant properties to each of the entities
-4. Identifying relationships between the entities
+2. From the entities identified in step 1, identify all pairs of (source_entity, target_entity) that are *clearly related* to each other.
+For each pair of related entities, extract the following information:
+- source_entity: name of the source entity, as identified in step 1
+- target_entity: name of the target entity, as identified in step 1
+- relationship_description: explanation as to why you think the source entity and the target entity are related to each other
+- relationship_strength: an integer score between 1 to 10, indicating strength of the relationship between the source entity and target entity
 
-Especially the relationships between the entities are important, so take extra care in identifying these.
-In addition, please specify these relationships in the following format.
-- [ENTITY_1] -> [RELATIONSHIP] -> [ENTITY_2]
+Format each relationship as a JSON entry with the following format:
 
-For example,
-- [Tim Cook] -> [works at] -> [Apple]
-- [Paris] -> [is located in] -> [France]
-- [Google] -> [is headquartered in] -> [Mountain View, California]
+{"source": <source_entity>, "target": <target_entity>, "relationship": <relationship_description>, "relationship_strength": <relationship_strength>}
 
-The text: {context}
-The current graph: {graph}"""
+3. Return output in English as a single list of all JSON entities and relationships identified in steps 1 and 2.
 
-execution_plan: str = "Do nothing this is a test!"
-graph: str = "This is the entire graph"
-context: str = "A lot of useful context"
+However, only extract entities that are specific so avoid extracting entities like CEO or employee, but instead
+extract only named entities.
 
+-Real Data-
+######################
+text: This is a test
+######################
+output:"""
 
-def test_templating_function_property() -> None:
-  assert process_template(
-    template_file="property.jinja", data={"execution_plan": execution_plan}
-  ) == property_template.format(execution_plan=execution_plan)
+input_text: str = "This is a test"
 
 
-def test_templating_function_elaboration_plan() -> None:
-  assert process_template(
-    template_file="elaboration_plan.jinja", data={"context": context, "graph": graph}
-  ) == elaboration_plan_template.format(graph=graph, context=context)
+def test_templating_function_json_build() -> None:
+  assert (
+    process_template(template_file="json_build.jinja", data={"input_text": input_text})
+    == json_build_template
+  )
 
 
-def test_templating_function_property_empty_data() -> None:
+def test_templating_function_json_build_empty_data() -> None:
   with pytest.raises(PromptFormattingException):
-    process_template(template_file="property.jinja", data={})
+    process_template(template_file="json_build.jinja", data={})
 
 
-def test_templating_function_elaboration_missing_data() -> None:
+def test_templating_function_json_property_missing_data() -> None:
   with pytest.raises(PromptFormattingException):
-    process_template(template_file="elaboration_plan.jinja", data={"graph": graph})
+    process_template(
+      template_file="json_property.jinja", data={"input_text": input_text}
+    )
 
 
 def test_extract_variables() -> None:
@@ -73,5 +74,5 @@ def test_extract_variables() -> None:
   )
 
   assert_that(
-    extract_variables("elaboration_plan.jinja", jinja_env)
-  ).does_not_contain_duplicates().contains_only("context", "graph")
+    extract_variables("json_property.jinja", jinja_env)
+  ).does_not_contain_duplicates().contains_only("input_text", "current_nodes")
