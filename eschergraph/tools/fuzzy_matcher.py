@@ -55,7 +55,7 @@ class FuzzyMatcher:
     Returns:
       True if sufficiently similar, False otherwise.
     """
-    return fuzz.token_set_ratio(name1, name2) >= 95
+    return bool(fuzz.token_set_ratio(name1, name2) >= 95)
 
   @staticmethod
   def _find_matches(query: str, names: list[str]) -> tuple[str, list[str]]:

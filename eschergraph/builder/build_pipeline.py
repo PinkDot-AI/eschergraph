@@ -45,6 +45,7 @@ class BuildPipeline:
 
     # Step 3: match the nodes together to extract entities from names
     unique_entities: list[str] = self._get_unique_entities()
+
     updated_logs: list[BuildLog] = NodeMatcher(
       model=self.model, reranker=self.reranker
     ).match(
@@ -56,7 +57,7 @@ class BuildPipeline:
     # Step 4: remove unmatched nodes from the updated logs
 
     # TODO: add persistence of new and old building logs
-    self._save_logs()
+    # self._save_logs()
 
     return updated_logs
 
@@ -74,10 +75,9 @@ class BuildPipeline:
 
   def _handle_nodes_edges_chunk(self, chunk: Chunk) -> None:
     prompt_formatted: str = process_template(JSON_BUILD, {"input_text": chunk.text})
-    json_nodes_edges: NodeEdgeExt = cast(
-      NodeEdgeExt, self.model.get_json_response(prompt=prompt_formatted)
-    )
 
+    answer = self.model.get_json_response(prompt=prompt_formatted)
+    json_nodes_edges: NodeEdgeExt = cast(NodeEdgeExt, answer)
     metadata: Metadata = Metadata(document_id=chunk.doc_id, chunk_id=chunk.chunk_id)
 
     # Add to the building logs
@@ -139,7 +139,7 @@ class BuildPipeline:
 
       # Collect all entities from the properties
       for entity_dict in log.properties:
-        unique_entities.add(entity_dict["entity_name"].lower())
+        unique_entities.add(entity_dict["name"].lower())
 
     return list(unique_entities)
 

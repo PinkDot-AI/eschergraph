@@ -10,6 +10,9 @@ from eschergraph.agents.llm import ModelProvider
 from eschergraph.agents.reranker import Reranker
 from eschergraph.agents.reranker import RerankerResult
 from eschergraph.builder.build_log import BuildLog
+from eschergraph.builder.build_log import EdgeExt
+from eschergraph.builder.build_log import NodeExt
+from eschergraph.builder.build_log import PropertyExt
 from eschergraph.tools.fuzzy_matcher import FuzzyMatcher
 
 JSON_UNIQUE_NODES = "identifying_nodes.jinja"
@@ -56,9 +59,7 @@ class NodeMatcher:
     prompt: str = process_template(
       template_file=JSON_UNIQUE_NODES, data={"entities": ", ".join(suggested_match)}
     )
-    response: Any = self.model.get_formatted_response(
-      prompt=prompt, response_format={"type": "json_object"}
-    )
+    response: Any = self.model.get_json_response(prompt=prompt)
     return response
 
   def _get_unique_nodes(self, suggested_matches: list[set[str]]) -> list[Any]:
@@ -97,34 +98,38 @@ class NodeMatcher:
     return top_result[0].text.split("---")[0]
 
   def _collect_node_info(
-    self, build_log_items: list[BuildLog], nodes: list[str]
+    self, build_log: list[BuildLog], nodes: list[str]
   ) -> dict[str, list[str]]:
     node_info: dict[str, list[str]] = {node: [] for node in nodes}
 
-    for item in build_log_items:
+    for log in build_log:
       # Extracting data from node_edge_json
-      for entity in item.node_edge_json.get("entities", []):
+
+      for entity in log.nodes:
         name = entity.get("name", "").lower()
         for node in nodes:
           if node in name:
             node_info[node].append(entity.get("description", ""))
 
       # Extracting data from relationships in node_edge_json
-      for relationship in item.node_edge_json.get("relationships", []):
+      for relationship in log.edges:
         source = relationship.get("source", "").lower()
         target = relationship.get("target", "").lower()
         for node in nodes:
           if node in source or node in target:
-            node_info[node].append(relationship.get("description", ""))
-
+            description = relationship.get("description", "")
+            if isinstance(description, str):
+              node_info[node].append(description)
       # Extracting data from properties_json
-      if item.properties_json:
-        for entity_dict in item.properties_json["entities"]:
+      if log.properties:
+        log_properties: list[PropertyExt] = log.properties
+        for entity_dict in log_properties:
           for entity_name, property_list in entity_dict.items():
             entity_name_lower = entity_name.lower()
             if entity_name_lower in nodes:
-              for property in property_list:
-                node_info[entity_name_lower].extend(property)
+              if isinstance(property_list, list):
+                for property in property_list:
+                  node_info[entity_name_lower].extend(property)
 
     return node_info
 
@@ -193,34 +198,31 @@ class NodeMatcher:
 
   def _update_log_item(
     self,
-    log_item: BuildLog,
+    log: BuildLog,
     entity: str,
     node_info: dict[str, list[str]],
     assigned_node_cache: dict[str, str],
   ) -> None:
     """Update a single log item with the correct entity names."""
-    node_edge_json = log_item.nodes
-    properties_json = log_item.properties
-
     # reset node cache
     assigned_node_cache = {}
 
     # Process node_edge_json entities
-    for entity_item in node_edge_json.get("entities", []):
+    for entity_item in log.nodes:
       self._replace_entity_name(
         entity_item, "name", entity, node_info, assigned_node_cache
       )
 
     # Process node_edge_json relationships
-    for relationship_item in node_edge_json.get("relationships", []):
+    for relationship_item in log.edges:
       for role in ["source", "target"]:
         self._replace_entity_name(
           relationship_item, role, entity, node_info, assigned_node_cache
         )
 
     # Process properties_json
-    if properties_json:
-      for entity_dict in properties_json["entities"]:
+    if log.properties:
+      for entity_dict in log.properties:
         # Iterate over keys in entity_dict
         for key in list(
           entity_dict.keys()
@@ -240,7 +242,7 @@ class NodeMatcher:
 
   def _replace_entity_name(
     self,
-    item: dict[str, Any],
+    item: NodeExt | EdgeExt,
     key: str,
     entity: str,
     node_info: dict[str, list[str]],

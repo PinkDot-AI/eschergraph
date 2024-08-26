@@ -118,9 +118,6 @@ class OpenAIProvider(ModelProvider, Embedding):
       )
       # Log the tokens that were used
       self._add_token_usage(response)
-      if response_format != NotGiven() and response.choices[0].message.content:
-        return json.loads(response.choices[0].message.content)
-
       return response.choices[0].message.content
     except Exception as e:
       raise ExternalProviderException(e)
