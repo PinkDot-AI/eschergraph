@@ -34,7 +34,7 @@ class ChromaDB(VectorDB):
     self,
     embeddings: list[list[float]],
     documents: list[str],
-    ids: list[str],
+    ids: list[UUID],
     metadata: list[dict[str, str]],
     collection_name: str,
   ) -> None:
@@ -105,7 +105,7 @@ class ChromaDB(VectorDB):
       for i in range(len(result["ids"][0]))
     ]
 
-  def delete_with_id(self, ids: list[str], collection_name: str) -> None:
+  def delete_with_id(self, ids: list[UUID], collection_name: str) -> None:
     """Deletes records from a specified collection using their unique IDs.
 
     Args:
