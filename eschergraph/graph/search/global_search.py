@@ -9,7 +9,7 @@ from uuid import UUID
 
 from eschergraph.agents.embedding import Embedding
 from eschergraph.agents.jinja_helper import process_template
-from eschergraph.agents.llm import Model
+from eschergraph.agents.llm import ModelProvider
 from eschergraph.agents.reranker import Reranker
 from eschergraph.exceptions import ExternalProviderException
 from eschergraph.graph.graph import Graph
@@ -21,7 +21,7 @@ from eschergraph.graph.property import Property
 def search_global(
   graph: Graph,
   prompt: str,
-  llm: Model,
+  llm: ModelProvider,
   reranker: Reranker,
   embedder: Embedding,
   vecdb: VectorDB,
@@ -34,9 +34,9 @@ def search_global(
   Args:
     graph (Graph): A graph object
     prompt (str): The question to answer
-    llm (Model): The large language model to use
-    reranker (Reranker): The reranker model to use
-    embedder (Embed): The embedding model
+    llm (ModelProvider): The large language ModelProvider to use
+    reranker (Reranker): The reranker ModelProvider to use
+    embedder (Embed): The embedding ModelProvider
     vecdb (VectorDB): The vector database
     collection_name (str): The collection of the vector database to use
   """
@@ -75,10 +75,10 @@ def retrieve_similar_properties(
   Args:
     graph (Graph): Graph object
     prompt (str): Question or statement to be searched for in the graph
-    embedder (Embed): Embedding model for vector search
+    embedder (Embed): Embedding ModelProvider for vector search
     vecdb (VectorDB): The vector database
     collection_name (str): The collection of the vector database to use
-    reranker (Reranker): The reranker model
+    reranker (Reranker): The reranker ModelProvider
     levels_to_search (int): How many graph levels to search from the max. Defaults to 3.
     properties_to_return (int): Maximum properties to return. Defaults to 10.
     top_vec_results (int): Maximum nodes to be used per level. Defaults to 5.
@@ -119,7 +119,7 @@ def retrieve_similar_properties(
 
 def retrieve_key_properties(
   graph: Graph,
-  llm: Model,
+  llm: ModelProvider,
   n: int = 2,
   sorted: bool = True,
   level: Optional[int] = None,
@@ -128,7 +128,7 @@ def retrieve_key_properties(
 
   Args:
     graph (Graph): A graph with at least a depth of _level_
-    llm (Model): Model to use when _sorted_=False
+    llm (ModelProvider): ModelProvider to use when _sorted_=False
     n (int): Top properties to retrieve per node. Defaults to 2.
     sorted (bool): Sort the findings in nodes on impact/importance if this has not been done yet at graph creation. Defaults to True.
     level (Optional[int]): Specify specific node level other than max level.
@@ -150,12 +150,12 @@ def retrieve_key_properties(
   return key_props
 
 
-def order_properties(nd: Node, llm: Model) -> List[Property]:
+def order_properties(nd: Node, llm: ModelProvider) -> List[Property]:
   """Order the properties of a node.
 
   Args:
     nd (Node): The node of which to order the properties
-    llm (Model): The llm with which to order the properties
+    llm (ModelProvider): The llm with which to order the properties
   Returns:
     Dict[str, List[dict]]: a dict with ordered properties
   """
@@ -177,12 +177,12 @@ def order_properties(nd: Node, llm: Model) -> List[Property]:
   return [Property.create(nd, description=prop["explanation"]) for prop in output]
 
 
-def extract_entities_from(query: str, llm: Model) -> List[str]:
+def extract_entities_from(query: str, llm: ModelProvider) -> List[str]:
   """Extract entities from query.
 
   Args:
       query (str): Text
-      llm (Model): A large language model class
+      llm (ModelProvider): A large language ModelProvider class
   Returns:
       List[str]: list of entities
   """
