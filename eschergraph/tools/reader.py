@@ -39,7 +39,7 @@ class Reader:
   """
 
   file_location: str
-  multimodal: bool
+  multimodal: bool = False
   optimal_tokens: int = 400
   chunk_size: int = 1500
   overlap: int = 300

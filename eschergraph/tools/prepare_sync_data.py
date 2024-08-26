@@ -23,7 +23,7 @@ def prepare_sync_data(
   """
   docs: list[str] = []
   ids: list[UUID] = []
-  metadata: list[dict[str, Any]] = []
+  metadata: list[dict[str, object]] = []
   ids_to_delete: list[UUID] = []
 
   for log in repository.get_change_log():
@@ -35,24 +35,30 @@ def prepare_sync_data(
 
     # Prepare metadata based on log type
     metadata_entry = {"level": level, "chunk_id": "", "document_id": ""}
-    if isinstance(log.type, Node):
-      node: Node = repository.get_node_by_id(log.id)
+    if log.type == Node:
+      node: Node | None = repository.get_node_by_id(log.id)
+      if not node:
+        continue
       docs.append(node.name)
       metadata_entry.update({
         "type": "node",
         "entity_frm": "",
         "entity_to": "",
       })
-    elif isinstance(log.type, Edge):
-      edge: Edge = repository.get_edge_by_id(log.id)
+    elif log.type == Edge:
+      edge: Edge | None = repository.get_edge_by_id(log.id)
+      if not edge:
+        continue
       docs.append(edge.description)
       metadata_entry.update({
         "type": "edge",
         "entity_frm": edge.frm.name,
         "entity_to": edge.to.name,
       })
-    elif isinstance(log.type, Property):
-      property: Property = repository.get_property_by_id(log.id)
+    elif log.type == Property:
+      property: Property | None = repository.get_property_by_id(log.id)
+      if not property:
+        continue
       docs.append(property.description)
       metadata_entry.update({
         "type": "property",
@@ -61,7 +67,6 @@ def prepare_sync_data(
       })
     else:
       continue  # Skip logs that are neither Node, Edge, nor Property
-
     metadata.append(metadata_entry)
     ids.append(log.id)
 
