@@ -1,14 +1,9 @@
 from __future__ import annotations
 
-import os
-
 from attrs import define
 from attrs import field
 from dotenv import load_dotenv
 
-from eschergraph.agents.embedding import Embedding
-from eschergraph.agents.providers.openai import ChatGPT
-from eschergraph.agents.providers.openai import OpenAIModel
 from eschergraph.graph.edge import Edge
 from eschergraph.graph.node import Node
 from eschergraph.graph.persistence import Metadata
@@ -28,23 +23,6 @@ class Graph:
   name: str
   repository: Repository = field(factory=get_default_repository)
   vector_db: VectorDB = field(factory=get_vector_db)
-  embedding_model: Embedding | None = field(factory=None)
-
-  def __init__(self) -> None:
-    """This is the initializer of the graph class for getting the vectordb."""
-    self.vector_db = get_vector_db()
-    # Retrieve the API key from the environment
-    api_key = os.getenv("OPENAI_API_KEY")
-    if api_key is None:
-      raise ValueError(
-        "API key is not set. Please set the OPENAI_API_KEY environment variable."
-      )
-
-    # Initialize the embedding model if it's not already provided
-    if self.embedding_model is None:
-      self.embedding_model = ChatGPT(
-        model=OpenAIModel.TEXT_EMBEDDING_LARGE, api_key=api_key
-      )
 
   def add_node(
     self,
@@ -123,11 +101,8 @@ class Graph:
       self.vector_db.delete_with_id(ids_to_delete, collection_name)
 
     # Embed all new or updated entries and insert into the vector database
-    if docs and self.embedding_model:
-      embeddings: list[list[float]] = self.embedding_model.get_embedding(list_text=docs)
-
+    if docs:
       self.vector_db.insert_documents(
-        embeddings=embeddings,
         documents=docs,
         ids=ids,
         metadata=metadata,

@@ -172,7 +172,7 @@ class ChatGPT(Model, Embedding):
         )
       )
 
-  def get_embedding(self, text_list: list[str]) -> list[list[float]]:
+  def get_embedding(self, list_text: list[str]) -> list[list[float]]:
     """Generates embeddings for a list of text inputs using a specified model.
 
     This method takes a list of strings, processes each string by replacing newline characters with spaces,
@@ -180,19 +180,19 @@ class ChatGPT(Model, Embedding):
     a list containing an empty list.
 
     Args:
-        text_list (list[str]): A list of text strings for which embeddings are to be generated.
+        list_text (list[str]): A list of text strings for which embeddings are to be generated.
 
     Returns:
         list[list[float]]: A list of embeddings, where each embedding is a list of floats corresponding to
         the input text. If the input list is empty, returns a list containing an empty list.
     """
     # Handle empty lists
-    if not len(text_list) > 0:
+    if not len(list_text) > 0:
       return [[]]
 
     model = "text-embedding-3-large"
-    text_list = [t.replace("\n", " ") for t in text_list]
-    response = self.client.embeddings.create(input=text_list, model=model).data
+    list_text = [t.replace("\n", " ") for t in list_text]
+    response = self.client.embeddings.create(input=list_text, model=model).data
     return [e.embedding for e in response]
 
   @staticmethod
