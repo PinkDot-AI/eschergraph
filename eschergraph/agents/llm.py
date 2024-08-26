@@ -31,6 +31,7 @@ class TokenUsage:
   total_tokens: int
 
 
+@define
 class Model(ABC):
   """The abstract base class for all the LLMs used in the package."""
 

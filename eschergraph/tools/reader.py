@@ -7,14 +7,14 @@ from typing import Optional
 from uuid import UUID
 from uuid import uuid4
 
-import requests
 import tiktoken
 from attrs import define
 from attrs import field
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-from eschergraph.exceptions import ExternalProviderException
 from eschergraph.exceptions import FileTypeNotProcessableException
+from eschergraph.tools.fast_pdf_parser import FastPdfParser
+from eschergraph.tools.fast_pdf_parser import PdfParsedSegment
 
 
 @define
@@ -52,16 +52,33 @@ class Reader:
     """The name of the file that is being parsed."""
     return os.path.basename(self.file_location)
 
-  def _get_document_analysis(self) -> Any:
+  def parse(self) -> list[Chunk] | None:
+    """This is the main function that parses the document."""
+    start_time: float = time.time()
+    if self.file_location.endswith(".txt"):
+      # Handle txt file
+      self._handle_plain_text()
+    elif self.file_location.endswith(".pdf"):
+      # Handle pdf file
+      response_json = self._get_document_analysis()
+      if response_json:
+        self._handle_json_response(response_json)
+    else:
+      # Raise an exception for unsupported file types
+      raise FileTypeNotProcessableException(
+        f"File type of {self.file_location} is not processable."
+      )
+
+    total_tokens: int = sum(self._count_tokens(c.text) for c in self.chunks)
+    self.total_tokens = total_tokens
+    print(
+      f"Parsed {self.file_location} with multimodal = {self.multimodal} into {len(self.chunks)} chunks, {self.total_tokens} tokens, in {round(time.time() - start_time, 3)} seconds"
+    )
+    return self.chunks
+
+  def _get_document_analysis(self) -> list[PdfParsedSegment]:
     # Send the file to the specified URL and get the response
-    with open(self.file_location, "rb") as file:
-      files = {"file": file}
-      response = requests.post("http://localhost:5060/document-analysis", files=files)
-    # Check if the response is in JSON format and process it
-    try:
-      return response.json()
-    except Exception as e:
-      raise ExternalProviderException from e
+    return FastPdfParser.parse(file_path=self.file_location)
 
   def _handle_json_response(self, response_json: Any) -> None:
     current_chunk: list[str] = []
@@ -114,7 +131,7 @@ class Reader:
   @staticmethod
   def _count_tokens(text: str) -> int:
     tokenizer = tiktoken.get_encoding("cl100k_base")
-    tokens: list[str] = tokenizer.encode(text)
+    tokens: list[int] = tokenizer.encode(text)
     return len(tokens)
 
   def _process_text_chunk(
@@ -157,30 +174,6 @@ class Reader:
           )
         )
     self.chunks = chunks
-
-  def parse(self) -> list[Chunk] | None:
-    """This is the main function that parses the document."""
-    start_time: float = time.time()
-    if self.file_location.endswith(".txt"):
-      # Handle txt file
-      self._handle_plain_text()
-    elif self.file_location.endswith(".pdf"):
-      # Handle pdf file
-      response_json = self._get_document_analysis()
-      if response_json:
-        self._handle_json_response(response_json)
-    else:
-      # Raise an exception for unsupported file types
-      raise FileTypeNotProcessableException(
-        f"File type of {self.file_location} is not processable."
-      )
-
-    total_tokens: int = sum(self._count_tokens(c.text) for c in self.chunks)
-    self.total_tokens = total_tokens
-    print(
-      f"Parsed {self.file_location} with multimodal = {self.multimodal} into {len(self.chunks)} chunks, {self.total_tokens} tokens, in {round(time.time() - start_time, 3)} seconds"
-    )
-    return self.chunks
 
   def _chunk_filter(self, chunk: str) -> bool:
     min_length = 100
