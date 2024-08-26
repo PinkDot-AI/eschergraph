@@ -11,6 +11,7 @@ from eschergraph.agents.jinja_helper import process_template
 from eschergraph.agents.llm import Model
 from eschergraph.exceptions import EdgeDoesNotExistException
 from eschergraph.exceptions import ExternalProviderException
+from eschergraph.graph.comm_graph import CommunityGraphResult
 from eschergraph.graph.community_alg import get_leidenalg_communities
 from eschergraph.graph.edge import Edge
 from eschergraph.graph.node import Node
@@ -18,6 +19,9 @@ from eschergraph.graph.persistence import Metadata
 from eschergraph.graph.persistence import Repository
 from eschergraph.graph.persistence.factory import get_default_repository
 from eschergraph.graph.property import Property
+
+COMMUNITY_TEMPLATE: str = "community_prompt.jinja"
+TEMPLATE_IMPORTANCE: str = "search/importance_rank.jinja"
 
 
 @define
@@ -95,40 +99,42 @@ class Graph:
         llm (Model): LLM to create community reports
 
     """
-    nodes = self.repository.get_all_at_level(from_level)
-    comms = get_leidenalg_communities(nodes)
+    nodes: list[Node] = self.repository.get_all_at_level(from_level)
+    comms: CommunityGraphResult = get_leidenalg_communities(nodes)
 
     # Transform nodes of graph to dict for faster lookup
-    node_lookup = {nd.id: nd for nd in nodes}
+    node_lookup: dict[UUID, Node] = {nd.id: nd for nd in nodes}
     # Map every node to its community
-    node_comm = {nd: idx for idx, comm in enumerate(comms.partitions) for nd in comm}
+    node_comm: dict[UUID, int] = {
+      nd: idx for idx, comm in enumerate(comms.partitions) for nd in comm
+    }
 
     edges: list[Edge] = []
-    nodes_tmp: dict[int, Node] = dict()
+    # Create an empty community node for each community
+    nodes_tmp: dict[int, Node] = {
+      idx: self._create_empty_community_node(comms.partitions[idx], from_level + 1)
+      for idx in set(node_comm.values())
+    }
+
     # Add edges between community nodes
     for edge_id in comms.edges:
       edge = self.repository.get_edge_by_id(edge_id)
       if edge is None:
         raise EdgeDoesNotExistException(f"Edge {edge_id} could not be found")
-      frm = node_comm[edge.frm.id]
-      to = node_comm[edge.to.id]
-      if frm != to:
-        if frm not in nodes_tmp:
-          nodes_tmp[frm] = self._create_empty_community_node(
-            comms.partitions[frm], from_level + 1
-          )
-        if to not in nodes_tmp:
-          nodes_tmp[to] = self._create_empty_community_node(
-            comms.partitions[to], from_level + 1
-          )
-        new_edge = Edge.create(frm=nodes_tmp[frm], to=nodes_tmp[to], description="")
-        edges.append(new_edge)
 
-    comm_template = "community_prompt.jinja"
-    template_importance = "search/importance_rank.jinja"
+      frm: int = node_comm[edge.frm.id]
+      to: int = node_comm[edge.to.id]
+
+      # Only use the edges that exist between communities
+      if frm == to:
+        continue
+
+      new_edge = Edge.create(frm=nodes_tmp[frm], to=nodes_tmp[to], description="")
+      edges.append(new_edge)
+
     for k, v in nodes_tmp.items():
-      idx = node_comm[v.id]
-      prop_format = "node_name,property\n" + "\n".join(
+      idx: int = node_comm[v.id]
+      prop_format: str = "node_name,property\n" + "\n".join(
         f"{node_lookup[nd_id].name},{prop.description}"
         for nd_id in comms.partitions[idx]
         for prop in node_lookup[nd_id].properties
@@ -137,12 +143,12 @@ class Graph:
       edge_relations = self._gather_community_edges(
         self.repository, comms.edges, comms.partitions[idx]
       )
-      edge_format = "from,to,description\n" + "\n".join(
+      edge_format: str = "from,to,description\n" + "\n".join(
         f"{ed.frm.name},{ed.to.name},{ed.description}" for ed in edge_relations
       )
 
       prompt = process_template(
-        comm_template,
+        COMMUNITY_TEMPLATE,
         {
           "relationships": edge_format,
           "properties": prop_format,
@@ -162,7 +168,7 @@ class Graph:
           "LLM JSON Response did not contain correct keys"
         )
       jsonized = json.dumps(parsed_json["findings"], indent=4)
-      prompt = process_template(template_importance, {"json_list": jsonized})
+      prompt = process_template(TEMPLATE_IMPORTANCE, {"json_list": jsonized})
 
       res_reorder = llm.get_formatted_response(
         prompt=prompt, response_format={"type": "json_schema"}
