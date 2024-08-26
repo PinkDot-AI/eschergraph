@@ -7,10 +7,10 @@ from attrs import define
 from attrs import field
 
 from eschergraph.exceptions import EdgeCreationException
+from eschergraph.exceptions import RepositoryException
 from eschergraph.graph.base import EscherBase
 from eschergraph.graph.loading import LoadState
 from eschergraph.graph.persistence import Metadata
-from eschergraph.graph.persistence import Repository
 from eschergraph.graph.utils import loading_getter_setter
 
 # Prevent circular import errors
@@ -43,7 +43,6 @@ class Edge(EscherBase):
     frm: Node,
     to: Node,
     description: str,
-    repository: Repository,
     metadata: Optional[set[Metadata]] = None,
   ) -> Edge:
     """The method that allows for the creation of a new edge.
@@ -55,7 +54,6 @@ class Edge(EscherBase):
       frm (Node): The from node in the edge.
       to (Node): The to node in the edge.
       description (str): A rich description of the relation.
-      repository (Repository): The repository used for persistence.
       metadata (Optional[set[Metadata]]): The optional metadata for the edge.
 
     Returns:
@@ -65,11 +63,17 @@ class Edge(EscherBase):
       raise EdgeCreationException(
         "An edge should be created between two different nodes."
       )
+
+    if not frm.repository is to.repository:
+      raise RepositoryException(
+        "The two nodes that are connected by an edge need to have the same repository."
+      )
+
     edge: Edge = cls(
       frm=frm,
       to=to,
       description=description,
-      repository=repository,
+      repository=frm.repository,
       metadata=metadata if metadata else set(),
       loadstate=LoadState.FULL,
     )
