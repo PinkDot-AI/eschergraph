@@ -117,42 +117,24 @@ class OpenAIProvider(ModelProvider, Embedding):
         response_format=response_format,
       )
       # Log the tokens that were used
-      self._add_token_usage(response)
+      # self._add_token_usage(response)
       return response.choices[0].message.content
     except Exception as e:
+      print(e)
       raise ExternalProviderException(e)
 
-  def get_json_response(
-    self, prompt: str, model: str | None = None, temperature: float = 0.1
-  ) -> str | None:
-    """Get a json text response from ChatGPT.
+  def get_json_reponse(self, prompt: str) -> str | None:
+    """Get a text json response from OpenAI.
 
     Note that the model that is used is specified when instantiating the class.
 
     Args:
       prompt (str): The user prompt that is send to ChatGPT.
-      model (str|None): the option for setting the model.
-      temperature(float): setting the temperature for the llm
 
     Returns:
       The answer given or None.
     """
-    messages: list[ChatCompletionMessageParam] = self._get_messages(prompt)
-
-    if not model:
-      model = self.model.value
-    try:
-      response: ChatCompletion = self.client.chat.completions.create(
-        model=model,
-        messages=messages,
-        temperature=temperature,
-        response_format={"type": "json_object"},
-      )
-      # Log the tokens that were used
-      self._add_token_usage(response)
-      return response.choices[0].message.content
-    except Exception as e:
-      raise ExternalProviderException(e)
+    return self._get_response(prompt, response_format={"type": "json_object"})
 
   def get_function_calls(self, prompt: str, tools: list[Tool]) -> list[FunctionCall]:
     """Get function calls from ChatGPT.
@@ -215,7 +197,7 @@ class OpenAIProvider(ModelProvider, Embedding):
         )
       )
 
-  def get_embedding(self, text_list: list[str]) -> list[list[float]]:
+  def get_embedding(self, list_text: list[str]) -> list[list[float]]:
     """Generates embeddings for a list of text inputs using a specified model.
 
     This method takes a list of strings, processes each string by replacing newline characters with spaces,
@@ -223,19 +205,19 @@ class OpenAIProvider(ModelProvider, Embedding):
     a list containing an empty list.
 
     Args:
-        text_list (list[str]): A list of text strings for which embeddings are to be generated.
+        list_text (list[str]): A list of text strings for which embeddings are to be generated.
 
     Returns:
         list[list[float]]: A list of embeddings, where each embedding is a list of floats corresponding to
         the input text. If the input list is empty, returns a list containing an empty list.
     """
     # Handle empty lists
-    if not len(text_list) > 0:
+    if not len(list_text) > 0:
       return [[]]
 
     model = "text-embedding-3-large"
-    text_list = [t.replace("\n", " ") for t in text_list]
-    response = self.client.embeddings.create(input=text_list, model=model).data
+    list_text = [t.replace("\n", " ") for t in list_text]
+    response = self.client.embeddings.create(input=list_text, model=model).data
     return [e.embedding for e in response]
 
   @staticmethod

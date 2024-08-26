@@ -17,23 +17,23 @@ Here are some examples:
 
 Example 1:
 Query: "Compare the market share of Google and Microsoft in the cloud computing industry."
-Output: {"entities": ["Google", "Microsoft"]}
+Output: {'entities':["Google", "Microsoft"]}
 
 Example 2:
 Query: "How many planets are in the solar system?"
-Output: {"entities": []}
+Output: {'entities':[]}
 
 Example 3:
 Query: "What is the capital of France?"
-Output: {"entities": ["France"]}
+Output: {'entities':["France"]}
 
 Example 4:
 Query: "Describe the 5 main themes in the article"
-Output: {"entities": []}
+Output: {'entities':[]}
 
 6. Important notes:
    - If the same entity is mentioned multiple times, include it only once in the output.
    - Do not include any explanation or additional text in your output, just the JSON list.
 
 Query: {{ query }}
-Output:
+Output: 

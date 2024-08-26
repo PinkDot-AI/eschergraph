@@ -7,7 +7,6 @@ from typing import List
 from typing import Optional
 from uuid import UUID
 
-from eschergraph.agents.embedding import Embedding
 from eschergraph.agents.jinja_helper import process_template
 from eschergraph.agents.llm import ModelProvider
 from eschergraph.agents.reranker import Reranker
@@ -23,7 +22,6 @@ def search_global(
   prompt: str,
   llm: ModelProvider,
   reranker: Reranker,
-  embedder: Embedding,
   vecdb: VectorDB,
   collection_name: str,
 ) -> str | None:
@@ -34,9 +32,8 @@ def search_global(
   Args:
     graph (Graph): A graph object
     prompt (str): The question to answer
-    llm (ModelProvider): The large language ModelProvider to use
-    reranker (Reranker): The reranker ModelProvider to use
-    embedder (Embed): The embedding ModelProvider
+    llm (Model): The large language model to use
+    reranker (Reranker): The reranker model to use
     vecdb (VectorDB): The vector database
     collection_name (str): The collection of the vector database to use
   """
@@ -46,7 +43,6 @@ def search_global(
     props = retrieve_similar_properties(
       graph=graph,
       prompt=prompt,
-      embedder=embedder,
       vecdb=vecdb,
       collection_name=collection_name,
       reranker=reranker,
@@ -61,7 +57,6 @@ def search_global(
 def retrieve_similar_properties(
   graph: Graph,
   prompt: str,
-  embedder: Embedding,
   vecdb: VectorDB,
   collection_name: str,
   reranker: Reranker,
@@ -75,7 +70,6 @@ def retrieve_similar_properties(
   Args:
     graph (Graph): Graph object
     prompt (str): Question or statement to be searched for in the graph
-    embedder (Embed): Embedding ModelProvider for vector search
     vecdb (VectorDB): The vector database
     collection_name (str): The collection of the vector database to use
     reranker (Reranker): The reranker ModelProvider
@@ -90,12 +84,12 @@ def retrieve_similar_properties(
   # Search is done from top level
   curr_level = graph.repository.get_max_level()
   stop_level = max(curr_level - levels_to_search, 0)
-  embedded_prompt = embedder.get_embedding([prompt])[0]
+
   search_res: List[Node | None] = []
   while curr_level >= stop_level:
     res = vecdb.format_search_results(
       vecdb.search(
-        embedded_prompt,
+        query=prompt,
         top_n=top_vec_results,
         metadata={"level": curr_level},
         collection_name=collection_name,
@@ -194,16 +188,14 @@ def extract_entities_from(query: str, llm: ModelProvider) -> List[str]:
   res = llm.get_formatted_response(
     prompt=prompt, response_format={"type": "json_object"}
   )
+  res = llm.get_formatted_response(
+    prompt=prompt, response_format={"type": "json_object"}
+  )
   if res is None:
     raise ExternalProviderException("Empty message response while extracting entities")
-  data = json.loads(res)
-  if (
-    "entities" not in data
-    or not all(isinstance(item, str) for item in data["entities"])
-    or not isinstance(data["entities"], list)
-  ):
-    raise ValueError(
-      "Something went wrong with the LLM output, expected a {'entities': []} but got: ",
-      data,
-    )
-  return data["entities"]
+  try:
+    data: dict[str, list[str]] = json.loads(res)
+    return data["entities"]
+
+  except:
+    raise ExternalProviderException("jsonify failed at extracting entities from query")

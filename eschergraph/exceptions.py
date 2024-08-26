@@ -45,3 +45,7 @@ class ExternalDependencyException(BaseEscherGraphException):
 
 class RepositoryException(BaseEscherGraphException):
   """When something unexpected happens with the repository."""
+
+
+class EdgeDoesNotExistException(BaseEscherGraphException):
+  """The specified edge could not be found."""

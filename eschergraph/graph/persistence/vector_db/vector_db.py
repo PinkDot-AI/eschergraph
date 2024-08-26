@@ -7,8 +7,6 @@ from typing import Dict
 from typing import List
 from uuid import UUID
 
-from eschergraph.graph.persistence.change_log import ChangeLog
-
 
 class VectorDB(ABC):
   """This is the abstract base class for all vector DB implementations."""
@@ -30,7 +28,6 @@ class VectorDB(ABC):
   @abstractmethod
   def insert(
     self,
-    embeddings: List[List[float]],
     documents: List[str],
     ids: List[UUID],
     metadata: List[Dict[str, str]],
@@ -50,7 +47,7 @@ class VectorDB(ABC):
   @abstractmethod
   def search(
     self,
-    embedding: List[float],
+    query: str,
     top_n: int,
     metadata: Dict[str, Any],
     collection_name: str,
@@ -58,7 +55,7 @@ class VectorDB(ABC):
     """Search for the top_n documents that are most similar to the given embedding.
 
     Args:
-      embedding (list[float]): Embedding of the query document.
+      query (str): the query to search for
       top_n (int): Number of top documents to retrieve.
       metadata (dict[str, Any]): Metadata to filter the search results.
       collection_name (str): The name of the collection.
@@ -80,18 +77,6 @@ class VectorDB(ABC):
 
     Returns:
         Dict[str, int | str | float | dict]: A list of dictionaries containing a standardized format
-    """
-    raise NotImplementedError
-
-  @abstractmethod
-  def sync(self, change_log: list[ChangeLog]) -> None:
-    """Sync the vector database to the repository.
-
-    The vector database updates its embeddings based on the logged
-    changes to EscherBase objects.
-
-    Args:
-      change_log (list[ChangeLog]): The list of logged changes.
     """
     raise NotImplementedError
 
