@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 from enum import Enum
 
-from attr import field
 from attrs import define
 from openai import NotGiven
 from openai import OpenAI
@@ -46,12 +45,12 @@ class OpenAIModel(Enum):
   TEXT_EMBEDDING_LARGE: str = "text-embedding-3-large"
 
 
-@define
+@define(kw_only=True)
 class ChatGPT(Model, Embedding):
   """The class that handles communication with the OpenAI API."""
 
   model: OpenAIModel
-  api_key: str = field(kw_only=True)
+  api_key: str
 
   @property
   def client(self) -> OpenAI:
@@ -95,10 +94,7 @@ class ChatGPT(Model, Embedding):
     response_format: ResponseFormat | NotGiven = NotGiven(),
   ) -> str | None:
     messages: list[ChatCompletionMessageParam] = self._get_messages(prompt)
-    messages.append(
-      ChatCompletionSystemMessageParam(role="system", content=SYSTEM_MESSAGE)
-    )
-    messages.append(ChatCompletionUserMessageParam(role="user", content=prompt))
+
     try:
       response: ChatCompletion = self.client.chat.completions.create(
         model=self.model.value,
@@ -106,10 +102,24 @@ class ChatGPT(Model, Embedding):
         response_format=response_format,
       )
       # Log the tokens that were used
-      self._add_token_usage(response)
+      # self._add_token_usage(response)
       return response.choices[0].message.content
     except Exception as e:
+      print(e)
       raise ExternalProviderException(e)
+
+  def get_json_reponse(self, prompt: str) -> str | None:
+    """Get a text json response from OpenAI.
+
+    Note that the model that is used is specified when instantiating the class.
+
+    Args:
+      prompt (str): The user prompt that is send to ChatGPT.
+
+    Returns:
+      The answer given or None.
+    """
+    return self._get_response(prompt, response_format={"type": "json_object"})
 
   def get_function_calls(self, prompt: str, tools: list[Tool]) -> list[FunctionCall]:
     """Get function calls from ChatGPT.

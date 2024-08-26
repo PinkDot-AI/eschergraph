@@ -170,7 +170,7 @@ def order_properties(nd: Node, llm: Model) -> List[Property]:
   return [Property.create(nd, description=prop["explanation"]) for prop in output]
 
 
-def extract_entities_from(query: str, llm: Model) -> List[str]:
+def extract_entities_from(query: str, llm: Model) -> list[str]:
   """Extract entities from query.
 
   Args:
@@ -184,10 +184,17 @@ def extract_entities_from(query: str, llm: Model) -> List[str]:
     entity_extraction_template,
     {"query": query},
   )
-  res = llm.get_plain_response(prompt=prompt)
+  res = llm.get_formatted_response(
+    prompt=prompt, response_format={"type": "json_object"}
+  )
+  res = llm.get_formatted_response(
+    prompt=prompt, response_format={"type": "json_object"}
+  )
   if res is None:
     raise ExternalProviderException("Empty message response while extracting entities")
-  data = json.loads(res)
-  if not isinstance(data, list) or not all(isinstance(item, str) for item in data):
-    raise ValueError("Expected a list of strings")
-  return data
+  try:
+    data: dict[str, list[str]] = json.loads(res)
+    return data["entities"]
+
+  except:
+    raise ExternalProviderException("jsonify failed at extracting entities from query")
