@@ -123,16 +123,13 @@ class Graph:
       self.vector_db.delete_with_id(ids_to_delete, collection_name)
 
     # Embed all new or updated entries and insert into the vector database
-    if docs:
-      if self.embedding_model:
-        embeddings: list[list[float]] = self.embedding_model.get_embedding(
-          list_text=docs
-        )
+    if docs and self.embedding_model:
+      embeddings: list[list[float]] = self.embedding_model.get_embedding(list_text=docs)
 
-        self.vector_db.insert_documents(
-          embeddings=embeddings,
-          documents=docs,
-          ids=ids,
-          metadata=metadata,
-          collection_name=collection_name,
-        )
+      self.vector_db.insert_documents(
+        embeddings=embeddings,
+        documents=docs,
+        ids=ids,
+        metadata=metadata,
+        collection_name=collection_name,
+      )
