@@ -14,7 +14,7 @@ class VectorDB(ABC):
   @abstractmethod
   def connect(self) -> None:
     """Possible connection method."""
-    pass
+    raise NotImplementedError
 
   @abstractmethod
   def create_collection(self, name: str) -> None:
@@ -23,14 +23,13 @@ class VectorDB(ABC):
     Args:
       name (str): Name for the collection.
     """
-    pass
+    raise NotImplementedError
 
   @abstractmethod
   def insert_documents(
     self,
-    embeddings: List[List[float]],
     documents: List[str],
-    ids: List[str],
+    ids: List[UUID],
     metadata: List[Dict[str, str]],
     collection_name: str,
   ) -> None:
@@ -43,12 +42,12 @@ class VectorDB(ABC):
       metadata (List[dict[str, Any]]): List of metadata dictionaries.
       collection_name (str): The name of the collection.
     """
-    pass
+    raise NotImplementedError
 
   @abstractmethod
   def search(
     self,
-    embedding: List[float],
+    query: str,
     top_n: int,
     metadata: Dict[str, Any],
     collection_name: str,
@@ -56,7 +55,7 @@ class VectorDB(ABC):
     """Search for the top_n documents that are most similar to the given embedding.
 
     Args:
-      embedding (list[float]): Embedding of the query document.
+      query (str): the query to search for
       top_n (int): Number of top documents to retrieve.
       metadata (dict[str, str]): Metadata to filter the search results.
       collection_name (str): The collection's name.
@@ -64,7 +63,7 @@ class VectorDB(ABC):
     Returns:
       dict[str, str]: List of documents that match the query.
     """
-    pass
+    raise NotImplementedError
 
   @abstractmethod
   def format_search_results(
@@ -79,7 +78,7 @@ class VectorDB(ABC):
     Returns:
         Dict[str, int | str | float | dict]: A list of dictionaries containing a standardized format
     """
-    pass
+    raise NotImplementedError
 
   @abstractmethod
   def delete_with_metadata(
@@ -98,7 +97,7 @@ class VectorDB(ABC):
   @abstractmethod
   def delete_with_id(
     self,
-    ids: list[str],
+    ids: list[UUID],
     collection_name: str,
   ) -> None:
     """Delete an item in the vectordb by its id.
