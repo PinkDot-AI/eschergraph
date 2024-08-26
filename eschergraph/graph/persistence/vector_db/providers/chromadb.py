@@ -7,19 +7,22 @@ from uuid import UUID
 
 import chromadb
 
+from eschergraph.agents.embedding import Embedding
+from eschergraph.agents.embedding import get_embedding_model
 from eschergraph.graph.persistence.vector_db.vector_db import VectorDB
 
 
 class ChromaDB(VectorDB):
   """This is the ChromaDB implementation."""
 
-  def __init__(self) -> None:
+  def __init__(self, embedding_model: str = "text_embedding_3_large") -> None:
     """Initialize the ChromaDB client."""
     self.client = chromadb.Client()
+    self.embedding_model: Embedding = get_embedding_model(embedding_model)
 
   def connect(self) -> None:
-    """Connect to ChromaDB. Currently a placeholder function."""
-    pass
+    """Connect to ChromaDB. Currently not used."""
+    ...
 
   def create_collection(self, name: str) -> None:
     """Create a new collection in ChromaDB.
@@ -31,22 +34,21 @@ class ChromaDB(VectorDB):
 
   def insert_documents(
     self,
-    embeddings: list[list[float]],
     documents: list[str],
-    ids: list[str],
+    ids: list[UUID],
     metadata: list[dict[str, str]],
     collection_name: str,
   ) -> None:
     """Insert documents into a ChromaDB collection.
 
     Args:
-      embeddings (list[list[float]]): List of embeddings for the documents.
       documents (list[str]): List of documents to be added.
       ids (list[str]): List of IDs corresponding to each document.
       metadata (list[dict]): List of metadata dictionaries for each document.
       collection_name (str): Name of the collection to add documents to.
     """
     collection = self.client.get_collection(name=collection_name)
+    embeddings = self.embedding_model.get_embedding(list_text=documents)
     collection.add(
       documents=documents,
       ids=ids,
@@ -56,7 +58,7 @@ class ChromaDB(VectorDB):
 
   def search(
     self,
-    embedding: list[float],
+    query: str,
     top_n: int,
     metadata: dict[str, Any],
     collection_name: str,
@@ -64,7 +66,7 @@ class ChromaDB(VectorDB):
     """Search for documents in a ChromaDB collection.
 
     Args:
-      embedding (list[float]): The embedding to search for.
+      query (list[float]): The query to search for.
       top_n (int): The number of top results to return.
       metadata (dict): Metadata to filter the search results.
       collection_name (str): Name of the collection to search in.
@@ -72,12 +74,13 @@ class ChromaDB(VectorDB):
     Returns:
       dict: Search results containing the documents.
     """
+    embedding = self.embedding_model.get_embedding([query])
     collection = self.client.get_collection(name=collection_name)
     results: dict[str, str] = collection.query(
-      query_embeddings=[embedding],
+      query_embeddings=embedding,
       n_results=top_n,
       where=metadata,
-      include=["documents"],
+      include=["documents", "metadatas", "distances"],
     )
 
     return results
@@ -104,7 +107,7 @@ class ChromaDB(VectorDB):
       for i in range(len(result["ids"][0]))
     ]
 
-  def delete_with_id(self, ids: list[str], collection_name: str) -> None:
+  def delete_with_id(self, ids: list[UUID], collection_name: str) -> None:
     """Deletes records from a specified collection using their unique IDs.
 
     Args:

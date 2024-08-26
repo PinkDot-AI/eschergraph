@@ -93,13 +93,12 @@ def retrieve_similar_findings(
   # Search is done from top level
   curr_level = graph.repository.get_max_level()
   stop_level = max(curr_level - levels_to_search, 0)
-  embedded_prompt = embedder.get_embedding([prompt])[0]
 
   search_res: List[Node | None] = []
   while curr_level >= stop_level:
     res = vecdb.format_search_results(
       vecdb.search(
-        embedded_prompt,
+        prompt,
         top_n=top_vec_results,
         metadata={"level": curr_level},
         collection_name=collection_name,
@@ -188,7 +187,7 @@ def order_findings(nd: Node, llm: Model) -> List[Finding]:
   return [Finding(fndg["summary"], fndg["explanation"]) for fndg in output["findings"]]
 
 
-def extract_entities_from(query: str, llm: Model) -> List[str]:
+def extract_entities_from(query: str, llm: Model) -> list[str]:
   """Extract entities from query.
 
   Args:
@@ -203,12 +202,14 @@ def extract_entities_from(query: str, llm: Model) -> List[str]:
     entity_extraction_template,
     {"query": query},
   )
-  res = llm.get_plain_response(prompt=prompt)
+  res = llm.get_formatted_response(
+    prompt=prompt, response_format={"type": "json_object"}
+  )
   if res is None:
     raise ExternalProviderException("Empty message response while extracting entities")
+  try:
+    data: dict[str, list[str]] = json.loads(res)
+    return data["entities"]
 
-  data = json.loads(res)
-  if not isinstance(data, list) or not all(isinstance(item, str) for item in data):
-    raise ValueError("Expected a list of strings")
-
-  return data
+  except:
+    raise ExternalProviderException("jsonify failed at extracting entities from query")
