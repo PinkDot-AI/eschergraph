@@ -1,18 +1,16 @@
 from __future__ import annotations
 
-from concurrent.futures import as_completed
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
 from attrs import define
-from fuzzywuzzy import fuzz
 
 from eschergraph.agents.jinja_helper import process_template
 from eschergraph.agents.llm import ModelProvider
 from eschergraph.agents.reranker import Reranker
 from eschergraph.agents.reranker import RerankerResult
 from eschergraph.builder.build_log import BuildLog
-from eschergraph.tools.reader import Chunk
+from eschergraph.tools.fuzzy_matcher import FuzzyMatcher
 
 JSON_UNIQUE_NODES = "identifying_nodes.jinja"
 
@@ -28,7 +26,6 @@ class NodeMatcher:
     self,
     building_logs: list[BuildLog],
     unique_node_names: list[str],
-    chunks: list[Chunk],
   ) -> list[BuildLog]:
     """Match nodes that refer to the same entity together.
 
@@ -36,103 +33,16 @@ class NodeMatcher:
       building_logs (list[BuildLog]): A list of building logs.
       unique_node_names (list[str]): A list of unique node names as extracted.
       chunks (list[Chunk]): All the chunks in the document.
+
+    Returns:
+      An updated list of build logs that can be used to add nodes and edges to
+      the graph.
     """
-    matches: dict[str, list[str]] = self._match_nodes(unique_node_names)
-    suggested_matches: list[set[str]] = self._match_sets(matches)
+    suggested_matches: list[set[str]] = FuzzyMatcher.get_match_sets(unique_node_names)
     updated_building_logs: list[BuildLog] = self.handle_merge(
       building_logs, suggested_matches
     )
     return updated_building_logs
-
-  def _match_nodes(self, node_names: list[str]) -> dict[str, list[str]]:
-    """Matches nodes in a graph based on similarity to provided node names.
-
-    :param graph: The graph containing nodes to be matched.
-    :param node_names: A list of node names to be matched against the graph.
-    :return: A dictionary where keys are node names and values are lists of matching nodes.
-    """
-    result: dict[str, list[str]] = dict()
-
-    with ThreadPoolExecutor() as executor:
-      futures = {
-        executor.submit(self._find_matches, name, node_names): name
-        for name in node_names
-      }
-      for future in as_completed(futures):
-        name, match_nodes = future.result()
-        if match_nodes:
-          result[name] = match_nodes
-    return result
-
-  @staticmethod
-  def _is_similar(name1: str, name2: str) -> bool:
-    """Checks if two node names are sufficiently similar using fuzzy matching.
-
-    :param name1: The first node name.
-    :param name2: The second node name.
-    :return: True if the names are sufficiently similar, False otherwise.
-    """
-    similarity = fuzz.token_set_ratio(name1, name2)
-    prediction: bool = similarity >= 95
-    return prediction
-
-  def _find_matches(self, query: str, names: list[str]) -> tuple[str, list[str]]:
-    """Finds matches for a given query string within a list of names.
-
-    :param query: The query string to find matches for.
-    :param names: A list of node names to match against.
-    :return: A tuple where the first element is the query string and the second is a list of matching node names.
-    """
-    matches = []
-    for name in names:
-      if self._is_similar(query, name) and query != name:
-        matches.append(name)
-    return query, matches
-
-  def _match_sets(self, matches: dict[str, list[str]]) -> list[set[str]]:
-    """Groups similar nodes into sets based on matching criteria.
-
-    :param matches: A dictionary of node names and their matching nodes.
-    :return: A list of sets, where each set contains names of similar nodes.
-    """
-    nodes_visited: set[str] = set()
-    merged: list[set[str]] = []
-
-    for key in matches.keys():
-      if key in nodes_visited:
-        continue
-      cluster = self._vertical_matching(
-        nodes_visited=nodes_visited,
-        cluster={key},  # Rewritten to use a set literal
-        matches={k: set(v) for k, v in matches.items()},  # Convert lists to sets
-        current=key,
-      )
-      merged.append(cluster)
-
-    return merged
-
-  def _vertical_matching(
-    self,
-    nodes_visited: set[str],
-    cluster: set[str],
-    matches: dict[str, set[str]],
-    current: str,
-  ) -> set[str]:
-    """Recursively matches nodes to form clusters of similar nodes.
-
-    :param nodes_visited: A set of nodes that have already been visited.
-    :param cluster: A set representing the current cluster of matched nodes.
-    :param matches: A dictionary of node names and their matching nodes.
-    :param current: The current node being processed.
-    :return: A set containing all nodes in the current cluster.
-    """
-    nodes_visited.add(current)
-
-    for match in matches[current]:
-      if match not in nodes_visited:
-        cluster.add(match)
-        cluster = self._vertical_matching(nodes_visited, cluster, matches, match)
-    return cluster
 
   def _get_unique_nodes_gpt(self, suggested_match: set[str]) -> Any:
     """Create a prompt using the template and matches, then send it to GPT for a JSON response.
@@ -289,8 +199,8 @@ class NodeMatcher:
     assigned_node_cache: dict[str, str],
   ) -> None:
     """Update a single log item with the correct entity names."""
-    node_edge_json = log_item.node_edge_json
-    properties_json = log_item.properties_json
+    node_edge_json = log_item.nodes
+    properties_json = log_item.properties
 
     # reset node cache
     assigned_node_cache = {}

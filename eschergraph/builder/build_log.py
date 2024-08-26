@@ -44,4 +44,5 @@ class BuildLog:
   metadata: Metadata
   nodes: list[NodeExt]
   edges: list[EdgeExt]
+  chunk_text: str
   properties: list[PropertyExt] = field(factory=list)

@@ -12,6 +12,7 @@ from eschergraph.agents.llm import ModelProvider
 from eschergraph.agents.reranker import Reranker
 from eschergraph.builder.build_log import BuildLog
 from eschergraph.builder.build_log import NodeEdgeExt
+from eschergraph.graph import Graph
 from eschergraph.graph.persistence import Metadata
 from eschergraph.tools.node_matcher import NodeMatcher
 from eschergraph.tools.reader import Chunk
@@ -24,21 +25,20 @@ JSON_PROPERTY = "json_property.jinja"
 class BuildPipeline:
   """The build pipeline that converts chunks into objects to add to the graph."""
 
-  chunks: list[Chunk]
   model: ModelProvider
   reranker: Reranker
   building_logs: list[BuildLog] = field(factory=list)
   unique_entities: list[str] = field(factory=list)
 
   # TODO: copy the building logs somewhere
-  def run(self) -> list[BuildLog]:
+  def run(self, chunks: list[Chunk], graph: Graph) -> list[BuildLog]:
     """Run the build pipeline.
 
     Returns:
       A list of build logs that can be used to add nodes and edges to the graph.
     """
     # Step 1: extract the nodes and edges per chunk
-    self._extract_node_edges()
+    self._extract_node_edges(chunks)
 
     # Step 2: extract the properties per chunk (for extracted nodes)
     self._extract_properties()
@@ -50,20 +50,20 @@ class BuildPipeline:
     ).match(
       building_logs=self.building_logs,
       unique_node_names=unique_entities,
-      chunks=self.chunks,
     )
 
     # TODO: add this step
     # Step 4: remove unmatched nodes from the updated logs
 
     # TODO: add persistence of new and old building logs
+    self._save_logs()
 
     return updated_logs
 
-  def _extract_node_edges(self) -> None:
+  def _extract_node_edges(self, chunks: list[Chunk]) -> None:
     with ThreadPoolExecutor(max_workers=self.model.max_threads) as executor:
       futures = {
-        executor.submit(self._handle_nodes_edges_chunk, chunk) for chunk in self.chunks
+        executor.submit(self._handle_nodes_edges_chunk, chunk) for chunk in chunks
       }
       for future in as_completed(futures):
         # TODO: add more exception handling
@@ -83,6 +83,7 @@ class BuildPipeline:
     # Add to the building logs
     self.building_logs.append(
       BuildLog(
+        chunk_text=chunk.text,
         metadata=metadata,
         nodes=json_nodes_edges["entities"],
         edges=json_nodes_edges["relationships"],
@@ -111,7 +112,7 @@ class BuildPipeline:
       JSON_PROPERTY,
       {
         "current_nodes": ", ".join(node_names),
-        "input_text": self.chunks[log.metadata.chunk_id],
+        "input_text": log.chunk_text,
       },
     )
     properties: dict[str, list[dict[str, list[str]]]] = self.model.get_json_response(
