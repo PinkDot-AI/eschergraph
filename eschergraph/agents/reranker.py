@@ -26,7 +26,16 @@ class Reranker(ABC):
 
   @abstractmethod
   def rerank(
-    self, query: str, texts_list: list[str], top_n: int
+    self, query: str, text_list: list[str], top_n: int
   ) -> list[RerankerResult]:
-    """Get a list of texts to be embedded by an embedding model."""
+    """Rerank the search results based on relevance for the query.
+
+    Args:
+      query (str): The query to search for.
+      text_list (list[str]): The results to rerank.
+      top_n (int): The number of results to return.
+
+    Returns:
+      A list of reranked results.
+    """
     raise NotImplementedError

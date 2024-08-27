@@ -13,7 +13,6 @@ from eschergraph.graph.community import Community
 from eschergraph.graph.loading import LoadState
 from eschergraph.graph.persistence import Metadata
 from eschergraph.graph.property import Property
-from eschergraph.graph.property import Property
 from eschergraph.graph.utils import loading_getter_setter
 
 # To prevent circular import errors

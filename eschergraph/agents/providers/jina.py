@@ -1,13 +1,8 @@
 from __future__ import annotations
 
-import os
-from typing import Any
-
-import requests
-from requests import Response
-from sentence_transformers import CrossEncoder
-
 from eschergraph.agents.reranker import Reranker
+from eschergraph.agents.reranker import RerankerResult
+from eschergraph.exceptions import ExternalProviderException
 
 
 class JinaReranker(Reranker):
@@ -19,16 +14,22 @@ class JinaReranker(Reranker):
   """
 
   def rerank(
-    self, query: str, texts_list: list[str], top_n: int
+    self, query: str, text_list: list[str], top_n: int
   ) -> list[RerankerResult]:
-    """Reranks a list of text documents based on their relevance to the query using Jina's API.
+    """Rerank the search results based on relevance for the query.
 
     Args:
-        model_repo (str, optional): the hugginface repository of the reranker. Defaults to "jinaai/jina-reranker-v1-turbo-en".
-    """
-    self.model = CrossEncoder(model_repo, trust_remote_code=True)
+      query (str): The query to search for.
+      text_list (list[str]): The results to rerank.
+      top_n (int): The number of results to return.
 
-  def rank(self, docs: list[str], query: str, top_n: int) -> List[Dict]:
+    Returns:
+      A list of reranked results.
+    """
+    # self.model = CrossEncoder(model_repo, trust_remote_code=True)
+    ...
+
+  def rank(self, docs: list[str], query: str, top_n: int) -> list[dict]:
     """Rank the documents based on the relevance to the query.
 
     Args:

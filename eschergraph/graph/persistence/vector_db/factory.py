@@ -4,7 +4,7 @@ from eschergraph.graph.persistence.vector_db.adapters.chromadb import ChromaDB
 from eschergraph.graph.persistence.vector_db.vector_db import VectorDB
 
 
-def get_vector_db(db_type: str) -> VectorDB:
+def get_vector_db(db_type: str = "chroma_db") -> VectorDB:
   """Factory method to get the default vector database implementation.
 
   Args:

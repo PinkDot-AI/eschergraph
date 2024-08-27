@@ -36,10 +36,10 @@ class VectorDB(ABC):
     """Store documents with their embeddings, ids, and metadata.
 
     Args:
-      embeddings (list[list[float]]): List of embeddings for the documents.
-      documents (list[str]): List of document texts.
-      ids (list[int]): List of document IDs.
-      metadata (list[Dict[str, Any]]): List of metadata dictionaries.
+      embeddings (List[List[float]]): List of embeddings for the documents.
+      documents (List[str]): List of document texts.
+      ids (List[int]): List of document IDs.
+      metadata (List[dict[str, Any]]): List of metadata dictionaries.
       collection_name (str): The name of the collection.
     """
     raise NotImplementedError
@@ -55,6 +55,7 @@ class VectorDB(ABC):
     """Search for the top_n documents that are most similar to the given embedding.
 
     Args:
+      query (str): the query to search for
       query (str): the query to search for
       top_n (int): Number of top documents to retrieve.
       metadata (dict[str, Any]): Metadata to filter the search results.
@@ -81,20 +82,6 @@ class VectorDB(ABC):
     raise NotImplementedError
 
   @abstractmethod
-  def delete_with_metadata(
-    self,
-    metadata: Dict[str, Any],
-    collection_name: str,
-  ) -> None:
-    """Delete an item in the vectordb by metadata filters.
-
-    Args:
-      metadata (dict[str, str]): Metadata to filter the search results.
-      collection_name (str): The name of the collection.
-    """
-    pass
-
-  @abstractmethod
   def delete_with_id(
     self,
     ids: list[UUID],
@@ -104,6 +91,20 @@ class VectorDB(ABC):
 
     Args:
       ids (str): list of ids that need to be removed
+      collection_name (str): The name of the collection.
+    """
+    raise NotImplementedError
+
+  @abstractmethod
+  def delete_with_metadata(
+    self,
+    metadata: Dict[str, Any],
+    collection_name: str,
+  ) -> None:
+    """Delete an item in the vectordb by metadata filters.
+
+    Args:
+      metadata (dict[str, str]): Metadata to filter the search results.
       collection_name (str): The name of the collection.
     """
     pass

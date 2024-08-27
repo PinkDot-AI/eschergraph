@@ -40,12 +40,13 @@ class FileTypeNotProcessableException(BaseEscherGraphException):
   """When a file is not processable due to its type."""
 
 
-class ExternalDependencyException(BaseEscherGraphException):
-  """When an external dependency (outside of Python) is missing."""
+class EdgeDoesNotExistException(BaseEscherGraphException):
+  """The specified edge could not be found."""
+
 
 class RepositoryException(BaseEscherGraphException):
   """When something unexpected happens with the repository."""
 
 
-class EdgeDoesNotExistException(BaseEscherGraphException):
-  """The specified edge could not be found."""
+class ExternalDependencyException(BaseEscherGraphException):
+  """When an external dependency (outside of Python) is missing."""

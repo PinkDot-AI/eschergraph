@@ -19,9 +19,12 @@ from eschergraph.graph.persistence import Metadata
 from eschergraph.graph.persistence import Repository
 from eschergraph.graph.persistence.factory import get_default_repository
 from eschergraph.graph.property import Property
+from eschergraph.tools.prepare_sync_data import prepare_sync_data
 
 COMMUNITY_TEMPLATE: str = "community_prompt.jinja"
 TEMPLATE_IMPORTANCE: str = "search/importance_rank.jinja"
+from eschergraph.graph.persistence.vector_db import get_vector_db
+from eschergraph.graph.persistence.vector_db import VectorDB
 
 
 @define
@@ -30,6 +33,7 @@ class Graph:
 
   name: str
   repository: Repository = field(factory=get_default_repository)
+  vector_db: VectorDB = field(factory=get_vector_db)
 
   def add_node(
     self,
@@ -91,12 +95,37 @@ class Graph:
 
     return edge
 
+  def sync_vectordb(self, collection_name: str, level: int = 0) -> None:
+    """Synchronizes the vector database with the latest changes in the repository.
+
+    Args:
+        collection_name (str): The name of the vector database collection where documents should be stored.
+        level (int, optional): The hierarchical level at which the metadata is being synced. Default is 0.
+    """
+    # Prepare data for synchronization
+    docs, ids, metadata, ids_to_delete = prepare_sync_data(
+      repository=self.repository, level=level
+    )
+
+    # Delete all records marked for deletion
+    if ids_to_delete:
+      self.vector_db.delete_with_id(ids_to_delete, collection_name)
+
+    # Embed all new or updated entries and insert into the vector database
+    if docs:
+      self.vector_db.insert_documents(
+        documents=docs,
+        ids=ids,
+        metadata=metadata,
+        collection_name=collection_name,
+      )
+
   def build_community_layer(self, from_level: int, llm: ModelProvider) -> None:
     """Build a community layer in a new level of the graph.
 
     Args:
         from_level (int): Which level to build on top of.
-        llm (ModelProvider): LLM to create community reports
+        llm (Model): LLM to create community reports
 
     """
     nodes: list[Node] = self.repository.get_all_at_level(from_level)
