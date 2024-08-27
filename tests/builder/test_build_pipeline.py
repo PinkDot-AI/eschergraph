@@ -17,10 +17,8 @@ from eschergraph.graph.graph import Graph
 from eschergraph.graph.node import Node
 from eschergraph.graph.persistence import Metadata
 from eschergraph.graph.persistence.adapters.simple_repository import SimpleRepository
-from eschergraph.graph.persistence.vector_db.vector_db import VectorDB
 
 
-# integration_test_building()
 @pytest.fixture(scope="function")
 def builder_mock() -> BuildPipeline:
   openai_mock = MagicMock(spec=OpenAIProvider)
@@ -28,12 +26,13 @@ def builder_mock() -> BuildPipeline:
   return BuildPipeline(model=openai_mock, reranker=jina_mock)
 
 
-def test_persist_to_graph(tmp_path: Path, builder_mock: BuildPipeline):
+def test_persist_to_graph(
+  tmp_path: Path, builder_mock: BuildPipeline, graph_unit: Graph
+):
   repository: SimpleRepository = SimpleRepository(save_location=tmp_path.as_posix())
 
-  # Mock the repository
-  mock_vector_db = MagicMock(spec=VectorDB)
-  mock_graph = Graph(name="test graph", repository=repository, vector_db=mock_vector_db)
+  graph_unit.name = "test graph"
+  graph_unit.repository = repository
 
   # Prepare build logs
   build_logs = [
@@ -64,7 +63,7 @@ def test_persist_to_graph(tmp_path: Path, builder_mock: BuildPipeline):
   ]
 
   # Call the method under test
-  builder_mock._persist_to_graph(mock_graph, build_logs)
+  builder_mock._persist_to_graph(graph_unit, build_logs)
 
   # Fetch all nodes from the repository
   all_nodes: list[Node] = repository.get_all_at_level(0)
