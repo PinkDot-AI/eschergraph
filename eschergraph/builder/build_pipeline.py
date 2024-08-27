@@ -63,8 +63,10 @@ class BuildPipeline:
     # add persistence of new and old building logs
     self._persist_to_graph(graph=graph, updated_logs=updated_logs)
 
-    # adding changes to vector db
+    # # adding changes to vector db
     graph.sync_vectordb()
+
+    # # TODO build upperlayer
     # self._save_logs()
 
     return updated_logs
@@ -160,11 +162,11 @@ class BuildPipeline:
       for node_ext in log.nodes:
         node_ext: NodeExt = node_ext
         if graph.repository.get_node_by_name(
-          node_ext["name"], document_id=log.metadata.document_id
+          node_ext["name"].lower(), document_id=log.metadata.document_id
         ):
           continue
         graph.add_node(
-          name=node_ext["name"],
+          name=node_ext["name"].lower(),
           description=node_ext["description"],
           level=0,
           metadata=log.metadata,
@@ -176,15 +178,18 @@ class BuildPipeline:
       for edge_ext in log.edges:
         edge_ext: EdgeExt = edge_ext
         frm: Node | None = graph.repository.get_node_by_name(
-          edge_ext["source"], document_id=log.metadata.document_id
+          edge_ext["source"].lower(), document_id=log.metadata.document_id
         )
         to: Node | None = graph.repository.get_node_by_name(
-          edge_ext["target"], document_id=log.metadata.document_id
+          edge_ext["target"].lower(), document_id=log.metadata.document_id
         )
         if not frm or not to:
           print(
             "source or target node does not exisist in nodes of this edge:", edge_ext
           )
+          continue
+        if frm == to:
+          print("cannot make an edge between 2 the same nodes", edge_ext)
           continue
         graph.add_edge(
           frm=frm,
@@ -197,10 +202,10 @@ class BuildPipeline:
       for prop_ext in log.properties:
         prop_ext: PropertyExt = prop_ext
         node: Node | None = graph.repository.get_node_by_name(
-          prop_ext["entity_name"], document_id=log.metadata.document_id
+          prop_ext["entity_name"].lower(), document_id=log.metadata.document_id
         )
         if not node:
-          print("node does not exsist".prop_ext["entity_name"])
+          print("node does not exsist", prop_ext["entity_name"].lower())
           continue
         for property_item in prop_ext["properties"]:
           node.add_property(description=property_item, metadata=log.metadata)

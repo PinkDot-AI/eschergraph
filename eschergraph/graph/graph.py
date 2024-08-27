@@ -95,7 +95,9 @@ class Graph:
 
     return edge
 
-  def sync_vectordb(self, collection_name: str, level: int = 0) -> None:
+  def sync_vectordb(
+    self, collection_name: str = "main_collection", level: int = 0
+  ) -> None:
     """Synchronizes the vector database with the latest changes in the repository.
 
     Args:
@@ -107,13 +109,15 @@ class Graph:
       repository=self.repository, level=level
     )
 
+    self.vector_db.get_or_create_collection(collection_name)
+
     # Delete all records marked for deletion
     if ids_to_delete:
       self.vector_db.delete_with_id(ids_to_delete, collection_name)
 
     # Embed all new or updated entries and insert into the vector database
     if docs:
-      self.vector_db.insert_documents(
+      self.vector_db.insert(
         documents=docs,
         ids=ids,
         metadata=metadata,

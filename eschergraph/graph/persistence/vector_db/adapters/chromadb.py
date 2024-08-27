@@ -24,13 +24,13 @@ class ChromaDB(VectorDB):
     """Connect to ChromaDB. Currently not used."""
     ...
 
-  def create_collection(self, name: str) -> None:
+  def get_or_create_collection(self, collection_name: str) -> None:
     """Create a new collection in ChromaDB.
 
     Args:
-      name (str): The name of the collection to be created.
+      collection_name (str): The name of the collection to be created.
     """
-    self.collection = self.client.create_collection(name=name)
+    self.collection = self.client.get_or_create_collection(name=collection_name)
 
   def insert(
     self,
@@ -49,6 +49,7 @@ class ChromaDB(VectorDB):
     """
     collection = self.client.get_collection(name=collection_name)
     embeddings = self.embedding_model.get_embedding(list_text=documents)
+    ids: list[str] = [str(id) for id in ids]
     collection.add(
       documents=documents,
       ids=ids,
@@ -115,6 +116,7 @@ class ChromaDB(VectorDB):
         collection_name (str): The name of the collection from which the records will be deleted.
     """
     collection = self.client.get_collection(name=collection_name)
+    ids: list[str] = [str(id) for id in ids]
     collection.delete(ids=ids)
 
   def delete_with_metadata(

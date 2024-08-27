@@ -117,7 +117,7 @@ def _get_attributes(
     # Rerank the attributes using JinaReranker
     reranked_attributes = JinaReranker(api_key=api_key).rerank(
       query=query,
-      texts_list=attributes_string,
+      text_list=attributes_string,
       top_n=len(attributes_results),
     )
   else:
