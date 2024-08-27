@@ -11,8 +11,12 @@ from eschergraph.agents.jinja_helper import process_template
 from eschergraph.agents.llm import ModelProvider
 from eschergraph.agents.reranker import Reranker
 from eschergraph.builder.build_log import BuildLog
+from eschergraph.builder.build_log import EdgeExt
 from eschergraph.builder.build_log import NodeEdgeExt
+from eschergraph.builder.build_log import NodeExt
+from eschergraph.builder.build_log import PropertyExt
 from eschergraph.graph import Graph
+from eschergraph.graph.node import Node
 from eschergraph.graph.persistence import Metadata
 from eschergraph.tools.node_matcher import NodeMatcher
 from eschergraph.tools.reader import Chunk
@@ -56,7 +60,11 @@ class BuildPipeline:
     # TODO: add this step
     # Step 4: remove unmatched nodes from the updated logs
 
-    # TODO: add persistence of new and old building logs
+    # add persistence of new and old building logs
+    self._persist_to_graph(graph=graph, updated_logs=updated_logs)
+
+    # adding changes to vector db
+    graph.sync_vectordb()
     # self._save_logs()
 
     return updated_logs
@@ -145,6 +153,57 @@ class BuildPipeline:
         unique_entities.add(entity_dict["entity_name"].lower())
 
     return list(unique_entities)
+
+  def _persist_to_graph(self, graph: Graph, updated_logs: list[BuildLog]):
+    # first add all nodes
+    for log in updated_logs:
+      for node_ext in log.nodes:
+        node_ext: NodeExt = node_ext
+        if graph.repository.get_node_by_name(
+          node_ext["name"], document_id=log.metadata.document_id
+        ):
+          continue
+        graph.add_node(
+          name=node_ext["name"],
+          description=node_ext["description"],
+          level=0,
+          metadata=log.metadata,
+        )
+
+    # then loop again to add all edges and properties
+    for log in updated_logs:
+      # adding edges
+      for edge_ext in log.edges:
+        edge_ext: EdgeExt = edge_ext
+        frm: Node | None = graph.repository.get_node_by_name(
+          edge_ext["source"], document_id=log.metadata.document_id
+        )
+        to: Node | None = graph.repository.get_node_by_name(
+          edge_ext["target"], document_id=log.metadata.document_id
+        )
+        if not frm or not to:
+          print(
+            "source or target node does not exisist in nodes of this edge:", edge_ext
+          )
+          continue
+        graph.add_edge(
+          frm=frm,
+          to=to,
+          description=edge_ext["relationship"],
+          metadata=log.metadata,
+        )
+
+      # adding properties
+      for prop_ext in log.properties:
+        prop_ext: PropertyExt = prop_ext
+        node: Node | None = graph.repository.get_node_by_name(
+          prop_ext["entity_name"], document_id=log.metadata.document_id
+        )
+        if not node:
+          print("node does not exsist".prop_ext["entity_name"])
+          continue
+        for property_item in prop_ext["properties"]:
+          node.add_property(description=property_item, metadata=log.metadata)
 
   # TODO: re-add the cost and time indication
   # def _get_cost_indication(self) -> float:

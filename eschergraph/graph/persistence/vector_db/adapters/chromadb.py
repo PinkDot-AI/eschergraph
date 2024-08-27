@@ -15,10 +15,10 @@ from eschergraph.graph.persistence.vector_db.vector_db import VectorDB
 class ChromaDB(VectorDB):
   """This is the ChromaDB implementation."""
 
-  def __init__(self, embedding_model: str = "text_embedding_3_large") -> None:
+  def __init__(self) -> None:
     """Initialize the ChromaDB client."""
     self.client = chromadb.Client()
-    self.embedding_model: Embedding = get_embedding_model(embedding_model)
+    self.embedding_model: Embedding = get_embedding_model()
 
   def connect(self) -> None:
     """Connect to ChromaDB. Currently not used."""

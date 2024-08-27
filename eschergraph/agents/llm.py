@@ -32,7 +32,7 @@ class TokenUsage:
 
 
 @define
-class Model(ABC):
+class ModelProvider(ABC):
   """The abstract base class for all the LLMs used in the package."""
 
   tokens: list[TokenUsage] = field(factory=list)
