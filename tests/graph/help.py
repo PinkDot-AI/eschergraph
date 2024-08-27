@@ -8,6 +8,8 @@ from uuid import uuid4
 
 from faker import Faker
 
+from eschergraph.agents.llm import ModelProvider
+from eschergraph.agents.reranker import Reranker
 from eschergraph.graph import Edge
 from eschergraph.graph import Graph
 from eschergraph.graph import Node
@@ -15,6 +17,7 @@ from eschergraph.graph import Property
 from eschergraph.graph.loading import LoadState
 from eschergraph.graph.persistence import Metadata
 from eschergraph.graph.persistence import Repository
+from eschergraph.graph.persistence.vector_db import VectorDB
 
 faker: Faker = Faker()
 
@@ -94,7 +97,21 @@ def create_simple_extracted_graph(
     repository = MagicMock(spec=Repository)
     repository.get_node_by_name.return_value = None
 
-  graph: Graph = Graph(name="test_graph", repository=repository)
+  model_mock: MagicMock = MagicMock(spec=ModelProvider)
+  reranker_mock: MagicMock = MagicMock(spec=Reranker)
+  vector_db_mock: MagicMock = MagicMock(spec=VectorDB)
+
+  model_mock.required_credentials = []
+  reranker_mock.required_credentials = []
+  vector_db_mock.required_credentials = []
+
+  graph: Graph = Graph(
+    name="test_graph",
+    repository=repository,
+    model=model_mock,
+    reranker=reranker_mock,
+    vector_db=vector_db_mock,
+  )
   nodes: list[Node] = []
   edges: list[Edge] = []
 
@@ -159,7 +176,21 @@ def create_node_only_multi_level_graph(
   if not repository:
     repository = MagicMock(spec=Repository)
 
-  graph: Graph = Graph(name="multi_level_graph", repository=repository)
+  model_mock: MagicMock = MagicMock(spec=ModelProvider)
+  reranker_mock: MagicMock = MagicMock(spec=Reranker)
+  vector_db_mock: MagicMock = MagicMock(spec=VectorDB)
+
+  model_mock.required_credentials = []
+  reranker_mock.required_credentials = []
+  vector_db_mock.required_credentials = []
+
+  graph: Graph = Graph(
+    name="mutli_level_graph",
+    repository=repository,
+    model=model_mock,
+    reranker=reranker_mock,
+    vector_db=vector_db_mock,
+  )
   document_id: UUID = uuid4()
   num_chunks: int = random.randint(5, 20)
 
