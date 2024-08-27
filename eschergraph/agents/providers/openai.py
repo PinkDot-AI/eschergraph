@@ -100,7 +100,7 @@ class OpenAIProvider(ModelProvider, Embedding):
     Returns:
       A json object parsed into a dictionary.
     """
-    return json.loads(
+    return json.loads(  # type: ignore
       self._get_response(prompt=prompt, response_format={"type": "json_object"})
     )
 
@@ -135,7 +135,7 @@ class OpenAIProvider(ModelProvider, Embedding):
     Returns:
       The answer given or None.
     """
-    return self._get_response(prompt, response_format={"type": "json_object"})
+    return self._get_response(prompt, response_format={"type": "json_object"})  # type: ignore
 
   def get_function_calls(self, prompt: str, tools: list[Tool]) -> list[FunctionCall]:
     """Get function calls from ChatGPT.

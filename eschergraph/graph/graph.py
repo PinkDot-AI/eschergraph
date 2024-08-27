@@ -6,8 +6,6 @@ import os
 from typing import Optional
 from uuid import UUID
 
-from attrs import define
-
 from eschergraph.agents.jinja_helper import process_template
 from eschergraph.agents.llm import ModelProvider
 from eschergraph.agents.reranker import Reranker
@@ -31,7 +29,6 @@ from eschergraph.graph.persistence.vector_db import get_vector_db
 from eschergraph.graph.persistence.vector_db import VectorDB
 
 
-@define
 class Graph:
   """The EscherGraph graph class."""
 
@@ -78,13 +75,7 @@ class Graph:
     self.vector_db = vector_db
     self.credentials = {}
 
-    for provider, cred in kwargs.items():
-      if not isinstance(provider, str) and isinstance(cred, str):
-        raise CredentialException(
-          "Please provider all required api keys in string format"
-        )
-
-      self.credentials[provider.upper()] = cred
+    self.credentials = {provider.upper(): cred for provider, cred in kwargs.items()}
 
     required_creds: set[str] = {
       cred
@@ -98,7 +89,7 @@ class Graph:
     # Check if all the required credentials are present
     # They can be present in both the keyword-arguments or the env variables
     for cred in required_creds:
-      if not cred in self.credentials and not os.getenv("OPENAI_API_KEY"):
+      if not cred in self.credentials and not os.getenv(cred):
         raise CredentialException(f"The API key: {cred} is missing.")
 
     # Set all the credentials as env variables (only for Python process)
