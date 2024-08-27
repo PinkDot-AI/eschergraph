@@ -6,14 +6,12 @@ from typing import List
 from uuid import UUID
 
 import chromadb
-from attrs import define
 
 from eschergraph.agents.embedding import Embedding
 from eschergraph.agents.embedding import get_embedding_model
 from eschergraph.graph.persistence.vector_db.vector_db import VectorDB
 
 
-@define
 class ChromaDB(VectorDB):
   """This is the ChromaDB implementation."""
 
