@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from unittest.mock import MagicMock
+from unittest.mock import patch
 
 import pytest
 
@@ -34,31 +35,43 @@ def node_matcher_mock() -> NodeMatcher:
 
 
 def test_get_unique_nodes_gpt(node_matcher_mock: NodeMatcher) -> None:
-  mock_response = {
-    "entities": [
-      {
-        "name": "Lennart Timmermans",
-        "merged entities": ["Lennart Timmermans", "Lennart"],
-      },
-      {
-        "name": "Patrick Timmermans",
-        "merged entities": ["Patrick Timmermans", "Patrick"],
-      },
-    ]
-  }
-  assert node_matcher_mock.model.get_json_response(prompt="test") == mock_response
-  suggested_match = {"Lennart", "Lennart Timmermans", "Patrick", "Patrick Timmermans"}
+  with patch.object(
+    node_matcher_mock.model, "get_json_response", MagicMock()
+  ) as mock_get_json_response:
+    # Define the mock response
+    mock_response = {
+      "entities": [
+        {
+          "name": "Lennart Timmermans",
+          "merged_entities": ["Lennart Timmermans", "Lennart"],
+        },
+        {
+          "name": "Patrick Timmermans",
+          "merged_entities": ["Patrick Timmermans", "Patrick"],
+        },
+      ]
+    }
 
-  result = node_matcher_mock._get_unique_nodes_gpt(suggested_match)
-  assert result == mock_response, f"Expected {mock_response}, but got {result}"
-  expected_prompt = process_template(
-    JSON_UNIQUE_NODES, data={"entities": ", ".join(suggested_match)}
-  )
-  # Check if get_json_response was called exactly twice
-  assert node_matcher_mock.model.get_json_response.call_count == 2, (
-    f"Expected get_json_response to be called twice, "
-    f"but it was called {node_matcher_mock.model.get_json_response.call_count} times"
-  )
+    # Set what the mock should return
+    mock_get_json_response.return_value = mock_response
 
-  # Verify the prompt passed in the calls
-  node_matcher_mock.model.get_json_response.assert_called_with(prompt=expected_prompt)
+    # Define the suggested match set
+    suggested_match = {"Lennart", "Lennart Timmermans", "Patrick", "Patrick Timmermans"}
+
+    # Call the function under test
+    result = node_matcher_mock._get_unique_nodes_gpt(suggested_match)
+
+    # Assertions
+    assert result == mock_response, f"Expected {mock_response}, but got {result}"
+    expected_prompt = process_template(
+      JSON_UNIQUE_NODES, data={"entities": ", ".join(suggested_match)}
+    )
+
+    # Check if get_json_response was called exactly twice
+    assert mock_get_json_response.call_count == 2, (
+      f"Expected get_json_response to be called twice, "
+      f"but it was called {mock_get_json_response.call_count} times"
+    )
+
+    # Optionally, check if it was called with specific arguments
+    mock_get_json_response.assert_called_with(expected_prompt)
