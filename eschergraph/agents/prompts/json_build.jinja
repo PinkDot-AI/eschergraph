@@ -1,16 +1,4 @@
-from __future__ import annotations
-
-import pytest
-from assertpy import assert_that
-from jinja2 import Environment
-from jinja2 import FileSystemLoader
-from jinja2 import select_autoescape
-
-from eschergraph.agents.jinja_helper import extract_variables
-from eschergraph.agents.jinja_helper import process_template
-from eschergraph.exceptions import PromptFormattingException
-
-json_build_template: str = """-Goal-
+-Goal-
 Extract all relevant information from the provided text into a graph representation containing entities and relations.
 
 -Steps-
@@ -41,38 +29,6 @@ extract only named entities.
 
 -Real Data-
 ######################
-text: This is a test
+text: {{ input_text }}
 ######################
-output:"""
-
-input_text: str = "This is a test"
-
-
-def test_templating_function_json_build() -> None:
-  assert (
-    process_template(template_file="json_build.jinja", data={"input_text": input_text})
-    == json_build_template
-  )
-
-
-def test_templating_function_json_build_empty_data() -> None:
-  with pytest.raises(PromptFormattingException):
-    process_template(template_file="json_build.jinja", data={})
-
-
-def test_templating_function_json_property_missing_data() -> None:
-  with pytest.raises(PromptFormattingException):
-    process_template(
-      template_file="json_property.jinja", data={"input_text": input_text}
-    )
-
-
-def test_extract_variables() -> None:
-  jinja_env: Environment = Environment(
-    loader=FileSystemLoader(searchpath="./eschergraph/agents/prompts"),
-    autoescape=select_autoescape(),
-  )
-
-  assert_that(
-    extract_variables("json_property.jinja", jinja_env)
-  ).does_not_contain_duplicates().contains_only("input_text", "current_nodes")
+output:

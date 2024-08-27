@@ -32,7 +32,7 @@ class ChromaDB(VectorDB):
     """
     self.collection = self.client.create_collection(name=name)
 
-  def insert_documents(
+  def insert(
     self,
     documents: list[str],
     ids: list[UUID],
@@ -120,13 +120,10 @@ class ChromaDB(VectorDB):
   def delete_with_metadata(
     self, metadata: Dict[str, Any], collection_name: str
   ) -> None:
-    """Deletes records from a specified collection based on metadata conditions.
+    """Delete an item in the vectordb by metadata filters.
 
     Args:
-        metadata (Dict[str, Any]): A dictionary specifying the metadata conditions that must be met
-                                   for the records to be deleted. The keys are metadata field names,
-                                   and the values are the required values for deletion.
-        collection_name (str): The name of the collection from which the records will be deleted.
+      metadata (dict[str, str]): Metadata to filter the search results.
+      collection_name (str): The name of the collection.
     """
-    collection = self.client.get_collection(name=collection_name)
-    collection.delete(where=metadata)
+    raise NotImplementedError

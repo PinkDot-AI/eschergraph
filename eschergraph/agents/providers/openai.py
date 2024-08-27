@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import json
 from enum import Enum
+from typing import Any
 
 from attrs import define
+from attrs import field
 from openai import NotGiven
 from openai import OpenAI
 from openai.types import CompletionUsage
@@ -23,7 +25,7 @@ from tenacity import wait_random_exponential
 
 from eschergraph.agents.embedding import Embedding
 from eschergraph.agents.llm import FunctionCall
-from eschergraph.agents.llm import Model
+from eschergraph.agents.llm import ModelProvider
 from eschergraph.agents.llm import TokenUsage
 from eschergraph.agents.tools import Function
 from eschergraph.agents.tools import Tool
@@ -39,18 +41,19 @@ from any document into a refined and parsed form.
 class OpenAIModel(Enum):
   """The different models that are available at OpenAI."""
 
-  GPT_3: str = "gpt-3.5-turbo"
   GPT_4o: str = "gpt-4o"
   GPT_4o_MINI: str = "gpt-4o-mini"
   TEXT_EMBEDDING_LARGE: str = "text-embedding-3-large"
 
 
-@define(kw_only=True)
-class ChatGPT(Model, Embedding):
+@define
+class OpenAIProvider(ModelProvider, Embedding):
   """The class that handles communication with the OpenAI API."""
 
   model: OpenAIModel
-  api_key: str
+  api_key: str = field(kw_only=True)
+  tokens: list[TokenUsage] = field(factory=list)
+  max_threads: int = field(default=10)
 
   @property
   def client(self) -> OpenAI:
@@ -60,7 +63,7 @@ class ChatGPT(Model, Embedding):
     return OpenAI(api_key=self.api_key)
 
   @retry(wait=wait_random_exponential(multiplier=1, max=40), stop=stop_after_attempt(3))
-  def get_plain_response(self, prompt: str) -> str | None:
+  def get_plain_response(self, prompt: str) -> Any:
     """Get a text response from OpenAI.
 
     Note that the model that is used is specified when instantiating the class.
@@ -74,9 +77,7 @@ class ChatGPT(Model, Embedding):
     return self._get_response(prompt)
 
   @retry(wait=wait_random_exponential(multiplier=1, max=40), stop=stop_after_attempt(3))
-  def get_formatted_response(
-    self, prompt: str, response_format: ResponseFormat
-  ) -> str | None:
+  def get_formatted_response(self, prompt: str, response_format: ResponseFormat) -> Any:
     """Get a formatted response from OpenAI.
 
     Args:
@@ -88,11 +89,25 @@ class ChatGPT(Model, Embedding):
     """
     return self._get_response(prompt=prompt, response_format=response_format)
 
+  @retry(wait=wait_random_exponential(multiplier=1, max=40), stop=stop_after_attempt(3))
+  def get_json_response(self, prompt: str) -> dict[str, Any]:
+    """Get a json response.
+
+    Args:
+      prompt (str): The user prompt that is send to ChatGPT.
+
+    Returns:
+      A json object parsed into a dictionary.
+    """
+    return json.loads(
+      self._get_response(prompt=prompt, response_format={"type": "json_object"})
+    )
+
   def _get_response(
     self,
     prompt: str,
     response_format: ResponseFormat | NotGiven = NotGiven(),
-  ) -> str | None:
+  ) -> Any:
     messages: list[ChatCompletionMessageParam] = self._get_messages(prompt)
 
     try:

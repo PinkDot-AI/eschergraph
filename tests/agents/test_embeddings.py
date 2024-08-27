@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-from eschergraph.agents.providers.openai import ChatGPT
+from eschergraph.agents.providers.openai import OpenAIProvider
 
 
 def test_openai_embedding() -> None:
   """Test the get_embedding method of the ChatGPT class using a mock."""
   # Create a mock ChatGPT instance
-  c: MagicMock = MagicMock(spec=ChatGPT)
+  c: MagicMock = MagicMock(spec=OpenAIProvider)
 
   # Define the mock return value for the get_embedding method
   mock_embeddings: list[list[float]] = [[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]]

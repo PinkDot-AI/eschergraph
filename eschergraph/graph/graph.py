@@ -6,10 +6,9 @@ from uuid import UUID
 
 from attrs import define
 from attrs import field
-from dotenv import load_dotenv
 
 from eschergraph.agents.jinja_helper import process_template
-from eschergraph.agents.llm import Model
+from eschergraph.agents.llm import ModelProvider
 from eschergraph.exceptions import EdgeDoesNotExistException
 from eschergraph.exceptions import ExternalProviderException
 from eschergraph.graph.comm_graph import CommunityGraphResult
@@ -20,14 +19,12 @@ from eschergraph.graph.persistence import Metadata
 from eschergraph.graph.persistence import Repository
 from eschergraph.graph.persistence.factory import get_default_repository
 from eschergraph.graph.property import Property
+from eschergraph.tools.prepare_sync_data import prepare_sync_data
 
 COMMUNITY_TEMPLATE: str = "community_prompt.jinja"
 TEMPLATE_IMPORTANCE: str = "search/importance_rank.jinja"
 from eschergraph.graph.persistence.vector_db import get_vector_db
 from eschergraph.graph.persistence.vector_db import VectorDB
-from eschergraph.tools.prepare_sync_data import prepare_sync_data
-
-load_dotenv()
 
 
 @define
@@ -123,7 +120,7 @@ class Graph:
         collection_name=collection_name,
       )
 
-  def build_community_layer(self, from_level: int, llm: Model) -> None:
+  def build_community_layer(self, from_level: int, llm: ModelProvider) -> None:
     """Build a community layer in a new level of the graph.
 
     Args:

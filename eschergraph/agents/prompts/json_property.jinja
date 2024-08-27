@@ -1,0 +1,37 @@
+The goal is to add richly descriptive properties to all entities that occur in the provided text.
+It is paramount that we extract all the properties for each node. We need to make sure that the
+resulting graph contains exactly the same information as the source text.
+===============================================================================
+EXAMPLE SECTION: The following section includes example output. These examples must be
+**excluded from your answer**.
+
+EXAMPLE 1
+Task: Extract all the properties for each entity from the source text.
+Text: Nicklas Bendtner is a Danish football legend that played for Arsenal. He was especially
+feared for his ability to score a goal at any moment.
+JSON RESPONSE:
+{"entities": [{"Nicklas Bendtner": ["A Danish football legend", "Played for Arsenal", "Especially feared for his ability to score a goal at any moment"]}]}
+END OF EXAMPLE 1
+
+EXAMPLE 2
+Task: Extract all the properties for each entity from the source text.
+Text: Pinkgraph is a state-of-the-art open-source package that provides a framework for building
+a structured graph from any unstructured data source. Although, an entirely novel approach, it can
+be seen as the next evolution of a knowledge graph. It was developed at PinkDot AI, a Delft based
+AI startup.
+JSON RESPONSE:
+{"entities": [
+  {"Pinkgraph": ["A state-of-the-art open source package that provides a framework for building a structured graph from any unstructured data source", "an entirely novel approach that can be seen as the next evolution of a knowledge graph"]},
+  {"PinkDot AI": ["A Delft based AI startup"]}
+]}
+END OF EXAMPLE 2
+===============================================================================
+
+===============================================================================
+REAL DATA: The following section is the real data. You should use only this real data to prepare your answer. Generate entities with properties only.
+Task: Extract all the properties for each entity from the source text.
+Text: {{ input_text }}
+JSON response:
+{"entities": [{"<ENTITY_NAME>": ["<PROPERTY_1>", "<PROPERTY_2>", "<PROPERTY_3>"]}]}
+Match the properties to existing nodes only!! This is absolutely crucial!!!
+Existing nodes: {{ current_nodes }}

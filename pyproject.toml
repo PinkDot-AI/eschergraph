@@ -150,7 +150,8 @@ exclude = [
     'eschergraph/tools/pdf_document_layout_analysis/.*\.py$',
     'eschergraph/graph/persistence/vector_db/adapters/chromadb.py$',
     'eschergraph/tools/fast_pdf_parser/parser.py',
-    'eschergraph/agents/providers/jina.py$'
+    'eschergraph/agents/providers/jina.py$',
+    'eschergraph/tools/node_matcher.py$'
 ]
 # The strictest settings extracted from the mypy docs
 # Start off with these
@@ -159,6 +160,7 @@ warn_redundant_casts = true
 warn_unused_ignores = true
 
 ignore_missing_imports = true
+
 # Getting these passing should be easy
 strict_equality = true
 extra_checks = true

@@ -21,12 +21,12 @@ class VectorDB(ABC):
     """Create a collection with a given name.
 
     Args:
-      name (str): Name for the collection.
+      name (str): Collection's name.
     """
     raise NotImplementedError
 
   @abstractmethod
-  def insert_documents(
+  def insert(
     self,
     documents: List[str],
     ids: List[UUID],
@@ -56,12 +56,13 @@ class VectorDB(ABC):
 
     Args:
       query (str): the query to search for
+      query (str): the query to search for
       top_n (int): Number of top documents to retrieve.
-      metadata (dict[str, str]): Metadata to filter the search results.
-      collection_name (str): The collection's name.
+      metadata (dict[str, Any]): Metadata to filter the search results.
+      collection_name (str): The name of the collection.
 
     Returns:
-      dict[str, str]: List of documents that match the query.
+      Dictionary with results that match the que
     """
     raise NotImplementedError
 
@@ -81,20 +82,6 @@ class VectorDB(ABC):
     raise NotImplementedError
 
   @abstractmethod
-  def delete_with_metadata(
-    self,
-    metadata: Dict[str, Any],
-    collection_name: str,
-  ) -> None:
-    """Delete an item in the vectordb by metadata filters.
-
-    Args:
-      metadata (dict[str, str]): Metadata to filter the search results.
-      collection_name (str): The name of the collection.
-    """
-    pass
-
-  @abstractmethod
   def delete_with_id(
     self,
     ids: list[UUID],
@@ -104,6 +91,20 @@ class VectorDB(ABC):
 
     Args:
       ids (str): list of ids that need to be removed
+      collection_name (str): The name of the collection.
+    """
+    raise NotImplementedError
+
+  @abstractmethod
+  def delete_with_metadata(
+    self,
+    metadata: Dict[str, Any],
+    collection_name: str,
+  ) -> None:
+    """Delete an item in the vectordb by metadata filters.
+
+    Args:
+      metadata (dict[str, str]): Metadata to filter the search results.
       collection_name (str): The name of the collection.
     """
     pass

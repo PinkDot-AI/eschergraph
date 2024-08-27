@@ -21,9 +21,11 @@ def get_embedding_model(embedding_type: str = "text_embedding_3_large") -> Embed
   openai_api_key: str | None = os.getenv("OPENAI_API_KEY")
 
   if embedding_type == "text_embedding_3_large" and openai_api_key:
-    from eschergraph.agents.providers.openai import ChatGPT, OpenAIModel
+    from eschergraph.agents.providers.openai import OpenAIProvider, OpenAIModel
 
-    return ChatGPT(model=OpenAIModel.TEXT_EMBEDDING_LARGE, api_key=openai_api_key)
+    return OpenAIProvider(
+      model=OpenAIModel.TEXT_EMBEDDING_LARGE, api_key=openai_api_key
+    )
   else:
     raise ValueError(f"Unknown embedding model type: {embedding_type}")
 

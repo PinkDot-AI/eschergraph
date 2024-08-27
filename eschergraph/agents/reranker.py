@@ -22,11 +22,20 @@ class RerankerResult:
 
 
 class Reranker(ABC):
-  """The abstract base class for all the embedding models used in the package."""
+  """The abstract base class for all rerankers used in the package."""
 
   @abstractmethod
   def rerank(
-    self, query: str, texts_list: list[str], top_n: int
+    self, query: str, text_list: list[str], top_n: int
   ) -> list[RerankerResult]:
-    """Get a list of texts to be embedded by an embedding model."""
+    """Rerank the search results based on relevance for the query.
+
+    Args:
+      query (str): The query to search for.
+      text_list (list[str]): The results to rerank.
+      top_n (int): The number of results to return.
+
+    Returns:
+      A list of reranked results.
+    """
     raise NotImplementedError

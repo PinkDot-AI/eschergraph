@@ -48,7 +48,7 @@ class Model(ABC):
     Returns:
       The response from the LLM.
     """
-    ...
+    raise NotImplementedError
 
   @abstractmethod
   def get_formatted_response(self, prompt: str, response_format: Any) -> str | None:
@@ -61,7 +61,7 @@ class Model(ABC):
     Returns:
       Formatted answer
     """
-    ...
+    raise NotImplementedError
 
   @abstractmethod
   def get_function_calls(self, prompt: str, tools: list[Tool]) -> list[FunctionCall]:
@@ -74,4 +74,19 @@ class Model(ABC):
     Returns:
       A list of function calls as specified by the model.
     """
-    ...
+    raise NotImplementedError
+
+  # TODO: remove this when fixing the ModelProvider
+  @abstractmethod
+  def get_json_response(self, prompt: str) -> dict[str, Any]:
+    """Get a JSON response from an LLM.
+
+    The JSON output is parsed into a Python dictionary before it is returned.
+
+    Args:
+      prompt (str): The prompt to send to the LLM.
+
+    Returns:
+      The parsed dictionary object.
+    """
+    raise NotImplementedError
