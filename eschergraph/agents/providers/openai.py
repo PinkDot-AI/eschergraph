@@ -51,6 +51,7 @@ class OpenAIProvider(ModelProvider, Embedding):
   """The class that handles communication with the OpenAI API."""
 
   model: OpenAIModel
+  required_credentials: list[str] = ["OPENAI_API_KEY"]
   api_key: str = field(kw_only=True)
   tokens: list[TokenUsage] = field(factory=list)
   max_threads: int = field(default=10)
@@ -117,7 +118,7 @@ class OpenAIProvider(ModelProvider, Embedding):
         response_format=response_format,
       )
       # Log the tokens that were used
-      # self._add_token_usage(response)
+      self._add_token_usage(response)
       return response.choices[0].message.content
     except Exception as e:
       print(e)
@@ -212,7 +213,7 @@ class OpenAIProvider(ModelProvider, Embedding):
         the input text. If the input list is empty, returns a list containing an empty list.
     """
     # Handle empty lists
-    if not len(list_text) > 0:
+    if not list_text:
       return [[]]
 
     model = "text-embedding-3-large"

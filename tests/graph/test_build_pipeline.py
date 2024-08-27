@@ -59,4 +59,3 @@
 # #     builder._handle_property_chunk(item)
 # #   assert builder.building_logs[0].properties_json is not None
 from __future__ import annotations
-

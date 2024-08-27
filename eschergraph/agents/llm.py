@@ -35,6 +35,7 @@ class TokenUsage:
 class ModelProvider(ABC):
   """The abstract base class for all the LLMs used in the package."""
 
+  required_credentials: list[str] = ["OPENAI_API_KEY"]
   tokens: list[TokenUsage] = field(factory=list)
   max_threads: int = field(default=10)
 

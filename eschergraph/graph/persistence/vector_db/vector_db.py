@@ -11,6 +11,8 @@ from uuid import UUID
 class VectorDB(ABC):
   """This is the abstract base class for all vector DB implementations."""
 
+  required_credentials: list[str]
+
   @abstractmethod
   def connect(self) -> None:
     """Possible connection method."""

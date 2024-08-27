@@ -24,6 +24,8 @@ class RerankerResult:
 class Reranker(ABC):
   """The abstract base class for all rerankers used in the package."""
 
+  required_credentials: list[str]
+
   @abstractmethod
   def rerank(
     self, query: str, text_list: list[str], top_n: int
