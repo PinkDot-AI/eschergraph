@@ -2,13 +2,17 @@ from __future__ import annotations
 
 import json
 import logging
+import os
+from typing import Optional
 from uuid import UUID
 
 from attrs import define
-from attrs import field
 
 from eschergraph.agents.jinja_helper import process_template
 from eschergraph.agents.llm import ModelProvider
+from eschergraph.agents.reranker import Reranker
+from eschergraph.config import DEFAULT_GRAPH_NAME
+from eschergraph.exceptions import CredentialException
 from eschergraph.exceptions import EdgeDoesNotExistException
 from eschergraph.exceptions import ExternalProviderException
 from eschergraph.graph.comm_graph import CommunityGraphResult
@@ -32,8 +36,75 @@ class Graph:
   """The EscherGraph graph class."""
 
   name: str
-  repository: Repository = field(factory=get_default_repository)
-  vector_db: VectorDB = field(factory=get_vector_db)
+  model: ModelProvider
+  reranker: Reranker
+  repository: Repository
+  vector_db: VectorDB
+  credentials: dict[str, str]
+
+  def __init__(
+    self,
+    model: ModelProvider,
+    reranker: Reranker,
+    name: str = DEFAULT_GRAPH_NAME,
+    repository: Optional[Repository] = None,
+    vector_db: Optional[VectorDB] = None,
+    **kwargs: str,
+  ) -> None:
+    """The init method for a graph.
+
+    Creates the graph with all of the tools used. It also manages setting up, and
+    verifying the presence of, all credentials that are needed for communication with
+    external services.
+
+    Args:
+      model (ModelProvider): The LLM model that is used.
+      reranker (Reranker): The reranker that is used.
+      name (str): The name of the graph (optional).
+      repository (Optional[Repository]): The persistent storage that is used for the graph.
+      vector_db (Optional[VectorDB]): The vector database that is used.
+      **kwargs (dict[str, str]): The credentials as optional keyword arguments.
+    """
+    self.name = name
+    self.model = model
+    self.reranker = reranker
+
+    if not repository:
+      repository = get_default_repository(name=name)
+    if not vector_db:
+      vector_db = get_vector_db()
+
+    self.repository = repository
+    self.vector_db = vector_db
+    self.credentials = {}
+
+    for provider, cred in kwargs.items():
+      if not isinstance(provider, str) and isinstance(cred, str):
+        raise CredentialException(
+          "Please provider all required api keys in string format"
+        )
+
+      self.credentials[provider.upper()] = cred
+
+    required_creds: set[str] = {
+      cred
+      for cred_list in [
+        self.model.required_credentials,
+        self.vector_db.required_credentials,
+        self.reranker.required_credentials,
+      ]
+      for cred in cred_list
+    }
+    # Check if all the required credentials are present
+    # They can be present in both the keyword-arguments or the env variables
+    for cred in required_creds:
+      if not cred in self.credentials and not os.getenv("OPENAI_API_KEY"):
+        raise CredentialException(f"The API key: {cred} is missing.")
+
+    # Set all the credentials as env variables (only for Python process)
+    # This is the easiest way to make them available to all classes
+    for cred, key in self.credentials.items():
+      os.environ[cred] = key
 
   def add_node(
     self,
@@ -113,7 +184,7 @@ class Graph:
 
     # Embed all new or updated entries and insert into the vector database
     if docs:
-      self.vector_db.insert_documents(
+      self.vector_db.insert(
         documents=docs,
         ids=ids,
         metadata=metadata,
