@@ -20,11 +20,11 @@ def test_reranker() -> None:
 
   # Define the test inputs
   query: str = "Today is an amazing day"
-  texts_list: list[str] = ["one", "two"]
+  text_list: list[str] = ["one", "two"]
   top_n: int = 2
 
   # Call the rerank method
-  reranked_items: list[RerankerResult] = mock_client.rerank(query, texts_list, top_n)
+  reranked_items: list[RerankerResult] = mock_client.rerank(query, text_list, top_n)
 
   # Check that the rerank method returns the correct number of items
   assert len(reranked_items) == 2
@@ -39,7 +39,7 @@ def test_reranker() -> None:
   assert reranked_items[1].relevance_score == 0.3
 
   # Check that the rerank method was called with the correct arguments
-  mock_client.rerank.assert_called_once_with(query, texts_list, top_n)
+  mock_client.rerank.assert_called_once_with(query, text_list, top_n)
 
   # If there's a need to check the exact call, we can also use
   # mock_client.rerank.assert_called_once()

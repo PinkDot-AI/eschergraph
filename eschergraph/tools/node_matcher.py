@@ -94,7 +94,7 @@ class NodeMatcher:
     ]
 
     top_result: list[RerankerResult] | None = self.reranker.rerank(
-      query=description, texts_list=docs, top_n=1
+      query=description, text_list=docs, top_n=1
     )
     if not top_result:
       print("There was an error with the reranker in the merging function")
@@ -251,19 +251,19 @@ class NodeMatcher:
         )
 
     if log.properties:
-      for entity_dict in log.properties:
-        for key in list(entity_dict.keys()):
-          if entity == key.lower():
-            if entity not in assigned_node_cache:
-              description = ", ".join(entity_dict[entity])
-              assigned_node_cache[entity] = self._assign_node(
-                description=description, node_info=node_info
-              )
-            assigned_node = assigned_node_cache[entity]
-            print(
-              f'Replacing property key "{key}" with "{assigned_node}" in properties_json.'
+      for prop_item in log.properties:
+        prop_item: PropertyExt = prop_item
+        node_name_lower = prop_item["entity_name"].lower()
+        if entity == node_name_lower:
+          if entity not in assigned_node_cache:
+            assigned_node_cache[entity] = self._assign_node(
+              description=node_name_lower, node_info=node_info
             )
-            entity_dict[assigned_node] = entity_dict.pop(key)
+          assigned_node = assigned_node_cache[entity]
+          print(
+            f'Replacing property key "{node_name_lower}" with "{assigned_node}" in properties_json.'
+          )
+          prop_item["entity_name"] = assigned_node.lower()
 
   def _replace_entity_name(
     self,

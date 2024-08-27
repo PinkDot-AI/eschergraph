@@ -19,11 +19,11 @@ class VectorDB(ABC):
     raise NotImplementedError
 
   @abstractmethod
-  def create_collection(self, name: str) -> None:
+  def get_or_create_collection(self, collection_name: str) -> None:
     """Create a collection with a given name.
 
     Args:
-      name (str): Collection's name.
+      collection_name (str): Collection's name.
     """
     raise NotImplementedError
 
