@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from enum import Enum
 from typing import Any
 
@@ -52,16 +53,16 @@ class OpenAIProvider(ModelProvider, Embedding):
 
   model: OpenAIModel
   required_credentials: list[str] = ["OPENAI_API_KEY"]
-  api_key: str = field(kw_only=True)
   tokens: list[TokenUsage] = field(factory=list)
   max_threads: int = field(default=10)
 
   @property
   def client(self) -> OpenAI:
     """The OpenAI client."""
-    if not self.api_key:
-      raise CredentialException("No API key has been set")
-    return OpenAI(api_key=self.api_key)
+    api_key: str = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+      raise CredentialException("No API key for OpenAI has been set")
+    return OpenAI(api_key=api_key)
 
   @retry(wait=wait_random_exponential(multiplier=1, max=40), stop=stop_after_attempt(3))
   def get_plain_response(self, prompt: str) -> Any:

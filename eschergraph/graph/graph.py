@@ -23,6 +23,7 @@ from eschergraph.graph.persistence import Metadata
 from eschergraph.graph.persistence import Repository
 from eschergraph.graph.persistence.factory import get_default_repository
 from eschergraph.graph.property import Property
+from eschergraph.graph.search.quick_search import search
 from eschergraph.tools.prepare_sync_data import prepare_sync_data
 
 COMMUNITY_TEMPLATE: str = "community_prompt.jinja"
@@ -341,3 +342,15 @@ class Graph:
         comm_edges.append(edge)
 
     return comm_edges
+
+  def search(self, query: str) -> str:
+    """Executes a search query using a vector database and a specified model.
+
+    Args:
+        query (str): The search query as a string.
+
+    Returns:
+        str: The result of the search, typically a string that represents the most relevant information or document found by the search.
+    """
+    result = search(vector_db=self.vector_db, query=query, model=self.model)
+    return result
