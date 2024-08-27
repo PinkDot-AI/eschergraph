@@ -8,6 +8,8 @@ from eschergraph.graph.node import Node
 from eschergraph.graph.persistence import Metadata
 from eschergraph.graph.persistence import Repository
 from eschergraph.graph.persistence.factory import get_default_repository
+from eschergraph.graph.persistence.vector_db import get_vector_db
+from eschergraph.graph.persistence.vector_db import VectorDB
 from eschergraph.graph.property import Property
 
 
@@ -17,6 +19,7 @@ class Graph:
 
   name: str
   repository: Repository = field(factory=get_default_repository)
+  vector_db: VectorDB = field(factory=get_vector_db)
 
   def add_node(
     self,

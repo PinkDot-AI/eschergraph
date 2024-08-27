@@ -7,9 +7,16 @@ from typing import Dict
 from typing import List
 from uuid import UUID
 
+from eschergraph.graph.persistence.change_log import ChangeLog
+
 
 class VectorDB(ABC):
-  """The abstract base class for a vector database."""
+  """This is the abstract base class for all vector DB implementations."""
+
+  @abstractmethod
+  def connect(self) -> None:
+    """Possible connection method."""
+    raise NotImplementedError
 
   @abstractmethod
   def create_collection(self, name: str) -> None:
@@ -18,7 +25,7 @@ class VectorDB(ABC):
     Args:
       name (str): Collection's name.
     """
-    pass
+    raise NotImplementedError
 
   @abstractmethod
   def insert(
@@ -38,7 +45,7 @@ class VectorDB(ABC):
       metadata (list[Dict[str, Any]]): List of metadata dictionaries.
       collection_name (str): The name of the collection.
     """
-    pass
+    raise NotImplementedError
 
   @abstractmethod
   def search(
@@ -59,7 +66,7 @@ class VectorDB(ABC):
     Returns:
       Dictionary with results that match the que
     """
-    pass
+    raise NotImplementedError
 
   @abstractmethod
   def format_search_results(
@@ -74,7 +81,19 @@ class VectorDB(ABC):
     Returns:
         Dict[str, int | str | float | dict]: A list of dictionaries containing a standardized format
     """
-    pass
+    raise NotImplementedError
+
+  @abstractmethod
+  def sync(self, change_log: list[ChangeLog]) -> None:
+    """Sync the vector database to the repository.
+
+    The vector database updates its embeddings based on the logged
+    changes to EscherBase objects.
+
+    Args:
+      change_log (list[ChangeLog]): The list of logged changes.
+    """
+    raise NotImplementedError
 
   @abstractmethod
   def delete_with_metadata(

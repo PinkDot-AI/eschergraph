@@ -8,11 +8,13 @@ from uuid import UUID
 
 from eschergraph.graph.loading import LoadState
 
+# Prevent circular import errors
 if TYPE_CHECKING:
   from eschergraph.graph.base import EscherBase
   from eschergraph.graph.node import Node
   from eschergraph.graph.edge import Edge
   from eschergraph.graph.property import Property
+  from eschergraph.graph.persistence.change_log import ChangeLog
 
 
 class Repository(ABC):
@@ -160,3 +162,24 @@ class Repository(ABC):
       A list with all the nodes at the specified level.
     """
     raise NotImplementedError
+
+  @abstractmethod
+  def get_change_log(self) -> list[ChangeLog]:
+    """Get the list of change logs.
+
+    The logs contain all the add operations that are performed for
+    EscherBase objects. These can be used to sync other systems such as
+    the vector database.
+
+    Returns:
+      A list of all changelogs.
+    """
+    raise NotImplementedError
+
+  @abstractmethod
+  def clear_change_log(self) -> None:
+    """Clear all change logs.
+
+    Use with caution. Should only be performed after syncing to external
+    systems such as a vector database.
+    """

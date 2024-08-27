@@ -7,6 +7,7 @@ from uuid import UUID
 
 import chromadb
 
+from eschergraph.graph.persistence.change_log import ChangeLog
 from eschergraph.graph.persistence.vector_db.vector_db import VectorDB
 
 
@@ -18,8 +19,8 @@ class ChromaDB(VectorDB):
     self.client = chromadb.Client()
 
   def connect(self) -> None:
-    """Connect to ChromaDB. Currently a placeholder function."""
-    pass
+    """Connect to ChromaDB. Currently not used."""
+    ...
 
   def create_collection(self, name: str) -> None:
     """Create a new collection in ChromaDB.
@@ -104,26 +105,14 @@ class ChromaDB(VectorDB):
       for i in range(len(result["ids"][0]))
     ]
 
-  def delete_with_id(self, ids: list[str], collection_name: str) -> None:
-    """Deletes records from a specified collection using their unique IDs.
+  # TODO: implement this method
+  def sync(self, change_log: List[ChangeLog]) -> None:
+    """Sync the vector database to the repository.
+
+    The vector database updates its embeddings based on the logged
+    changes to EscherBase objects.
 
     Args:
-        ids (list[str]): A list of unique identifiers corresponding to the records to be deleted.
-        collection_name (str): The name of the collection from which the records will be deleted.
+      change_log (list[ChangeLog]): The list of logged changes.
     """
-    collection = self.client.get_collection(name=collection_name)
-    collection.delete(ids=ids)
-
-  def delete_with_metadata(
-    self, metadata: Dict[str, Any], collection_name: str
-  ) -> None:
-    """Deletes records from a specified collection based on metadata conditions.
-
-    Args:
-        metadata (Dict[str, Any]): A dictionary specifying the metadata conditions that must be met
-                                   for the records to be deleted. The keys are metadata field names,
-                                   and the values are the required values for deletion.
-        collection_name (str): The name of the collection from which the records will be deleted.
-    """
-    collection = self.client.get_collection(name=collection_name)
-    collection.delete(where=metadata)
+    raise NotImplementedError

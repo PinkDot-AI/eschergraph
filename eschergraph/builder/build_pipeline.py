@@ -119,7 +119,10 @@ class BuildPipeline:
       prompt=prompt_formatted
     )
     log.properties = [
-      {"name": list(entity_prop.keys())[0], "properties": list(entity_prop.values())[0]}
+      {
+        "entity_name": list(entity_prop.keys())[0],
+        "properties": list(entity_prop.values())[0],
+      }
       for entity_prop in properties["entities"]
     ]
 
@@ -139,7 +142,7 @@ class BuildPipeline:
 
       # Collect all entities from the properties
       for entity_dict in log.properties:
-        unique_entities.add(entity_dict["name"].lower())
+        unique_entities.add(entity_dict["entity_name"].lower())
 
     return list(unique_entities)
 
