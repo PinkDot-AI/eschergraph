@@ -33,7 +33,7 @@ def node_matcher_mock() -> NodeMatcher:
   return NodeMatcher(model=model_mock, reranker=reranker_mock)
 
 
-def test_get_unique_nodes_gpt(node_matcher_mock: NodeMatcher):
+def test_get_unique_nodes_gpt(node_matcher_mock: NodeMatcher) -> None:
   mock_response = {
     "entities": [
       {

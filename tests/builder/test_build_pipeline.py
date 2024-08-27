@@ -26,7 +26,7 @@ def integration_test_building():
   builder = BuildPipeline(model=client, reranker=JinaReranker(api_key=jina_api_key))
   graph: Graph = Graph(name="my graph")
 
-  builder.run(chunks=reader, graph=graph)
+  builder.run(chunks=reader.chunks, graph=graph)
 
   print("processing time", time.time() - t)
   print(builder.graph.repository.get_all_at_level(0))

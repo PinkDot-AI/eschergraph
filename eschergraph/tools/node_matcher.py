@@ -229,7 +229,7 @@ class NodeMatcher:
         ):  # Use list() to avoid issues with modifying the dictionary during iteration
           if entity == key.lower():  # Compare both in lowercase
             if entity not in assigned_node_cache:
-              description = ", ".join(entity_dict[key])
+              description = ", ".join(entity_dict[entity])
               assigned_node_cache[entity] = self._assign_node(
                 description=description, node_info=node_info
               )
