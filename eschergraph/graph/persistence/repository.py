@@ -73,30 +73,6 @@ class Repository(ABC):
     raise NotImplementedError
 
   @abstractmethod
-  def get_nodes_by_level(
-    self, level: int, loadstate: LoadState = LoadState.CORE
-  ) -> List[Node]:
-    """Get nodes by level.
-
-    Args:
-        level (int): The level of the nodes
-        loadstate (LoadState): The state in which the nodes should be loaded.
-
-    Returns:
-        List[Node]: Nodes of the given level
-    """
-    raise NotImplementedError
-
-  @abstractmethod
-  def get_max_level(self) -> int:
-    """Get the highest non-root level of the graph.
-
-    Returns:
-        int: The highest level
-    """
-    raise NotImplementedError
-
-  @abstractmethod
   def save(self) -> None:
     """Explicitly indicate that the repository should save the graph to its persistent storage.
 

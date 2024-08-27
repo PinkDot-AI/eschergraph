@@ -24,8 +24,6 @@ class RerankerResult:
 class Reranker(ABC):
   """The abstract base class for all rerankers used in the package."""
 
-  model: CrossEncoder = field(default=None)
-
   @abstractmethod
   def rerank(
     self, query: str, texts_list: list[str], top_n: int

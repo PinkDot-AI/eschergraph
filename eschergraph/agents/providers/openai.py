@@ -5,7 +5,7 @@ from enum import Enum
 from typing import Any
 
 from attrs import define
-from dotenv import load_dotenv
+from attrs import field
 from openai import NotGiven
 from openai import OpenAI
 from openai.types import CompletionUsage

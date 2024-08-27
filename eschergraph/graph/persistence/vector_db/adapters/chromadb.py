@@ -9,7 +9,6 @@ import chromadb
 
 from eschergraph.agents.embedding import Embedding
 from eschergraph.agents.embedding import get_embedding_model
-from eschergraph.graph.persistence.change_log import ChangeLog
 from eschergraph.graph.persistence.vector_db.vector_db import VectorDB
 
 
@@ -33,7 +32,7 @@ class ChromaDB(VectorDB):
     """
     self.collection = self.client.create_collection(name=name)
 
-  def insert_documents(
+  def insert(
     self,
     documents: list[str],
     ids: list[UUID],
@@ -108,10 +107,6 @@ class ChromaDB(VectorDB):
       for i in range(len(result["ids"][0]))
     ]
 
-  # TODO: implement this method
-  def sync(
-    self,
-    change_log: List[ChangeLog],
   def delete_with_id(self, ids: list[UUID], collection_name: str) -> None:
     """Deletes records from a specified collection using their unique IDs.
 
@@ -125,12 +120,10 @@ class ChromaDB(VectorDB):
   def delete_with_metadata(
     self, metadata: Dict[str, Any], collection_name: str
   ) -> None:
-    """Sync the vector database to the repository.
-
-    The vector database updates its embeddings based on the logged
-    changes to EscherBase objects.
+    """Delete an item in the vectordb by metadata filters.
 
     Args:
-      change_log (list[ChangeLog]): The list of logged changes.
+      metadata (dict[str, str]): Metadata to filter the search results.
+      collection_name (str): The name of the collection.
     """
     raise NotImplementedError

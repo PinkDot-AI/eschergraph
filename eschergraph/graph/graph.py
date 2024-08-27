@@ -8,7 +8,7 @@ from attrs import define
 from attrs import field
 
 from eschergraph.agents.jinja_helper import process_template
-from eschergraph.agents.llm import Model
+from eschergraph.agents.llm import ModelProvider
 from eschergraph.exceptions import EdgeDoesNotExistException
 from eschergraph.exceptions import ExternalProviderException
 from eschergraph.graph.comm_graph import CommunityGraphResult
@@ -91,12 +91,12 @@ class Graph:
 
     return edge
 
-  def build_community_layer(self, from_level: int, llm: Model) -> None:
+  def build_community_layer(self, from_level: int, llm: ModelProvider) -> None:
     """Build a community layer in a new level of the graph.
 
     Args:
         from_level (int): Which level to build on top of.
-        llm (Model): LLM to create community reports
+        llm (ModelProvider): LLM to create community reports
 
     """
     nodes: list[Node] = self.repository.get_all_at_level(from_level)
