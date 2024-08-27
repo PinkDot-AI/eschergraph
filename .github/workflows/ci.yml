@@ -3,17 +3,17 @@ name: CI
 on:
   push:
     branches: [main]
-  # pull_request:
-  #   branches: [main]
+  pull_request:
+    branches: [main]
 
 permissions:
   contents: read
   pull-requests: read
 
 # Only run the latest commit for each PR
-# concurrency:
-#   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-#   cancel-in-progress: true
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 
 env:
