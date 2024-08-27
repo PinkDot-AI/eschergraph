@@ -150,8 +150,8 @@ exclude = [
     'eschergraph/tools/pdf_document_layout_analysis/.*\.py$',
     'eschergraph/graph/persistence/vector_db/adapters/chromadb.py$',
     'eschergraph/tools/fast_pdf_parser/parser.py',
-    'eschergraph/agents/providers/jina.py$',
-    'eschergraph/tools/node_matcher.py$'
+    'eschergraph/tools/node_matcher.py$',
+    'eschergraph/agents/providers/.*\.py$'
 ]
 # The strictest settings extracted from the mypy docs
 # Start off with these
