@@ -161,12 +161,9 @@ def order_properties(nd: Node, llm: ModelProvider) -> List[Property]:
     [{"explanation": prop.description} for prop in nd.properties], indent=4
   )
   prompt = process_template(template, {"json_list": jsonized})
-  message = llm.get_formatted_response(
-    prompt=prompt, response_format={"type": "json_object"}
-  )
-  if message is None:
+  output = llm.get_json_response(prompt=prompt)
+  if output is None:
     raise ExternalProviderException("Empty message response from formatted response")
-  output = json.loads(message)
   if not isinstance(output, list):
     raise ExternalProviderException("Non-list response from LLM")
   # Clear out old properties
@@ -188,12 +185,10 @@ def extract_entities_from(query: str, llm: ModelProvider) -> List[str]:
     entity_extraction_template,
     {"query": query},
   )
-  res = llm.get_json_response(prompt=prompt, response_format={"type": "json_object"})
-  if res is None:
+  res = llm.get_json_response(prompt=prompt)
+  if not res:
     raise ExternalProviderException("Empty message response while extracting entities")
   try:
-    data: dict[str, list[str]] = json.loads(res)
-    return data["entities"]
-
+    return res["entities"]
   except:
     raise ExternalProviderException("jsonify failed at extracting entities from query")
