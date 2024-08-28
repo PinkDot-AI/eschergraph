@@ -5,16 +5,19 @@ import json
 from typing import cast
 from typing import List
 from typing import Optional
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from eschergraph.agents.jinja_helper import process_template
 from eschergraph.agents.llm import ModelProvider
 from eschergraph.agents.reranker import Reranker
 from eschergraph.exceptions import ExternalProviderException
-from eschergraph.graph.graph import Graph
 from eschergraph.graph.node import Node
 from eschergraph.graph.persistence.vector_db.vector_db import VectorDB
 from eschergraph.graph.property import Property
+
+if TYPE_CHECKING:
+  from eschergraph.graph import Graph
 
 
 def search_global(

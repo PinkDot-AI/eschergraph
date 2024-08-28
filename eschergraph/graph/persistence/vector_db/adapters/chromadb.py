@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from typing import Any
 from typing import Dict
 from typing import List
@@ -13,13 +14,23 @@ from eschergraph.graph.persistence.vector_db.vector_db import VectorDB
 
 
 class ChromaDB(VectorDB):
-  """This is the ChromaDB implementation."""
+  """This is the ChromaDB implementation with a persistent client and named storage."""
 
   required_credentials: list[str] = ["OPENAI_API_KEY"]
 
-  def __init__(self) -> None:
-    """Initialize the ChromaDB client."""
-    self.client = chromadb.Client()
+  def __init__(self, save_name: str) -> None:
+    """Initialize the ChromaDB client and used embedding model.
+
+    Args:
+        save_name (str): the save name for the persisted vector db .
+    """
+    storage_dir = "eschergraph_storage"
+    persistence_path = os.path.join(storage_dir, f"{save_name}-vectordb")
+
+    # Ensure the storage directory exists
+    os.makedirs(persistence_path, exist_ok=True)
+
+    self.client = chromadb.PersistentClient(path=persistence_path)
     self.embedding_model: Embedding = get_embedding_model()
 
   def connect(self) -> None:

@@ -24,7 +24,7 @@ def get_embedding_model(embedding_type: str = "text_embedding_3_large") -> Embed
     from eschergraph.agents.providers.openai import OpenAIProvider, OpenAIModel
 
     return OpenAIProvider(
-      model=OpenAIModel.TEXT_EMBEDDING_LARGE, api_key=openai_api_key
+      model=OpenAIModel.TEXT_EMBEDDING_LARGE,
     )
   else:
     raise ValueError(f"Unknown embedding model type: {embedding_type}")
