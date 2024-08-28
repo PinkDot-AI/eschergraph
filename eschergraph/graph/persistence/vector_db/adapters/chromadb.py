@@ -18,19 +18,28 @@ class ChromaDB(VectorDB):
 
   required_credentials: list[str] = ["OPENAI_API_KEY"]
 
-  def __init__(self, save_name: str) -> None:
+  def __init__(
+    self,
+    save_name: str,
+    storage_dir: str = "eschergraph_storage",
+    persistent: bool = True,
+  ) -> None:
     """Initialize the ChromaDB client and used embedding model.
 
     Args:
-        save_name (str): the save name for the persisted vector db .
+      save_name (str): The save name for the persisted vector db.
+      storage_dir (str): The directory to store the persistent client data in.
+      persistent (bool): Whether the vector database should be persistent.
     """
-    storage_dir = "eschergraph_storage"
     persistence_path = os.path.join(storage_dir, f"{save_name}-vectordb")
 
     # Ensure the storage directory exists
     os.makedirs(persistence_path, exist_ok=True)
 
-    self.client = chromadb.PersistentClient(path=persistence_path)
+    if persistent:
+      self.client = chromadb.PersistentClient(path=persistence_path)
+    if not persistent:
+      self.client = chromadb.EphemeralClient()
     self.embedding_model: Embedding = get_embedding_model()
 
   def connect(self) -> None:
