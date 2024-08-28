@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import threading
 from concurrent.futures import as_completed
 from concurrent.futures import ThreadPoolExecutor
@@ -50,6 +51,9 @@ def evaluate_information_consistency(graph: Graph) -> dict:
     ]
     for future in as_completed(futures):
       future.result()  # This will raise any exceptions that occurred during execution
+  output_path = f"eschergraph_storage/{graph.name}-graph_build_evaluation"
+  with open(output_path, "w") as outfile:
+    json.dump(data, outfile, indent=4)
 
   return calculate_statistics(data)
 
@@ -66,15 +70,12 @@ def calculate_statistics(data: list[LogAnalysisResult]) -> dict:
   similarity_differences = [log["similarity_mean_difference"] for log in data]
   std_differences = [log["std_mean_difference"] for log in data]
 
-  avg_similarity = round(np.mean(similarity_differences), 4)
-  avg_std = round(np.mean(std_differences), 4)
+  avg_similarity = round(np.mean(similarity_differences), 3)
+  avg_std = round(np.mean(std_differences), 3)
 
   return {
-    "Average similarity difference": avg_similarity,
-    "Average std difference": avg_std,
-    "loss_of_information_mean": avg_similarity,
-    "loss_of_information": avg_similarity,
-    "loss_of_information_std": avg_std,
+    "Average of mean similarity differences ": avg_similarity,
+    "Average of mean std difference": avg_std,
   }
 
 
