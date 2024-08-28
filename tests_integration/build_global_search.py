@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from eschergraph.agents.providers.jina import JinaReranker
 from eschergraph.agents.providers.openai import OpenAIModel
 from eschergraph.agents.providers.openai import OpenAIProvider
+from eschergraph.builder import BuildPipeline
 from eschergraph.graph import Graph
 from eschergraph.graph.persistence import Repository
 from eschergraph.graph.persistence.adapters.simple_repository import SimpleRepository
@@ -15,6 +16,7 @@ from eschergraph.graph.persistence.vector_db import VectorDB
 from eschergraph.graph.persistence.vector_db.adapters.chromadb import ChromaDB
 from eschergraph.tools.reader import Chunk
 from eschergraph.tools.reader import Reader
+from eschergraph.visualization import Visualizer
 
 TEST_FILE: str = "./test_files/Attention Is All You Need.pdf"
 
@@ -43,6 +45,18 @@ def build_global_search() -> None:
 
   # Read and parse the document
   chunks: list[Chunk] = Reader(file_location=TEST_FILE).parse()
+
+  # Build the graph
+  build_pipeline: BuildPipeline = BuildPipeline(
+    model=graph.model, reranker=graph.reranker
+  )
+  build_pipeline.run(chunks, graph)
+  Visualizer.visualize_graph(
+    graph, level=0, save_location=temp_path.as_posix() + "/level0.html"
+  )
+  Visualizer.visualize_graph(
+    graph, level=1, save_location=temp_path.as_posix() + "/level1.html"
+  )
 
   # Clean up all the persistent data
   temp_dir.cleanup()
