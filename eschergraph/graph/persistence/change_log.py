@@ -25,5 +25,7 @@ class ChangeLog:
   """The primary key of the object."""
   action: Action
   type: type[EscherBase]
+  level: int
+  """The level in the graph at which the change occurred."""
   attributes: list[str] = field(factory=list)
   """A list with the name of the attributes could be impacted."""

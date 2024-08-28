@@ -146,9 +146,7 @@ class Graph:
 
     return edge
 
-  def sync_vectordb(
-    self, collection_name: str = "main_collection", level: int = 0
-  ) -> None:
+  def sync_vectordb(self, collection_name: str = "main_collection") -> None:
     """Synchronizes the vector database with the latest changes in the repository.
 
     Args:
@@ -156,9 +154,7 @@ class Graph:
         level (int, optional): The hierarchical level at which the metadata is being synced. Default is 0.
     """
     # Prepare data for synchronization
-    docs, ids, metadata, ids_to_delete = prepare_sync_data(
-      repository=self.repository, level=level
-    )
+    docs, ids, metadata, ids_to_delete = prepare_sync_data(repository=self.repository)
 
     self.vector_db.get_or_create_collection(collection_name)
 

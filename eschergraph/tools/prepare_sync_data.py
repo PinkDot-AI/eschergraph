@@ -11,15 +11,15 @@ from eschergraph.graph.property import Property
 
 
 def prepare_sync_data(
-  repository: Repository, level: int = 0
+  repository: Repository,
 ) -> tuple[list[str], list[UUID], list[dict[str, Any]], list[UUID]]:
   """Prepares data for synchronization with the vector database.
 
   Args:
-      level (int, optional): The hierarchical level at which the metadata is being synced. Default is 0.
-      repository (Repository): The regarding graphs repository
+    repository (Repository): The graph's repository.
+
   Returns:
-      tuple: A tuple containing lists of documents, IDs, metadata, and IDs to delete.
+    tuple: A tuple containing lists of documents, IDs, metadata, and IDs to delete.
   """
   docs: list[str] = []
   ids: list[UUID] = []
@@ -34,7 +34,7 @@ def prepare_sync_data(
         continue
 
     # Prepare metadata based on log type
-    metadata_entry = {"level": level, "chunk_id": "", "document_id": ""}
+    metadata_entry = {"level": log.level, "chunk_id": "", "document_id": ""}
     if log.type == Node:
       node: Node | None = repository.get_node_by_id(log.id)
       if not node:

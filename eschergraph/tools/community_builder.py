@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from eschergraph.agents.jinja_helper import process_template
@@ -9,11 +10,13 @@ from eschergraph.config import TEMPLATE_IMPORTANCE
 from eschergraph.exceptions import EdgeDoesNotExistException
 from eschergraph.exceptions import ExternalProviderException
 from eschergraph.graph import Edge
-from eschergraph.graph import Graph
 from eschergraph.graph import Node
 from eschergraph.graph import Property
 from eschergraph.graph.comm_graph import CommunityGraphResult
 from eschergraph.graph.community_alg import get_leidenalg_communities
+
+if TYPE_CHECKING:
+  from eschergraph.graph import Graph
 
 
 class CommunityBuilder:
