@@ -24,7 +24,7 @@ class ChromaDB(VectorDB):
     Args:
         save_name (str): the save name for the persisted vector db .
     """
-    storage_dir = "eschergraph-storage"
+    storage_dir = "eschergraph_storage"
     persistence_path = os.path.join(storage_dir, f"{save_name}-vectordb")
 
     # Ensure the storage directory exists
