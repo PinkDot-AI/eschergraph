@@ -9,6 +9,7 @@ from uuid import UUID
 from eschergraph.agents.jinja_helper import process_template
 from eschergraph.agents.llm import ModelProvider
 from eschergraph.agents.reranker import Reranker
+from eschergraph.builder.build_log import BuildLog
 from eschergraph.config import DEFAULT_GRAPH_NAME
 from eschergraph.exceptions import CredentialException
 from eschergraph.exceptions import EdgeDoesNotExistException
@@ -39,6 +40,7 @@ class Graph:
   repository: Repository
   vector_db: VectorDB
   credentials: dict[str, str]
+  pre_persist_building_logs: list[BuildLog]
 
   def __init__(
     self,
@@ -66,6 +68,7 @@ class Graph:
     self.name = name
     self.model = model
     self.reranker = reranker
+    self.pre_persist_building_logs = []
 
     if not repository:
       repository = get_default_repository(name=name)
