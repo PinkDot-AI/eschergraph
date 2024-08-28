@@ -23,7 +23,7 @@ from eschergraph.graph.persistence import Metadata
 from eschergraph.graph.persistence import Repository
 from eschergraph.graph.persistence.factory import get_default_repository
 from eschergraph.graph.property import Property
-from eschergraph.graph.search.quick_search import search
+from eschergraph.graph.search.quick_search import quick_search
 from eschergraph.tools.prepare_sync_data import prepare_sync_data
 
 COMMUNITY_TEMPLATE: str = "community_prompt.jinja"
@@ -73,7 +73,7 @@ class Graph:
     if not repository:
       repository = get_default_repository(name=name)
     if not vector_db:
-      vector_db = get_vector_db()
+      vector_db = get_vector_db(save_name=name)
 
     self.repository = repository
     self.vector_db = vector_db
@@ -352,5 +352,5 @@ class Graph:
     Returns:
         str: The result of the search, typically a string that represents the most relevant information or document found by the search.
     """
-    result = search(vector_db=self.vector_db, query=query, model=self.model)
+    result = quick_search(vector_db=self.vector_db, query=query, model=self.model)
     return result

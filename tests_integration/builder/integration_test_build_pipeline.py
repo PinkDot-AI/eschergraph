@@ -35,9 +35,14 @@ def integration_test_building() -> None:
   builder.run(chunks=reader.chunks, graph=graph)
 
   print("processing time", time.time() - t)
+  query = "what is the oig?"
+
+  r = graph.search(query=query)
+  print("searching time", time.time() - t)
+  print(r)
 
 
-# integration_test_building()
+integration_test_building()
 
 
 def test_search_graph() -> None:
@@ -46,9 +51,3 @@ def test_search_graph() -> None:
   openai_client = OpenAIProvider(model=OpenAIModel.GPT_4o_MINI)
   reranker_client = JinaReranker()
   graph: Graph = Graph(name="my graph", model=openai_client, reranker=reranker_client)
-
-  query = "what is the oid?"
-
-  r = graph.search(query=query)
-  print("searching time", time.time() - t)
-  print(r)
