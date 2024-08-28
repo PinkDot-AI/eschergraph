@@ -188,12 +188,7 @@ def extract_entities_from(query: str, llm: ModelProvider) -> List[str]:
     entity_extraction_template,
     {"query": query},
   )
-  res = llm.get_formatted_response(
-    prompt=prompt, response_format={"type": "json_object"}
-  )
-  res = llm.get_formatted_response(
-    prompt=prompt, response_format={"type": "json_object"}
-  )
+  res = llm.get_json_response(prompt=prompt, response_format={"type": "json_object"})
   if res is None:
     raise ExternalProviderException("Empty message response while extracting entities")
   try:
