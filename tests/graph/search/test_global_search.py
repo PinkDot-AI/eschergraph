@@ -78,28 +78,28 @@ def setup_mocks() -> MagicMockTuple:
 def test_correct_entity_extraction(setup_mocks: MagicMockTuple) -> None:
   mock_llm, *_ = setup_mocks
   entities = {"entities": ["entity1", "entity2", "entity3"]}
-  mock_llm.get_formatted_response.return_value = json.dumps(entities)
+  mock_llm.get_json_response.return_value = entities
   result = extract_entities_from("Find entities in this query.", mock_llm)
   assert result == entities["entities"]
 
 
 def test_empty_response_raises_exception(setup_mocks: MagicMockTuple) -> None:
   mock_llm, *_ = setup_mocks
-  mock_llm.get_formatted_response.return_value = None
+  mock_llm.get_json_response.return_value = None
   with pytest.raises(ExternalProviderException):
     extract_entities_from("Find entities in this query.", mock_llm)
 
 
 def test_invalid_json_raises_value_error(setup_mocks: MagicMockTuple) -> None:
   mock_llm, *_ = setup_mocks
-  mock_llm.get_formatted_response.return_value = "not a json"
+  mock_llm.get_json_response.return_value = "not a json"
   with pytest.raises(ExternalProviderException):
     extract_entities_from("Find entities in this query.", mock_llm)
 
 
 def test_non_list_json_raises_value_error(setup_mocks: MagicMockTuple) -> None:
   mock_llm, *_ = setup_mocks
-  mock_llm.get_formatted_response.return_value = json.dumps({"entity": "not a list"})
+  mock_llm.get_json_response.return_value = {"entity": "not a list"}
   with pytest.raises(ExternalProviderException):
     extract_entities_from("Find entities in this query.", mock_llm)
 
@@ -108,14 +108,14 @@ def test_list_with_non_string_elements_raises_value_error(
   setup_mocks: MagicMockTuple,
 ) -> None:
   mock_llm, *_ = setup_mocks
-  mock_llm.get_formatted_response.return_value = json.dumps(["entity1", 42, "entity3"])
+  mock_llm.get_json_response.return_value = json.dumps(["entity1", 42, "entity3"])
   with pytest.raises(ExternalProviderException):
     extract_entities_from("Find entities in this query.", mock_llm)
 
 
 def test_empty_list_response(setup_mocks: MagicMockTuple) -> None:
   mock_llm, *_ = setup_mocks
-  mock_llm.get_formatted_response.return_value = json.dumps({"entities": []})
+  mock_llm.get_json_response.return_value = {"entities": []}
   result = extract_entities_from("Find entities in this query.", mock_llm)
   assert len(result) == 0
 
@@ -125,7 +125,7 @@ def test_correct_ordering_of_properties(setup_mocks: MagicMockTuple) -> None:
   properties_json = [{"explanation": "Explanation 1"}, {"explanation": "Explanation 2"}]
   mock_node = MagicMock()
   mock_node.properties_to_json.return_value = json.dumps(properties_json)
-  mock_llm.get_formatted_response.return_value = json.dumps(properties_json)
+  mock_llm.get_json_response.return_value = properties_json
   result = order_properties(mock_node, mock_llm)
   expected_properties = [
     Property(
@@ -142,7 +142,7 @@ def test_empty_properties_response(setup_mocks: MagicMockTuple) -> None:
   mock_llm, *_ = setup_mocks
   mock_node = MagicMock()
   mock_node.properties_to_json.return_value = json.dumps([])
-  mock_llm.get_formatted_response.return_value = json.dumps([])
+  mock_llm.get_json_response.return_value = []
   result = order_properties(mock_node, mock_llm)
   assert result == []
 
@@ -151,7 +151,7 @@ def test_invalid_json_structure_raises_error(setup_mocks: MagicMockTuple) -> Non
   mock_llm, *_ = setup_mocks
   mock_node = MagicMock()
   mock_node.properties_to_json.return_value = json.dumps([])
-  mock_llm.get_formatted_response.return_value = json.dumps({"invalid_key": []})
+  mock_llm.get_json_response.return_value = {"invalid_key": []}
   with pytest.raises(ExternalProviderException):
     order_properties(mock_node, mock_llm)
 
@@ -161,7 +161,7 @@ def test_empty_response_raises_exception_in_order_properties(
 ) -> None:
   mock_llm, *_ = setup_mocks
   mock_node = MagicMock()
-  mock_llm.get_formatted_response.return_value = None
+  mock_llm.get_json_response.return_value = None
   with pytest.raises(ExternalProviderException):
     order_properties(mock_node, mock_llm)
 
