@@ -58,7 +58,7 @@ def evaluate_information_consistency(graph: Graph) -> dict:
   return calculate_statistics(data)
 
 
-def calculate_statistics(data: list[LogAnalysisResult]) -> dict:
+def calculate_statistics(data: list[LogAnalysisResult]) -> dict[str, float]:
   """Calculate statistics on similarity and standard deviation differences.
 
   Args:
