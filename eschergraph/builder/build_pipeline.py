@@ -69,6 +69,9 @@ class BuildPipeline:
     # # TODO build upperlayer
     # self._save_logs()
 
+    # save graph
+    graph.repository.save()
+
     return updated_logs
 
   def _extract_node_edges(self, chunks: list[Chunk]) -> None:
@@ -189,7 +192,10 @@ class BuildPipeline:
           )
           continue
         if frm == to:
-          print("cannot make an edge between 2 the same nodes", edge_ext)
+          print(
+            "tried to make an edge between 2 the same nodes, but added it as a property to the node."
+          )
+          frm.add_property(description=edge_ext["relationship"], metadata=log.metadata)
           continue
         graph.add_edge(
           frm=frm,

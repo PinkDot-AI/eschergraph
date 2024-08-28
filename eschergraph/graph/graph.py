@@ -14,6 +14,7 @@ from eschergraph.graph.persistence import Repository
 from eschergraph.graph.persistence.factory import get_default_repository
 from eschergraph.graph.persistence.vector_db import get_vector_db
 from eschergraph.graph.persistence.vector_db import VectorDB
+from eschergraph.graph.search.quick_search import quick_search
 from eschergraph.tools.prepare_sync_data import prepare_sync_data
 
 
@@ -57,7 +58,7 @@ class Graph:
     if not repository:
       repository = get_default_repository(name=name)
     if not vector_db:
-      vector_db = get_vector_db()
+      vector_db = get_vector_db(save_name=name)
 
     self.repository = repository
     self.vector_db = vector_db
@@ -173,3 +174,15 @@ class Graph:
         metadata=metadata,
         collection_name=collection_name,
       )
+
+  def search(self, query: str) -> str:
+    """Executes a search query using a vector database and a specified model.
+
+    Args:
+        query (str): The search query as a string.
+
+    Returns:
+        str: The result of the search, typically a string that represents the most relevant information or document found by the search.
+    """
+    result = quick_search(vector_db=self.vector_db, query=query, model=self.model)
+    return result

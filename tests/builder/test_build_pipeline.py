@@ -13,7 +13,7 @@ from eschergraph.builder.build_log import EdgeExt
 from eschergraph.builder.build_log import NodeExt
 from eschergraph.builder.build_log import PropertyExt
 from eschergraph.builder.build_pipeline import BuildPipeline
-from eschergraph.graph.graph import Graph
+from eschergraph.graph import Graph
 from eschergraph.graph.node import Node
 from eschergraph.graph.persistence import Metadata
 from eschergraph.graph.persistence.adapters.simple_repository import SimpleRepository
