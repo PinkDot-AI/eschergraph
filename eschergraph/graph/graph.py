@@ -6,21 +6,19 @@ from typing import Optional
 from eschergraph.agents.llm import ModelProvider
 from eschergraph.agents.reranker import Reranker
 from eschergraph.builder.build_pipeline import BuildPipeline
+from eschergraph.builder.building_tools import BuildingTools
 from eschergraph.config import DEFAULT_GRAPH_NAME
 from eschergraph.exceptions import CredentialException
 from eschergraph.graph.edge import Edge
 from eschergraph.graph.node import Node
 from eschergraph.graph.persistence import Metadata
 from eschergraph.graph.persistence import Repository
-from eschergraph.graph.persistence.document import DocumentData
 from eschergraph.graph.persistence.factory import get_default_repository
 from eschergraph.graph.persistence.vector_db import get_vector_db
 from eschergraph.graph.persistence.vector_db import VectorDB
 from eschergraph.graph.search.quick_search import quick_search
-from eschergraph.tools.estimator import Estimator
 from eschergraph.tools.prepare_sync_data import prepare_sync_data
-from eschergraph.tools.reader import Chunk
-from eschergraph.tools.reader import Reader
+from eschergraph.visualization.dashboard_maker import DashboardMaker
 
 
 class Graph:
@@ -198,11 +196,11 @@ class Graph:
     Returns:
         Graph: The built graph object.
     """
-    chunks, document_data, total_tokens = self._process_files(files)
+    chunks, document_data, total_tokens = BuildingTools.process_files(files)
 
-    self._display_build_info(chunks, total_tokens)
+    BuildingTools.display_build_info(chunks, total_tokens, model=self.model)
 
-    if not always_approve and not self._get_user_approval():
+    if not always_approve and not BuildingTools.get_user_approval():
       print("Building cancelled.")
       return self
 
@@ -215,70 +213,10 @@ class Graph:
 
     return self
 
-  def _process_files(
-    self, files: str | list[str]
-  ) -> tuple[list[Chunk], list[DocumentData], int]:
-    """Process the given files and extract chunks, document data, and total tokens.
+  def dashboard(self) -> None:
+    """Gathers data and visualizes the dashboard using DashboardMaker."""
+    # Step 1: Gather data
+    data = DashboardMaker.gather_data(self.repository, self.model)
 
-    Args:
-        files (str | list[str]): A single file path or a list of file paths to process.
-
-    Returns:
-        tuple[list[Chunk], list[DocumentData], int]: A tuple containing:
-            - A list of Chunk objects
-            - A list of DocumentData objects
-            - The total number of tokens processed
-    """
-    chunks: str[Chunk] = []
-    document_data: list[DocumentData] = []
-    total_tokens: int = 0
-
-    file_list = [files] if isinstance(files, str) else files
-
-    for file in file_list:
-      reader = Reader(file_location=file)
-      reader.parse()
-      chunks.extend(reader.chunks)
-
-      doc_data = DocumentData(
-        id=reader.doc_id,
-        name=reader.filename,
-        chunk_num=len(reader.chunks),
-        token_num=reader.total_tokens,
-        loss_of_information=None,
-      )
-      document_data.append(doc_data)
-      total_tokens += reader.total_tokens
-
-    return chunks, document_data, total_tokens
-
-  def _display_build_info(self, chunks: list[Chunk], total_tokens: int) -> None:
-    """Display information about the graph building process.
-
-    Args:
-        chunks (list[Chunk]): The list of chunks to be processed.
-        total_tokens (int): The total number of tokens to be processed.
-    """
-    model_name = self.model.get_model_name()
-    estimated_time = Estimator.get_time_indication(
-      num_chunks=len(chunks), model=model_name
-    )
-    estimated_cost = Estimator.get_cost_indication(
-      total_tokens=total_tokens, model=model_name
-    )
-    print("------------------------INFO-------------------------")
-    print(
-      f"This will parse {len(chunks)} chunks, analyze {total_tokens} tokens\n"
-      f"Using {model_name} with an approximate cost of ${estimated_cost:.2f} \n"
-      f"Estimated building time is: {estimated_time}\n"
-    )
-
-  @staticmethod
-  def _get_user_approval() -> bool:
-    """Prompt the user for approval to build the graph.
-
-    Returns:
-        bool: True if the user approves, False otherwise.
-    """
-    user_input = input("Press y to build graph - anything to cancel").lower()
-    return user_input == "y"
+    # Step 2: Visualize the data
+    DashboardMaker.visualizer_print(data)
