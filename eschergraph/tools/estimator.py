@@ -34,7 +34,6 @@ class Estimator:
       raise ValueError("Invalid model specified.")
 
     building_cost: float = prompt_cost + (completion_cost / 4)
-    print(building_cost)
     return round(building_cost * llm_calls_per_token_estimation, 4)
 
   @staticmethod
@@ -66,8 +65,8 @@ class Estimator:
       if remaining_chunks > 0:
         estimated_time += average_time_per_chunk
 
-    node_mathcer_delay = num_chunks
-    community_building_delay = num_chunks
+    node_mathcer_delay = num_chunks * average_time_per_chunk
+    community_building_delay = num_chunks * average_time_per_chunk
 
     estimated_time = estimated_time + node_mathcer_delay + community_building_delay
 

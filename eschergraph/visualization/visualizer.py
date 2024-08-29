@@ -1,14 +1,17 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 import seaborn as sns
 from pyvis.network import Network
 
 from eschergraph.graph import Edge
-from eschergraph.graph import Graph
-from eschergraph.graph import Node
 from eschergraph.graph.community_alg import get_leidenalg_communities
+
+if TYPE_CHECKING:
+  from eschergraph.graph import Graph
+  from eschergraph.graph import Node
 
 
 # TODO: add level and graph name to the visualization
