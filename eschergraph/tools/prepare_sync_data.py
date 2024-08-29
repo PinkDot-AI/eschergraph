@@ -6,6 +6,7 @@ from uuid import UUID
 from eschergraph.graph.edge import Edge
 from eschergraph.graph.node import Node
 from eschergraph.graph.persistence.change_log import Action
+from eschergraph.graph.persistence.change_log import ChangeLog
 from eschergraph.graph.persistence.repository import Repository
 from eschergraph.graph.property import Property
 
@@ -25,13 +26,19 @@ def prepare_sync_data(
   ids: list[UUID] = []
   metadata: list[dict[str, object]] = []
   ids_to_delete: list[UUID] = []
-
-  for log in repository.get_change_log():
+  change_logs: list[ChangeLog] = repository.get_change_log()
+  # Remove change logs that contain a create and delete for the same object
+  for log in change_logs:
     # Handle deletion and update actions
-    if log.action in {Action.UPDATE, Action.DELETE}:
-      ids_to_delete.append(log.id)
-      if log.action == Action.DELETE:
-        continue
+    # if log.action in {Action.UPDATE, Action.DELETE}:
+    #   # Quick fix, an update after a delete
+
+    #   ids_to_delete.append(log.id)
+    #   if log.action == Action.DELETE:
+    #     continue
+
+    if log.action != Action.CREATE:
+      continue
 
     # Prepare metadata based on log type
     metadata_entry = {"level": log.level, "chunk_id": "", "document_id": ""}

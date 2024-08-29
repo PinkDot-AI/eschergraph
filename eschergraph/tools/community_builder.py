@@ -18,6 +18,8 @@ from eschergraph.graph.community_alg import get_leidenalg_communities
 if TYPE_CHECKING:
   from eschergraph.graph import Graph
 
+# TODO: add multi-threading to the community builder
+
 
 class CommunityBuilder:
   """The community builder.
@@ -162,11 +164,10 @@ class CommunityBuilder:
         "properties": prop_format,
       },
     )
-
-    res = graph.model.get_formatted_response(finding_prompt, {"type": "json_schema"})
-    if res is None:
+    # TODO: add more exception handling
+    parsed_json = graph.model.get_json_response(finding_prompt)
+    if parsed_json is None:
       raise ExternalProviderException("Invalid response from LLM")
-    parsed_json = json.loads(res)
     if (
       "title" not in parsed_json
       or "summary" not in parsed_json
@@ -175,13 +176,14 @@ class CommunityBuilder:
       raise ExternalProviderException("LLM JSON Response did not contain correct keys")
     jsonized: str = json.dumps(parsed_json["findings"], indent=4)
     reorder_prompt = process_template(TEMPLATE_IMPORTANCE, {"json_list": jsonized})
-    res_reorder = graph.model.get_formatted_response(
-      prompt=reorder_prompt, response_format={"type": "json_schema"}
-    )
-    if res_reorder is None:
+    findings = graph.model.get_json_response(prompt=reorder_prompt)
+    if not isinstance(findings, list):
+      key: str = list(findings.keys())[0]
+      findings = findings[key]
+    # Returns a json with the findings under the key findings
+    if findings is None:
       raise ExternalProviderException("Invalid response from LLM for reordering")
-    findings = json.loads(res_reorder)
     if not isinstance(findings, list):
       raise ExternalProviderException("Invalid response from LLM for reordering")
 
-    return parsed_json["title"], parsed_json["description"], findings
+    return parsed_json["title"], parsed_json["summary"], findings

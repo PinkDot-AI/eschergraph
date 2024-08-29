@@ -7,13 +7,12 @@ from typing import Any
 
 from attrs import define
 from attrs import field
+from openai import BadRequestError
 from openai import NotGiven
 from openai import OpenAI
 from openai.types import CompletionUsage
 from openai.types.chat import ChatCompletionMessageParam
-from openai.types.chat import ChatCompletionMessageToolCall
 from openai.types.chat import ChatCompletionSystemMessageParam
-from openai.types.chat import ChatCompletionToolChoiceOptionParam
 from openai.types.chat import ChatCompletionToolParam
 from openai.types.chat import ChatCompletionUserMessageParam
 from openai.types.chat.chat_completion import ChatCompletion
@@ -25,7 +24,6 @@ from tenacity import stop_after_attempt
 from tenacity import wait_random_exponential
 
 from eschergraph.agents.embedding import Embedding
-from eschergraph.agents.llm import FunctionCall
 from eschergraph.agents.llm import ModelProvider
 from eschergraph.agents.llm import TokenUsage
 from eschergraph.agents.tools import Function
@@ -125,69 +123,6 @@ class OpenAIProvider(ModelProvider, Embedding):
       print(e)
       raise ExternalProviderException(e)
 
-  def get_json_reponse(self, prompt: str) -> str | None:
-    """Get a text json response from OpenAI.
-
-    Note that the model that is used is specified when instantiating the class.
-
-    Args:
-      prompt (str): The user prompt that is send to ChatGPT.
-
-    Returns:
-      The answer given or None.
-    """
-    return self._get_response(prompt, response_format={"type": "json_object"})  # type: ignore
-
-  def get_function_calls(self, prompt: str, tools: list[Tool]) -> list[FunctionCall]:
-    """Get function calls from ChatGPT.
-
-    Collect function calls that the model chooses from the tools that are provided.
-
-    Args:
-      prompt (str): The instructions that explain the context under which tools should be used.
-      tools (list[Tool]): The tools that are available.
-
-    Returns:
-      A list of function calls.
-    """
-    tool_choice: ChatCompletionToolChoiceOptionParam = "required"
-    chat_tools: list[ChatCompletionToolParam] = self._get_tools_for_chat(tools)
-    messages: list[ChatCompletionMessageParam] = self._get_messages(prompt)
-    try:
-      response: ChatCompletion = self.client.chat.completions.create(
-        model=self.model.value,
-        messages=messages,
-        tools=chat_tools,
-        tool_choice=tool_choice,
-      )
-      # Log the tokens that were used
-      self._add_token_usage(response)
-    except Exception as e:
-      raise ExternalProviderException(e)
-
-    # Convert the function calls to the package format
-    function_calls: list[FunctionCall] = []
-
-    chat_tool_response: list[ChatCompletionMessageToolCall] | None = response.choices[
-      0
-    ].message.tool_calls
-
-    # In case Chat supplied no tool calls
-    if not chat_tool_response:
-      return function_calls
-
-    chat_tool_calls: list[ChatCompletionMessageToolCall] = chat_tool_response
-
-    for tool_call in chat_tool_calls:
-      function_calls.append(
-        FunctionCall(
-          name=tool_call.function.name,
-          arguments=json.loads(tool_call.function.arguments),
-        )
-      )
-
-    return function_calls
-
   def _add_token_usage(self, response: ChatCompletion) -> None:
     if response.usage:
       completion_usage: CompletionUsage = response.usage
@@ -219,8 +154,12 @@ class OpenAIProvider(ModelProvider, Embedding):
 
     model = "text-embedding-3-large"
     list_text = [t.replace("\n", " ") for t in list_text]
-    response = self.client.embeddings.create(input=list_text, model=model).data
-    return [e.embedding for e in response]
+    try:
+      response = self.client.embeddings.create(input=list_text, model=model).data
+      return [e.embedding for e in response]
+    except BadRequestError:
+      print("Bad request for the embedding")
+      print(f"This was the input for which it went wrong: {list_text}")
 
   @staticmethod
   def _get_tools_for_chat(tools: list[Tool]) -> list[ChatCompletionToolParam]:
