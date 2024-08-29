@@ -139,7 +139,7 @@ class Reader:
   ) -> None:
     text: str = " ".join(chunk_list)
 
-    if not self._chunk_filter(text):
+    if not Reader._chunk_filter(text):
       return
 
     chunk: Chunk = Chunk(
@@ -175,11 +175,12 @@ class Reader:
         )
     self.chunks = chunks
 
-  def _chunk_filter(self, chunk: str) -> bool:
+  @staticmethod
+  def _chunk_filter(chunk: str) -> bool:
     min_length = 100
     if len(chunk) < min_length:
       return False
-    elif self._contains_many_non_alpha(input_string=chunk):
+    elif Reader._contains_many_non_alpha(input_string=chunk):
       return False
     return True
 

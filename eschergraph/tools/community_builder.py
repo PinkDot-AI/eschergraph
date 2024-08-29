@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+from concurrent.futures import as_completed
+from concurrent.futures import ThreadPoolExecutor
 from typing import TYPE_CHECKING
 from uuid import UUID
 
@@ -9,6 +11,7 @@ from eschergraph.config import COMMUNITY_TEMPLATE
 from eschergraph.config import TEMPLATE_IMPORTANCE
 from eschergraph.exceptions import EdgeDoesNotExistException
 from eschergraph.exceptions import ExternalProviderException
+from eschergraph.graph import Community
 from eschergraph.graph import Edge
 from eschergraph.graph import Node
 from eschergraph.graph import Property
@@ -17,8 +20,6 @@ from eschergraph.graph.community_alg import get_leidenalg_communities
 
 if TYPE_CHECKING:
   from eschergraph.graph import Graph
-
-# TODO: add multi-threading to the community builder
 
 
 class CommunityBuilder:
@@ -70,26 +71,51 @@ class CommunityBuilder:
       new_edge = Edge.create(frm=nodes_tmp[frm], to=nodes_tmp[to], description="")
       edges.append(new_edge)
 
-    # Generate and process findings for each community
-    for comm_idx in nodes_tmp.keys():
-      comm_edges: list[Edge] = CommunityBuilder._gather_community_edges(
+    # Generate the comm edges and nodes for each community
+    comms_edges: dict[int, list[Edge]] = {
+      comm_idx: CommunityBuilder._gather_community_edges(
         graph, comms.edges, comms.partitions[comm_idx]
       )
-      comm_nodes: list[Node] = [
-        node_lookup[nd_id] for nd_id in comms.partitions[comm_idx]
-      ]
+      for comm_idx in nodes_tmp.keys()
+    }
 
-      title, description, findings = CommunityBuilder._get_model_findings(
-        graph, comm_edges, comm_nodes
-      )
+    comms_nodes: dict[int, list[Node]] = {
+      comm_idx: [node_lookup[nd_id] for nd_id in comms.partitions[comm_idx]]
+      for comm_idx in nodes_tmp.keys()
+    }
 
-      for finding in findings:
-        Property.create(nodes_tmp[comm_idx], description=finding["explanation"])
+    # Generate and process findings for each community (multi-threaded)
+    with ThreadPoolExecutor(max_workers=graph.model.max_threads) as executor:
+      futures = {
+        executor.submit(
+          CommunityBuilder._get_model_findings,
+          graph,
+          comms_edges[idx],
+          comms_nodes[idx],
+        ): idx
+        for idx in nodes_tmp.keys()
+      }
+      for future in as_completed(futures):
+        comm_idx: int = futures[future]
+        try:
+          name, description, findings = future.result()
+          for finding in findings:
+            Property.create(nodes_tmp[comm_idx], description=finding["explanation"])
 
-      nodes_tmp[comm_idx].name = title
-      nodes_tmp[comm_idx].description = description
+          nodes_tmp[comm_idx].name = name
+          nodes_tmp[comm_idx].description = description
 
-      graph.repository.add(nodes_tmp[comm_idx])
+        except Exception as e:
+          print(f"Error processing community findings: {e}")
+
+    for comm_node in nodes_tmp.values():
+      graph.repository.add(comm_node)
+
+    # Add the community node to all the child nodes
+    for nd_id, comm_idx in node_comm.items():
+      node: Node = node_lookup[nd_id]
+      node.community = Community(node=nodes_tmp[comm_idx])
+      graph.repository.add(node)
 
   @staticmethod
   def _create_empty_community_node(
@@ -156,7 +182,6 @@ class CommunityBuilder:
     edge_format: str = "from,to,description\n" + "\n".join(
       f"{edge.frm.name},{edge.to.name},{edge.description}" for edge in comm_edges
     )
-
     finding_prompt = process_template(
       COMMUNITY_TEMPLATE,
       {
@@ -164,7 +189,6 @@ class CommunityBuilder:
         "properties": prop_format,
       },
     )
-    # TODO: add more exception handling
     parsed_json = graph.model.get_json_response(finding_prompt)
     if parsed_json is None:
       raise ExternalProviderException("Invalid response from LLM")
