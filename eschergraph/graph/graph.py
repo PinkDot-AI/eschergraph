@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import os
 from typing import Optional
+from typing import TYPE_CHECKING
 
 from eschergraph.agents.llm import ModelProvider
 from eschergraph.agents.reranker import Reranker
-from eschergraph.builder.build_log import BuildLog
 from eschergraph.config import DEFAULT_GRAPH_NAME
 from eschergraph.exceptions import CredentialException
 from eschergraph.graph.edge import Edge
@@ -18,6 +18,9 @@ from eschergraph.graph.persistence.vector_db import VectorDB
 from eschergraph.graph.search.quick_search import quick_search
 from eschergraph.tools.prepare_sync_data import prepare_sync_data
 from eschergraph.visualization.dashboard_maker import DashboardMaker
+
+if TYPE_CHECKING:
+  from eschergraph.builder.build_log import BuildLog
 
 
 class Graph:
