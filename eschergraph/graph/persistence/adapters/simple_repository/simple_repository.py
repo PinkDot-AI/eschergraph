@@ -609,3 +609,14 @@ class SimpleRepository(Repository):
         List[DocumentData]: A list of `DocumentData` instances for the requested documents.
     """
     ...
+
+  def update_documents(self, document_data: list[DocumentData]) -> None:
+    """Updates the document data in the repository.
+
+    Args:
+        document_data: A list of DocumentData objects that need to be updated in the repository.
+
+    Returns:
+        None
+    """
+    raise NotImplementedError

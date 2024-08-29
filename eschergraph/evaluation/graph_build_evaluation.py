@@ -6,6 +6,7 @@ from concurrent.futures import as_completed
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 from typing import TypedDict
+from uuid import UUID
 
 import nltk
 import numpy as np
@@ -28,22 +29,22 @@ class LogAnalysisResult(TypedDict):
   possible_loss_of_information_sentences: list[dict[str, Any]]
 
 
-def evaluate_information_consistency(graph: Graph) -> dict:
-  """Evaluate information consistency across the graph using parallel processing.
+def evaluate_information_consistency(graph: Graph) -> dict[UUID, dict[str, float]]:
+  """Evaluate information consistency across the graph, grouped by document ID.
 
   Args:
       graph: The Graph object to evaluate.
 
   Returns:
-      A dictionary containing statistical results of the evaluation.
+      A dictionary containing statistical results of the evaluation, averaged by document.
   """
-  data: list[LogAnalysisResult] = []
+  data_by_document: dict[str, list[LogAnalysisResult]] = {}
   lock = threading.Lock()
 
   def process_log(log):
     result = handle_log(log, graph)
     with lock:
-      data.append(result)
+      data_by_document[log.metadata.document_id].append(result)
 
   with ThreadPoolExecutor() as executor:
     futures = [
@@ -51,31 +52,34 @@ def evaluate_information_consistency(graph: Graph) -> dict:
     ]
     for future in as_completed(futures):
       future.result()  # This will raise any exceptions that occurred during execution
+
+  # Compute averages per document
+  averages_by_document: dict[UUID, dict[str, float]] = {}
+  for document_id, logs in data_by_document.items():
+    averages_by_document[document_id] = calculate_document_statistics(logs)
+  # Save results to output file
   output_path = f"eschergraph_storage/{graph.name}-graph_build_evaluation"
   with open(output_path, "w") as outfile:
-    json.dump(data, outfile, indent=4)
+    json.dump(averages_by_document, outfile, indent=4)
 
-  return calculate_statistics(data)
+  return averages_by_document
 
 
-def calculate_statistics(data: list[LogAnalysisResult]) -> dict[str, float]:
-  """Calculate statistics on similarity and standard deviation differences.
+def calculate_document_statistics(logs: list[LogAnalysisResult]) -> dict[str, float]:
+  """Calculate average statistics for a single document.
 
   Args:
-      data: A list of LogAnalysisResult objects.
+      logs: A list of LogAnalysisResult objects for a document.
 
   Returns:
-      A dictionary containing calculated statistics.
+      A dictionary containing average statistics for the document.
   """
-  similarity_differences = [log["similarity_mean_difference"] for log in data]
-  std_differences = [log["std_mean_difference"] for log in data]
-
-  avg_similarity = round(np.mean(similarity_differences), 3)
-  avg_std = round(np.mean(std_differences), 3)
+  similarity_differences = [log["similarity_mean_difference"] for log in logs]
+  std_differences = [log["std_mean_difference"] for log in logs]
 
   return {
-    "Average of mean similarity differences ": avg_similarity,
-    "Average of mean std difference": avg_std,
+    "Average similarity mean difference": round(np.mean(similarity_differences), 3),
+    "Average standard deviation difference": round(np.mean(std_differences), 3),
   }
 
 

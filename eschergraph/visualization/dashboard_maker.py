@@ -75,7 +75,6 @@ class DashboardMaker:
        data (dict[str, Any]): is a dictionry holding all the information to be printed
     returns:
        none
-
     """
     llm_model_type: str = data["llm_model_type"]
     documents: list[DocumentData] = data["documents"]
@@ -86,8 +85,14 @@ class DashboardMaker:
     total_num_properties: int = data["total_num_properties"]
 
     # Table for document details
+    total_loss_of_information = 0.0
+    total_std_loss_of_information = 0.0
+    count_loss_of_information = 0
+    count_std_loss_of_information = 0
     table_data = []
+    # Populate the table_data and accumulate the values for averages
     for document in documents:
+      # Add the document data to the table
       table_data.append([
         document.name,
         document.chunk_num,
@@ -95,7 +100,32 @@ class DashboardMaker:
         document.loss_of_information
         if document.loss_of_information is not None
         else "--",
+        document.std_loss_of_information
+        if document.std_loss_of_information is not None
+        else "--",
       ])
+
+      # Accumulate valid loss_of_information values for averaging
+      if document.loss_of_information is not None:
+        total_loss_of_information += document.loss_of_information
+        count_loss_of_information += 1
+
+      # Accumulate valid std_loss_of_information values for averaging
+      if document.std_loss_of_information is not None:
+        total_std_loss_of_information += document.std_loss_of_information
+        count_std_loss_of_information += 1
+
+    # Calculate the averages, checking for division by zero
+    average_loss_of_information = (
+      total_loss_of_information / count_loss_of_information
+      if count_loss_of_information > 0
+      else 0
+    )
+    average_std_loss_of_information = (
+      total_std_loss_of_information / count_std_loss_of_information
+      if count_std_loss_of_information > 0
+      else 0
+    )
 
     # Output dashboard data in a readable format
     print("### Dashboard ###")
@@ -107,10 +137,19 @@ class DashboardMaker:
     print(
       tabulate(
         table_data,
-        headers=["Document Name", "Chunk Num", "Tokens Num", "Information Loss"],
+        headers=[
+          "Document Name",
+          "Chunk Num",
+          "Tokens Num",
+          "Information Loss" "STD Information Loss",
+        ],
       )
     )
 
+    print(
+      f"\n Overall mean information loss:{average_loss_of_information}"
+      f"\n Overall std information loss:{average_std_loss_of_information}"
+    )
     # Print top 5 lower-level nodes
     print("\nTop 5 Lower-Level Nodes by Number of Edges:")
     for node in top_5_nodes:

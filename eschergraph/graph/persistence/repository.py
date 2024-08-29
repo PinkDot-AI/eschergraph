@@ -163,7 +163,7 @@ class Repository(ABC):
     raise NotImplementedError
 
   @abstractmethod
-  def add_document(self, document_data: DocumentData) -> None:
+  def add_documents(self, document_data: list[DocumentData]) -> None:
     """Adds a document to the system.
 
     Args:
@@ -174,7 +174,7 @@ class Repository(ABC):
     """
     raise NotImplementedError
 
-  def get_document(self, ids: list[UUID]) -> list[DocumentData]:
+  def get_documents(self, ids: list[UUID]) -> list[DocumentData]:
     """Retrieves documents based on a list of document UUIDs.
 
     Args:
@@ -182,5 +182,16 @@ class Repository(ABC):
 
     Returns:
         List[DocumentData]: A list of `DocumentData` instances for the requested documents.
+    """
+    raise NotImplementedError
+
+  def update_documents(self, document_data: list[DocumentData]) -> None:
+    """Updates the document data in the repository.
+
+    Args:
+        document_data: A list of DocumentData objects that need to be updated in the repository.
+
+    Returns:
+        None
     """
     raise NotImplementedError

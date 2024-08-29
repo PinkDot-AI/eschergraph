@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from typing import Optional
+from uuid import UUID
 
 from eschergraph.agents.llm import ModelProvider
 from eschergraph.agents.reranker import Reranker
@@ -9,11 +10,15 @@ from eschergraph.builder.build_log import BuildLog
 from eschergraph.builder.build_pipeline import BuildPipeline
 from eschergraph.builder.building_tools import BuildingTools
 from eschergraph.config import DEFAULT_GRAPH_NAME
+from eschergraph.evaluation.graph_build_evaluation import (
+  evaluate_information_consistency,
+)
 from eschergraph.exceptions import CredentialException
 from eschergraph.graph.edge import Edge
 from eschergraph.graph.node import Node
 from eschergraph.graph.persistence import Metadata
 from eschergraph.graph.persistence import Repository
+from eschergraph.graph.persistence.document import DocumentData
 from eschergraph.graph.persistence.factory import get_default_repository
 from eschergraph.graph.persistence.vector_db import get_vector_db
 from eschergraph.graph.persistence.vector_db import VectorDB
@@ -223,3 +228,26 @@ class Graph:
 
     # Step 2: Visualize the data
     DashboardMaker.visualizer_print(data)
+
+  def evaluate(self) -> None:
+    """Evaluates the information consistency across the graph and updates the corresponding document data.
+
+    with the calculated loss of information statistics.
+    """
+    averages_by_document = evaluate_information_consistency(graph=self)
+    ids: list[UUID] = list(averages_by_document.keys())
+    document_data: list[DocumentData] = self.repository.get_documents(ids)
+    for doc in document_data:
+      # Get the corresponding statistics for the document from averages_by_document
+      document_stats = averages_by_document.get(doc.id)
+      if document_stats:
+        # We use "Average similarity mean difference" as the "loss_of_information"
+        doc.loss_of_information = document_stats["Average similarity mean difference"]
+        doc.std_loss_of_information = document_stats[
+          "Average standard deviation difference"
+        ]
+
+    # Step 5: Optionally, save the updated DocumentData objects back to the repository
+    self.repository.update_documents(document_data)
+
+    self.dashboard()
