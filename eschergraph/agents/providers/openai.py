@@ -64,6 +64,14 @@ class OpenAIProvider(ModelProvider, Embedding):
       raise CredentialException("No API key for OpenAI has been set")
     return OpenAI(api_key=api_key)
 
+  def get_model_name(self) -> str:
+    """Returns which model is used.
+
+    Returns:
+      The given model name as a string
+    """
+    return self.model.value
+
   @retry(wait=wait_random_exponential(multiplier=1, max=40), stop=stop_after_attempt(3))
   def get_plain_response(self, prompt: str) -> Any:
     """Get a text response from OpenAI.

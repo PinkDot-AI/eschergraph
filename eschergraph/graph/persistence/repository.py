@@ -15,6 +15,7 @@ if TYPE_CHECKING:
   from eschergraph.graph.edge import Edge
   from eschergraph.graph.property import Property
   from eschergraph.graph.persistence.change_log import ChangeLog
+  from eschergraph.graph.persistence.document import DocumentData
 
 
 class Repository(ABC):
@@ -159,3 +160,27 @@ class Repository(ABC):
     Use with caution. Should only be performed after syncing to external
     systems such as a vector database.
     """
+    raise NotImplementedError
+
+  @abstractmethod
+  def add_document(self, document_data: DocumentData) -> None:
+    """Adds a document to the system.
+
+    Args:
+        document_data (DocumentData): The document data that needs to be added.
+
+    Returns:
+        None: This method does not return any value.
+    """
+    raise NotImplementedError
+
+  def get_document(self, ids: list[UUID]) -> list[DocumentData]:
+    """Retrieves documents based on a list of document UUIDs.
+
+    Args:
+        ids (List[UUID]): A list of UUIDs representing the documents to be fetched.
+
+    Returns:
+        List[DocumentData]: A list of `DocumentData` instances for the requested documents.
+    """
+    raise NotImplementedError

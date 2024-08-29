@@ -40,6 +40,15 @@ class ModelProvider(ABC):
   max_threads: int = field(default=10)
 
   @abstractmethod
+  def get_model_name(self) -> str:
+    """Get the model name of the model provider.
+
+    Returns:
+      The string name of the used llm model
+    """
+    raise NotImplementedError
+
+  @abstractmethod
   def get_plain_response(self, prompt: str) -> str | None:
     """Get a plain text response from an LLM.
 
