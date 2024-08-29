@@ -168,6 +168,7 @@ class OpenAIProvider(ModelProvider, Embedding):
     except BadRequestError:
       print("Bad request for the embedding")
       print(f"This was the input for which it went wrong: {list_text}")
+      raise ExternalProviderException("Something went wrong creating embeddings")
 
   @staticmethod
   def _get_tools_for_chat(tools: list[Tool]) -> list[ChatCompletionToolParam]:
