@@ -10,6 +10,7 @@ import chromadb
 
 from eschergraph.agents.embedding import Embedding
 from eschergraph.agents.embedding import get_embedding_model
+from eschergraph.exceptions import ExternalProviderException
 from eschergraph.graph.persistence.vector_db.vector_db import VectorDB
 
 
@@ -70,7 +71,13 @@ class ChromaDB(VectorDB):
       collection_name (str): Name of the collection to add documents to.
     """
     collection = self.client.get_collection(name=collection_name)
-    embeddings = self.embedding_model.get_embedding(list_text=documents)
+    # TODO: add more error handling / communication to operating classes
+    try:
+      embeddings = self.embedding_model.get_embedding(list_text=documents)
+    except ExternalProviderException as e:
+      print(f"Something went wrong generating embeddings: {e}")
+      return
+
     ids: list[str] = [str(id) for id in ids]
     collection.add(
       documents=documents,

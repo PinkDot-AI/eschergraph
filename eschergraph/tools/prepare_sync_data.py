@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from typing import Any
 from uuid import UUID
 
 from eschergraph.graph.edge import Edge
@@ -13,7 +12,7 @@ from eschergraph.graph.property import Property
 
 def prepare_sync_data(
   repository: Repository,
-) -> tuple[list[str], list[UUID], list[dict[str, Any]], list[UUID]]:
+) -> tuple[list[str], list[UUID], list[dict[str, str]], list[UUID]]:
   """Prepares data for synchronization with the vector database.
 
   Args:
@@ -23,27 +22,23 @@ def prepare_sync_data(
     tuple: A tuple containing lists of documents, IDs, metadata, and IDs to delete.
   """
   docs: list[str] = []
-  ids: list[UUID] = []
-  metadata: list[dict[str, object]] = []
-  ids_to_delete: list[UUID] = []
+  metadata: list[dict[str, str | int]] = []
   change_logs: list[ChangeLog] = repository.get_change_log()
-  # Remove change logs that contain a create and delete for the same object
+
+  # Map each object id to its change_logs
+  objects_logs: dict[UUID, list[ChangeLog]] = {log.id: [] for log in change_logs}
   for log in change_logs:
-    # Handle deletion and update actions
-    # if log.action in {Action.UPDATE, Action.DELETE}:
-    #   # Quick fix, an update after a delete
+    objects_logs[log.id].append(log)
 
-    #   ids_to_delete.append(log.id)
-    #   if log.action == Action.DELETE:
-    #     continue
+  ids_to_create, ids_to_delete = _get_actions_for_objects(objects_logs)
 
-    if log.action != Action.CREATE:
-      continue
-
+  # Remove change logs that contain a create and delete for the same object
+  for id in ids_to_create:
+    log: ChangeLog = objects_logs[id][0]
     # Prepare metadata based on log type
     metadata_entry = {"level": log.level, "chunk_id": "", "document_id": ""}
     if log.type == Node:
-      node: Node | None = repository.get_node_by_id(log.id)
+      node: Node | None = repository.get_node_by_id(id)
       if not node:
         continue
       docs.append(node.name)
@@ -72,9 +67,23 @@ def prepare_sync_data(
         "entity_frm": property.node.name,
         "entity_to": "",
       })
-    else:
-      continue  # Skip logs that are neither Node, Edge, nor Property
-    metadata.append(metadata_entry)
-    ids.append(log.id)
 
-  return docs, ids, metadata, ids_to_delete
+    metadata.append(metadata_entry)
+
+  return docs, ids_to_create, metadata, ids_to_delete
+
+
+def _get_actions_for_objects(
+  objects_logs: dict[UUID, list[ChangeLog]],
+) -> tuple[list[UUID], list[UUID]]:
+  ids_to_delete: list[UUID] = []
+  ids_to_create: list[UUID] = []
+  for id, object_logs in objects_logs.items():
+    # Create a set of actions for the object
+    actions: set[Action] = {log.action for log in object_logs}
+    if not Action.CREATE in actions:
+      ids_to_delete.append(id)
+    if not Action.DELETE in actions:
+      ids_to_create.append(id)
+
+  return ids_to_create, ids_to_delete

@@ -24,7 +24,7 @@ from eschergraph.tools.node_matcher import NodeMatcher
 from eschergraph.tools.reader import Chunk
 
 if TYPE_CHECKING:
-  from eschergraph.graph import Graph
+  from eschergraph.graph.graph import Graph
   from eschergraph.graph.node import Node
 
 

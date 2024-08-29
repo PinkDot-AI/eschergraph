@@ -6,8 +6,6 @@ from typing import Optional
 from eschergraph.agents.llm import ModelProvider
 from eschergraph.agents.reranker import Reranker
 from eschergraph.builder.build_log import BuildLog
-from eschergraph.builder.build_pipeline import BuildPipeline
-from eschergraph.builder.building_tools import BuildingTools
 from eschergraph.config import DEFAULT_GRAPH_NAME
 from eschergraph.exceptions import CredentialException
 from eschergraph.graph.edge import Edge
@@ -199,6 +197,10 @@ class Graph:
     Returns:
         Graph: The built graph object.
     """
+    # Prevent circular import errors
+    from eschergraph.builder.build_pipeline import BuildPipeline
+    from eschergraph.builder.building_tools import BuildingTools
+
     chunks, document_data, total_tokens = BuildingTools.process_files(files)
 
     BuildingTools.display_build_info(chunks, total_tokens, model=self.model)
