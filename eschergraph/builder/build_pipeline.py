@@ -18,7 +18,6 @@ from eschergraph.builder.build_log import NodeExt
 from eschergraph.builder.build_log import PropertyExt
 from eschergraph.config import JSON_BUILD
 from eschergraph.config import JSON_PROPERTY
-from eschergraph.graph.node import Node
 from eschergraph.graph.persistence import Metadata
 from eschergraph.tools.community_builder import CommunityBuilder
 from eschergraph.tools.node_matcher import NodeMatcher
@@ -26,6 +25,7 @@ from eschergraph.tools.reader import Chunk
 
 if TYPE_CHECKING:
   from eschergraph.graph import Graph
+  from eschergraph.graph.node import Node
 
 
 @define

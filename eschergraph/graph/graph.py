@@ -18,6 +18,7 @@ from eschergraph.graph.persistence.vector_db import get_vector_db
 from eschergraph.graph.persistence.vector_db import VectorDB
 from eschergraph.graph.search.quick_search import quick_search
 from eschergraph.tools.prepare_sync_data import prepare_sync_data
+from eschergraph.visualization.dashboard_maker import DashboardMaker
 
 
 class Graph:
@@ -211,3 +212,11 @@ class Graph:
     self.repository.add_document(document_data=document_data)
 
     return self
+
+  def dashboard(self) -> None:
+    """Gathers data and visualizes the dashboard using DashboardMaker."""
+    # Step 1: Gather data
+    data = DashboardMaker.gather_data(self.repository, self.model)
+
+    # Step 2: Visualize the data
+    DashboardMaker.visualizer_print(data)

@@ -1,28 +1,52 @@
 from __future__ import annotations
 
 import time
-
-from dotenv import load_dotenv
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from eschergraph.agents.providers.jina import JinaReranker
 from eschergraph.agents.providers.openai import OpenAIModel
 from eschergraph.agents.providers.openai import OpenAIProvider
 from eschergraph.graph import Graph
+from eschergraph.graph.persistence.adapters.simple_repository.simple_repository import (
+  SimpleRepository,
+)
+from eschergraph.graph.persistence.repository import Repository
+from eschergraph.graph.persistence.vector_db.adapters.chromadb import ChromaDB
+from eschergraph.graph.persistence.vector_db.vector_db import VectorDB
 
-load_dotenv()
+TEST_FILE: str = "./test_files/test_file.pdf"
 
 
 def integration_test_building() -> None:
   """Integration test for building pipeline."""
-  openai_client = OpenAIProvider(model=OpenAIModel.GPT_4o_MINI)
-  reranker_client = JinaReranker()
-  file_path = "test_files/Attention is All You Need.pdf"
+  # The temporary directory (clean run for each test)
+  temp_dir: TemporaryDirectory = TemporaryDirectory()
+  temp_path: Path = Path(temp_dir.name)
+
+  # Set up all the graph dependencies
+  graph_name: str = "test_graph"
+  repository: Repository = SimpleRepository(
+    name=graph_name, save_location=temp_path.as_posix()
+  )
+  chroma: VectorDB = ChromaDB(save_name=graph_name, persistent=False)
+  graph: Graph = Graph(
+    model=OpenAIProvider(model=OpenAIModel.GPT_4o_MINI),
+    reranker=JinaReranker(),
+    name=graph_name,
+    repository=repository,
+    vector_db=chroma,
+  )
   t = time.time()
+  graph.build(files=TEST_FILE)
 
-  graph: Graph = Graph(name="my graph", model=openai_client, reranker=reranker_client)
-
-  graph.build(files=file_path)
+  graph.dashboard()
   print("processing time", time.time() - t)
+  # Wait a few seconds before cleaning up to open the visuals
+  time.sleep(10)
+
+  # Clean up all the persistent data
+  temp_dir.cleanup()
 
 
 integration_test_building()

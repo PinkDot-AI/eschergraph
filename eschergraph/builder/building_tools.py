@@ -80,5 +80,7 @@ class BuildingTools:
     Returns:
         bool: True if the user approves, False otherwise.
     """
-    user_input = input("Press y to build graph - anything to cancel").lower()
+    user_input = input(
+      "Press y to build graph - press anything else to cancel: "
+    ).lower()
     return user_input == "y"
