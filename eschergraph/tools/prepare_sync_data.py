@@ -34,7 +34,7 @@ def prepare_sync_data(
 
   # Remove change logs that contain a create and delete for the same object
   for id in ids_to_create:
-    log: ChangeLog = objects_logs[id]
+    log: ChangeLog = objects_logs[id][0]
     # Prepare metadata based on log type
     metadata_entry = {"level": log.level, "chunk_id": "", "document_id": ""}
     if log.type == Node:

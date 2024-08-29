@@ -2,13 +2,15 @@ from __future__ import annotations
 
 from heapq import nlargest
 from typing import Any
+from typing import TYPE_CHECKING
 
 from tabulate import tabulate
 
-from eschergraph.agents.llm import ModelProvider
-from eschergraph.graph.node import Node
-from eschergraph.graph.persistence import Repository
-from eschergraph.graph.persistence.document import DocumentData
+if TYPE_CHECKING:
+  from eschergraph.agents.llm import ModelProvider
+  from eschergraph.graph.node import Node
+  from eschergraph.graph.persistence import Repository
+  from eschergraph.graph.persistence.document import DocumentData
 
 
 class DashboardMaker:

@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from eschergraph.agents.llm import ModelProvider
-from eschergraph.graph.persistence.document import DocumentData
 from eschergraph.tools.estimator import Estimator
 from eschergraph.tools.reader import Chunk
 from eschergraph.tools.reader import Reader
+
+if TYPE_CHECKING:
+  from eschergraph.graph.persistence.document import DocumentData
 
 
 class BuildingTools:
@@ -25,6 +29,8 @@ class BuildingTools:
             - A list of DocumentData objects
             - The total number of tokens processed
     """
+    from eschergraph.graph.persistence.document import DocumentData
+
     chunks: list[Chunk] = []
     document_data: list[DocumentData] = []
     total_tokens: int = 0
