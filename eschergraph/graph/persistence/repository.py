@@ -159,3 +159,4 @@ class Repository(ABC):
     Use with caution. Should only be performed after syncing to external
     systems such as a vector database.
     """
+    raise NotImplementedError
