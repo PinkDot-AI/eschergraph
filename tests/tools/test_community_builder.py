@@ -44,6 +44,7 @@ def graph_communities_setup(
   graph.repository.get_all_at_level.return_value = nodes
   graph.repository.get_edge_by_id.side_effect = edge_by_id
   graph.repository.get_node_by_id.side_effect = node_by_id
+  graph.model.max_threads = 10
 
   return graph, nodes, edges
 
@@ -80,6 +81,11 @@ def test_building_community_nodes(
   community_result: CommunityGraphResult = get_leidenalg_communities(nodes)
   num_comms: int = len(community_result.partitions)
 
+  # Map each node to its community
+  node_comm: dict[UUID, int] = {
+    nd: idx for idx, comm in enumerate(community_result.partitions) for nd in comm
+  }
+
   # The random findings for each community
   name, description, findings = generate_random_community_findings()
   mock_llm_findings: MagicMock = MagicMock()
@@ -95,8 +101,16 @@ def test_building_community_nodes(
   graph.repository.get_all_at_level.assert_called_once_with(0)
   assert mock_llm_findings.call_count == num_comms
 
+  child_nodes: list[Node] = []
+  comm_nodes: list[UUID] = []
   for idx, call in enumerate(graph.repository.add.call_args_list):
     node_added: Node = call[0][0]
+    if idx >= num_comms:
+      child_nodes.append(node_added)
+      continue
+
+    comm_nodes.append(node_added.id)
+
     assert node_added.name == name
     assert node_added.description == description
     assert {prop.description for prop in node_added.properties} == {
@@ -107,7 +121,12 @@ def test_building_community_nodes(
       community_result.partitions[idx]
     )
 
-  assert graph.repository.add.call_count == num_comms
+  # Check whether each child node has been assigned the correct community node
+  for child_node in child_nodes:
+    comm_id: UUID = comm_nodes[node_comm[child_node.id]]
+    assert child_node.community.node.id == comm_id
+
+  assert graph.repository.add.call_count == num_comms + len(nodes)
 
 
 def test_building_community_edges(
@@ -116,6 +135,7 @@ def test_building_community_edges(
   graph, nodes, edges = graph_communities_setup
   # The number of communities for the asserts
   community_result: CommunityGraphResult = get_leidenalg_communities(nodes)
+  num_comms: int = len(community_result.partitions)
   edges_between_comms: list[set[int]] = edges_between_communities(
     partitions=community_result.partitions, edges=edges
   )
@@ -135,7 +155,11 @@ def test_building_community_edges(
   # Start by creating a dict that matches community node to community index
   node_comm: dict[Node, int] = {}
   nodes: list[Node] = []
+  # Only make assertions for the community nodes that have been added
   for idx, call in enumerate(graph.repository.add.call_args_list):
+    if idx == num_comms:
+      break
+
     node_added: Node = call[0][0]
     node_comm[node_added] = idx
     nodes.append(node_added)
