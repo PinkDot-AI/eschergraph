@@ -131,6 +131,7 @@ exclude = ["eschergraph/tools/pdf_document_layout_analysis/**/*"]
 [tool.ruff.lint.extend-per-file-ignores]
 # Ignore all docstrings in tests
 "tests/*" = ["D"]
+"tests_integration/*" = ["D"]
 
 [tool.ruff.lint.mccabe]
 max-complexity = 18

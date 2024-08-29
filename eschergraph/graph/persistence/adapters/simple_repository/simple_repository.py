@@ -260,12 +260,18 @@ class SimpleRepository(Repository):
     # Check if the node already exists
     if not node.id in self.nodes:
       self._add_new_node(node)
-      self.change_log.append(ChangeLog(id=node.id, action=Action.CREATE, type=Node))
+      self.change_log.append(
+        ChangeLog(id=node.id, action=Action.CREATE, type=Node, level=node.level)
+      )
     else:
       attributes_to_check: list[str] = self._select_attributes_to_add(node)
       self.change_log.append(
         ChangeLog(
-          id=node.id, action=Action.UPDATE, type=Node, attributes=attributes_to_check
+          id=node.id,
+          action=Action.UPDATE,
+          type=Node,
+          attributes=attributes_to_check,
+          level=node.level,
         )
       )
       node_model: NodeModel = self.nodes[node.id]
@@ -343,7 +349,9 @@ class SimpleRepository(Repository):
       new_model: PropertyModel = self._new_property_to_property_model(property)
       self.properties[property.id] = new_model
       self.change_log.append(
-        ChangeLog(id=property.id, action=Action.CREATE, type=Property)
+        ChangeLog(
+          id=property.id, action=Action.CREATE, type=Property, level=property.node.level
+        )
       )
 
       # Only add to the node's properties if not called from a node
@@ -354,7 +362,11 @@ class SimpleRepository(Repository):
       attributes: list[str] = self._select_attributes_to_add(property)
       self.change_log.append(
         ChangeLog(
-          id=property.id, action=Action.UPDATE, type=Property, attributes=attributes
+          id=property.id,
+          action=Action.UPDATE,
+          type=Property,
+          attributes=attributes,
+          level=property.node.level,
         )
       )
       for attr in attributes:
@@ -405,7 +417,9 @@ class SimpleRepository(Repository):
     # Check if the edge already exists
     if not edge.id in self.edges:
       self.edges[edge.id] = self._new_edge_to_edge_model(edge)
-      self.change_log.append(ChangeLog(id=edge.id, action=Action.CREATE, type=Edge))
+      self.change_log.append(
+        ChangeLog(id=edge.id, action=Action.CREATE, type=Edge, level=edge.frm.level)
+      )
 
       # Making sure that the edges can also be found on the nodes
       self.nodes[edge.frm.id]["edges"].add(edge.id)
@@ -414,7 +428,11 @@ class SimpleRepository(Repository):
       attributes_to_check: list[str] = self._select_attributes_to_add(edge)
       self.change_log.append(
         ChangeLog(
-          id=edge.id, action=Action.UPDATE, type=Edge, attributes=attributes_to_check
+          id=edge.id,
+          action=Action.UPDATE,
+          type=Edge,
+          attributes=attributes_to_check,
+          level=edge.frm.level,
         )
       )
       edge_model: EdgeModel = self.edges[edge.id]

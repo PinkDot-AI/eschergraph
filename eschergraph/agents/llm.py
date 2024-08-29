@@ -7,8 +7,6 @@ from typing import Any
 from attrs import define
 from attrs import field
 
-from eschergraph.agents.tools import Tool
-
 
 @define
 class FunctionCall:
@@ -73,20 +71,6 @@ class ModelProvider(ABC):
     """
     raise NotImplementedError
 
-  @abstractmethod
-  def get_function_calls(self, prompt: str, tools: list[Tool]) -> list[FunctionCall]:
-    """Get function calls from the model.
-
-    Args:
-      prompt (str): The prompt to send to the LLM.
-      tools (list[Tool]): The list of tools (functions) that the agent can use.
-
-    Returns:
-      A list of function calls as specified by the model.
-    """
-    raise NotImplementedError
-
-  # TODO: remove this when fixing the ModelProvider
   @abstractmethod
   def get_json_response(self, prompt: str) -> dict[str, Any]:
     """Get a JSON response from an LLM.
