@@ -29,6 +29,7 @@ from eschergraph.graph.persistence.adapters.simple_repository.models import (
 )
 from eschergraph.graph.persistence.change_log import Action
 from eschergraph.graph.persistence.change_log import ChangeLog
+from eschergraph.graph.persistence.document import DocumentData
 from eschergraph.graph.persistence.exceptions import DirectoryDoesNotExistException
 from eschergraph.graph.persistence.exceptions import FilesMissingException
 from eschergraph.graph.persistence.exceptions import PersistenceException
@@ -586,3 +587,25 @@ class SimpleRepository(Repository):
     systems such as a vector database.
     """
     self.change_log = []
+
+  def add_document(self, document_data: DocumentData) -> None:
+    """Adds a document to the system.
+
+    Args:
+        document_data (DocumentData): The document data that needs to be added.
+
+    Returns:
+        None: This method does not return any value.
+    """
+    ...
+
+  def get_document(self, ids: list[UUID]) -> list[DocumentData]:
+    """Retrieves documents based on a list of document UUIDs.
+
+    Args:
+        ids (List[UUID]): A list of UUIDs representing the documents to be fetched.
+
+    Returns:
+        List[DocumentData]: A list of `DocumentData` instances for the requested documents.
+    """
+    ...

@@ -3,6 +3,7 @@ from __future__ import annotations
 from concurrent.futures import as_completed
 from concurrent.futures import ThreadPoolExecutor
 from typing import cast
+from typing import TYPE_CHECKING
 
 from attrs import define
 from attrs import field
@@ -17,12 +18,14 @@ from eschergraph.builder.build_log import NodeExt
 from eschergraph.builder.build_log import PropertyExt
 from eschergraph.config import JSON_BUILD
 from eschergraph.config import JSON_PROPERTY
-from eschergraph.graph import Graph
 from eschergraph.graph.node import Node
 from eschergraph.graph.persistence import Metadata
 from eschergraph.tools.community_builder import CommunityBuilder
 from eschergraph.tools.node_matcher import NodeMatcher
 from eschergraph.tools.reader import Chunk
+
+if TYPE_CHECKING:
+  from eschergraph.graph import Graph
 
 
 @define
@@ -216,67 +219,3 @@ class BuildPipeline:
           continue
         for property_item in prop_ext["properties"]:
           node.add_property(description=property_item, metadata=log.metadata)
-
-  # TODO: re-add the cost and time indication
-  # def _get_cost_indication(self) -> float:
-  #   """Estimates the cost based on the number of tokens and the model used.
-
-  #   The completion tokens are assumed to be equal to prompt tokens.
-
-  #   Returns:
-  #     The estimated cost of processing.
-  #   """
-  #   model = self.model.model.value
-  #   total_tokens = self.reader.total_tokens
-
-  #   # Initialize variables
-  #   prompt_cost: float = 0.0
-  #   completion_cost: float = 0.0
-
-  #   # Assumed that completion tokens are equal to prompt tokens
-  #   if model == "gpt-4o":
-  #     prompt_cost = (total_tokens / 1e6) * 5.00
-  #     completion_cost = (total_tokens / 1e6) * 15.00
-  #   elif model == "gpt-4o-mini":
-  #     prompt_cost = (total_tokens / 1e6) * 0.150
-  #     completion_cost = (total_tokens / 1e6) * 0.600
-  #   else:
-  #     raise ExternalProviderException("Invalid model specified.")
-
-  #   total_cost: float = prompt_cost + completion_cost / 3
-  #   return round(total_cost, 3)
-
-  # def _get_time_indication(self) -> str:
-  #   """Estimates the time required to process the document based on the number of chunks, the model used, and the number of parallel workers.
-
-  #   Returns:
-  #       float: The estimated time to complete the processing.
-  #   """
-  #   average_time_per_chunk: int = 0
-  #   if self.model.model.value == "gpt-4o":
-  #     average_time_per_chunk = 4  # seconds
-  #   else:
-  #     average_time_per_chunk = 2  # seconds
-
-  #   num_chunks: int = len(self.reader.chunks)
-  #   max_workers: int = 10  # as used in ThreadPoolExecutor
-
-  #   # If number of chunks is less than or equal to max_workers,
-  #   # the time taken would be approximately the time for one chunk.
-  #   if num_chunks <= max_workers:
-  #     estimated_time = average_time_per_chunk
-  #   else:
-  #     # Calculate the time for full batches and any remaining chunks
-  #     full_batches = num_chunks // max_workers
-  #     remaining_chunks = num_chunks % max_workers
-
-  #     estimated_time = full_batches * average_time_per_chunk
-  #     if remaining_chunks > 0:
-  #       estimated_time += average_time_per_chunk
-
-  #   # If the estimated time is more than 60 seconds, return time in minutes
-  #   if estimated_time > 60:
-  #     minutes = round(estimated_time // 60, 3)
-  #     return f"{minutes} minute{'s' if minutes > 1 else ''}"
-  #   else:
-  #     return f"{round(estimated_time, 3)} seconds"
