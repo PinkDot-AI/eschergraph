@@ -50,8 +50,12 @@ class BuildPipeline:
     # Step 2: extract the properties per chunk (for extracted nodes)
     self._extract_properties()
 
-    # Step 3: match the nodes together to extract entities from names
+    # Step 3: save the pre persistance building logs for evaluation
+    graph.pre_persist_building_logs = self.building_logs
+
     unique_entities: list[str] = self._get_unique_entities()
+
+    # Step 5: match the nodes together to extract entities from names
 
     updated_logs: list[BuildLog] = NodeMatcher(
       model=self.model, reranker=self.reranker
@@ -60,7 +64,6 @@ class BuildPipeline:
       unique_node_names=unique_entities,
     )
 
-    # TODO: add this step
     # Step 4: remove unmatched nodes from the updated logs
 
     # add persistence of new and old building logs
