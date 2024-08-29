@@ -80,9 +80,8 @@ class CommunityBuilder:
     }
 
     comms_nodes: dict[int, list[Node]] = {
-      comm_idx: node_lookup[nd_id]
+      comm_idx: [node_lookup[nd_id] for nd_id in comms.partitions[comm_idx]]
       for comm_idx in nodes_tmp.keys()
-      for nd_id in comms.partitions[comm_idx]
     }
 
     # Generate and process findings for each community (multi-threaded)
