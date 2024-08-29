@@ -15,14 +15,14 @@ from eschergraph.builder.build_log import EdgeExt
 from eschergraph.builder.build_log import NodeEdgeExt
 from eschergraph.builder.build_log import NodeExt
 from eschergraph.builder.build_log import PropertyExt
+from eschergraph.config import JSON_BUILD
+from eschergraph.config import JSON_PROPERTY
 from eschergraph.graph import Graph
 from eschergraph.graph.node import Node
 from eschergraph.graph.persistence import Metadata
+from eschergraph.tools.community_builder import CommunityBuilder
 from eschergraph.tools.node_matcher import NodeMatcher
 from eschergraph.tools.reader import Chunk
-
-JSON_BUILD = "json_build.jinja"
-JSON_PROPERTY = "json_property.jinja"
 
 
 @define
@@ -63,13 +63,16 @@ class BuildPipeline:
     # add persistence of new and old building logs
     self._persist_to_graph(graph=graph, updated_logs=updated_logs)
 
-    # # adding changes to vector db
+    # Build the community layer
+    CommunityBuilder.build(level=0, graph=graph)
+
+    # Adding changes to vector db
     graph.sync_vectordb()
 
     # # TODO build upperlayer
     # self._save_logs()
 
-    # save graph
+    # Save graph (perhaps make explicit)
     graph.repository.save()
 
     return updated_logs
@@ -187,9 +190,7 @@ class BuildPipeline:
           edge_ext["target"].lower(), document_id=log.metadata.document_id
         )
         if not frm or not to:
-          print(
-            "source or target node does not exisist in nodes of this edge:", edge_ext
-          )
+          print("source or target node does not exist in nodes of this edge:", edge_ext)
           continue
         if frm == to:
           print(

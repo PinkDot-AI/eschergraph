@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 from uuid import uuid4
 
@@ -13,10 +14,12 @@ from eschergraph.builder.build_log import EdgeExt
 from eschergraph.builder.build_log import NodeExt
 from eschergraph.builder.build_log import PropertyExt
 from eschergraph.builder.build_pipeline import BuildPipeline
-from eschergraph.graph import Graph
 from eschergraph.graph.node import Node
 from eschergraph.graph.persistence import Metadata
 from eschergraph.graph.persistence.adapters.simple_repository import SimpleRepository
+
+if TYPE_CHECKING:
+  from eschergraph.graph import Graph
 
 
 @pytest.fixture(scope="function")
@@ -92,4 +95,4 @@ def test_persist_to_graph(
         len(properties) == 0
       ), f"Expected no properties for 'node 2', but got {len(properties)}"
 
-  # TODO no method to test the edges yet.
+  # TODO: no method to test the edges yet.

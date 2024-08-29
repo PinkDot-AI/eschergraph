@@ -1,16 +1,26 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from unittest.mock import MagicMock
 from unittest.mock import Mock
 
 import pytest
+from dotenv import load_dotenv
 from pytest import TempPathFactory
 
 from eschergraph.agents.llm import ModelProvider
 from eschergraph.graph import Graph
 from eschergraph.graph.persistence import Repository
 from eschergraph.graph.persistence.vector_db import VectorDB
+
+load_dotenv()
+
+# Mark the provider tests with a decorator, only run them when wanted
+provider_test = pytest.mark.skipif(
+  "TEST_PROVIDERS" not in os.environ or os.environ["TEST_PROVIDERS"] != "true",
+  reason="Credentials for external provider required.",
+)
 
 
 @pytest.fixture(scope="function")
