@@ -26,7 +26,7 @@ class AttributeSearch:
   """This is the dataclass for the attribute search object."""
 
   text: str
-  metadata: Metadata
+  metadata: Metadata | None
   parent_node: str
 
 
@@ -77,11 +77,7 @@ def _get_attributes(graph: Graph, query: str) -> list[AttributeSearch]:
   extracted_nodes: list[str] = extract_entities_from(query=query, llm=graph.model)
 
   # Initialize search metadata for attributes
-  search_metadata = {
-    "$and": [
-      {"level": 0},
-    ]
-  }
+  search_metadata = {"level": 0}
 
   # Perform initial search for nodes if any extracted entities are found
   if extracted_nodes:
@@ -96,12 +92,17 @@ def _get_attributes(graph: Graph, query: str) -> list[AttributeSearch]:
 
     # Add filtering conditions to the search metadata if nodes were found
     if filtered_nodes:
-      search_metadata["$and"].append({
-        "$or": [
-          {"entity1": {"$in": filtered_nodes}},
-          {"entity2": {"$in": filtered_nodes}},
+      search_metadata = {
+        "$and": [
+          {"level": 0},
+          {
+            "$or": [
+              {"entity1": {"$in": filtered_nodes}},
+              {"entity2": {"$in": filtered_nodes}},
+            ]
+          },
         ]
-      })
+      }
 
   # Perform the final search for attributes
   attributes_results = graph.vector_db.format_search_results(
@@ -191,9 +192,7 @@ def rerank_and_filter_attributes(
       # Create the AttributeSearch object with the metadata and parent nodes
       obj = AttributeSearch(
         text=r.text,
-        metadata=Metadata(
-          document_id=metadata["document_id"], chunk_id=metadata["chunk_id"]
-        ),
+        metadata=None,
         parent_node="",
       )
 

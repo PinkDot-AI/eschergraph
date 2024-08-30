@@ -8,6 +8,7 @@ from eschergraph.agents.reranker import Reranker
 from eschergraph.builder.build_log import BuildLog
 from eschergraph.config import DEFAULT_GRAPH_NAME
 from eschergraph.exceptions import CredentialException
+from eschergraph.exceptions import UnlogicalActionException
 from eschergraph.graph.edge import Edge
 from eschergraph.graph.node import Node
 from eschergraph.graph.persistence import Metadata
@@ -199,8 +200,9 @@ class Graph:
     Returns:
         str: The result of the search, typically a string that represents the most relevant information or document found by the search.
     """
-    result = quick_search(vector_db=self.vector_db, query=query, model=self.model)
-    return result
+    if not self._search_check():
+      raise UnlogicalActionException("You cannot search a graph before building it")
+    return quick_search(graph=self, query=query)
 
   def global_search(self, query: str) -> str:
     """Executes a search query using a vector database and a specified model on the upper layers of the graph.
@@ -211,7 +213,20 @@ class Graph:
     Returns:
         str: The result of the search, is a string
     """
-    return global_search(graph=self, prompt=query)
+    if not self._search_check():
+      raise UnlogicalActionException("You cannot search a graph before building it")
+    return global_search(graph=self, query=query)
+
+  def _search_check(self) -> bool:
+    """Check if there are any elements at level 0 in the graph repository.
+
+    Args:
+      graph (Graph): The graph object to check.
+
+    Returns:
+      bool: True if there are elements at level 0, otherwise False.
+    """
+    return len(self.repository.get_all_at_level(0)) > 0
 
   def build(self, files: str | list[str], always_approve: bool = False) -> Graph:
     """Build a graph from the given files.
