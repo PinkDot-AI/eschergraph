@@ -12,7 +12,9 @@ from eschergraph.graph.property import Property
 
 def prepare_sync_data(
   repository: Repository,
-) -> tuple[list[str], list[UUID], list[dict[str, str]], list[UUID]]:
+) -> tuple[
+  list[dict[str, str | float]], list[dict[str, str | float]], list[UUID], list[UUID]
+]:
   """Prepares data for synchronization with the vector database.
 
   Args:
@@ -21,8 +23,6 @@ def prepare_sync_data(
   Returns:
     tuple: A tuple containing lists of documents, IDs, metadata, and IDs to delete.
   """
-  docs: list[str] = []
-  metadata: list[dict[str, str | int]] = []
   change_logs: list[ChangeLog] = repository.get_change_log()
 
   # Map each object id to its change_logs
@@ -31,46 +31,60 @@ def prepare_sync_data(
     objects_logs[log.id].append(log)
 
   ids_to_create, ids_to_delete = _get_actions_for_objects(objects_logs)
+  delete_node_name_ids: list[UUID] = []
+  create_main: list[tuple[UUID, str, dict[str, str | float]]] = []
+  create_node_name: list[tuple[UUID, str, dict[str, str | float]]] = []
 
-  # Remove change logs that contain a create and delete for the same object
+  for id in ids_to_delete:
+    log: ChangeLog = objects_logs[id][0]
+    if log.type == Node and log.level == 0:
+      delete_node_name_ids.append(id)
+
   for id in ids_to_create:
     log: ChangeLog = objects_logs[id][0]
     # Prepare metadata based on log type
-    metadata_entry = {"level": log.level, "chunk_id": "", "document_id": ""}
     if log.type == Node:
       node: Node | None = repository.get_node_by_id(id)
       if not node:
         continue
-      docs.append(node.name)
-      metadata_entry.update({
+      # add node description
+      metadata_entry = {
+        "level": log.level,
         "type": "node",
-        "entity_frm": "",
+        "entity_frm": node.name,
         "entity_to": "",
-      })
+      }
+      create_main.append((id, node.description, metadata_entry))
+
+      if log.level == 0:
+        metadata_entry["type"] = "node_name"
+        create_node_name.append((id, node.name, metadata_entry))
+
     elif log.type == Edge:
       edge: Edge | None = repository.get_edge_by_id(log.id)
       if not edge:
         continue
-      docs.append(edge.description)
-      metadata_entry.update({
+      metadata_entry = {
+        "level": log.level,
         "type": "edge",
         "entity_frm": edge.frm.name,
         "entity_to": edge.to.name,
-      })
+      }
+      create_main.append((id, edge.description, metadata_entry))
+
     elif log.type == Property:
       property: Property | None = repository.get_property_by_id(log.id)
       if not property:
         continue
-      docs.append(property.description)
-      metadata_entry.update({
+      metadata_entry = {
+        "level": log.level,
         "type": "property",
         "entity_frm": property.node.name,
         "entity_to": "",
-      })
+      }
+      create_main.append((id, property.description, metadata_entry))
 
-    metadata.append(metadata_entry)
-
-  return docs, ids_to_create, metadata, ids_to_delete
+  return create_main, create_node_name, ids_to_delete, delete_node_name_ids
 
 
 def _get_actions_for_objects(

@@ -10,23 +10,16 @@ from uuid import UUID
 
 from eschergraph.agents.jinja_helper import process_template
 from eschergraph.agents.llm import ModelProvider
-from eschergraph.agents.reranker import Reranker
 from eschergraph.exceptions import ExternalProviderException
 from eschergraph.graph.node import Node
-from eschergraph.graph.persistence.vector_db.vector_db import VectorDB
 from eschergraph.graph.property import Property
 
 if TYPE_CHECKING:
   from eschergraph.graph import Graph
 
 
-def search_global(
-  graph: Graph,
-  prompt: str,
-  llm: ModelProvider,
-  reranker: Reranker,
-  vecdb: VectorDB,
-  collection_name: str,
+def global_search(
+  graph: Graph, prompt: str, collection_name: str = "main_collection"
 ) -> str | None:
   """Search a graph globally through it's communities.
 
@@ -35,34 +28,25 @@ def search_global(
   Args:
     graph (Graph): A graph object
     prompt (str): The question to answer
-    llm (Model): The large language model to use
-    reranker (Reranker): The reranker model to use
-    vecdb (VectorDB): The vector database
     collection_name (str): The collection of the vector database to use
   """
-  extracted_nodes = extract_entities_from(prompt, llm)
+  extracted_nodes = extract_entities_from(prompt, graph.model)
   ans_template = "search/question_with_context.jinja"
   if len(extracted_nodes) > 0:
     props = retrieve_similar_properties(
-      graph=graph,
-      prompt=prompt,
-      vecdb=vecdb,
-      collection_name=collection_name,
-      reranker=reranker,
+      graph=graph, prompt=prompt, collection_name=collection_name
     )
   else:
-    props = retrieve_key_properties(graph, llm)
+    props: list[Property] = retrieve_key_properties(graph)
   context = "\n".join([prop.description for prop in props])
   full_prompt = process_template(ans_template, {"CONTEXT": context, "QUERY": prompt})
-  return llm.get_plain_response(full_prompt)
+  return graph.model.get_plain_response(full_prompt)
 
 
 def retrieve_similar_properties(
   graph: Graph,
   prompt: str,
-  vecdb: VectorDB,
   collection_name: str,
-  reranker: Reranker,
   levels_to_search: int = 3,
   properties_to_return: int = 10,
   top_vec_results: int = 5,
@@ -73,9 +57,7 @@ def retrieve_similar_properties(
   Args:
     graph (Graph): Graph object
     prompt (str): Question or statement to be searched for in the graph
-    vecdb (VectorDB): The vector database
     collection_name (str): The collection of the vector database to use
-    reranker (Reranker): The reranker ModelProvider
     levels_to_search (int): How many graph levels to search from the max. Defaults to 3.
     properties_to_return (int): Maximum properties to return. Defaults to 10.
     top_vec_results (int): Maximum nodes to be used per level. Defaults to 5.
@@ -90,8 +72,8 @@ def retrieve_similar_properties(
 
   search_res: List[Node | None] = []
   while curr_level >= stop_level:
-    res = vecdb.format_search_results(
-      vecdb.search(
+    res = graph.vector_db.format_search_results(
+      graph.vector_db.search(
         query=prompt,
         top_n=top_vec_results,
         metadata={"level": curr_level},
@@ -108,7 +90,7 @@ def retrieve_similar_properties(
     if nd is not None and nd.properties
     for prop in nd.properties[:top_node_properties]
   ]
-  rank_res = reranker.rerank(
+  rank_res = graph.reranker.rerank(
     prompt, [fd.description for fd in props], properties_to_return
   )
   return [props[ranked.index] for ranked in rank_res if ranked.index < len(props)]
@@ -116,7 +98,6 @@ def retrieve_similar_properties(
 
 def retrieve_key_properties(
   graph: Graph,
-  llm: ModelProvider,
   n: int = 2,
   sorted: bool = True,
   level: Optional[int] = None,
@@ -125,7 +106,6 @@ def retrieve_key_properties(
 
   Args:
     graph (Graph): A graph with at least a depth of _level_
-    llm (ModelProvider): ModelProvider to use when _sorted_=False
     n (int): Top properties to retrieve per node. Defaults to 2.
     sorted (bool): Sort the findings in nodes on impact/importance if this has not been done yet at graph creation. Defaults to True.
     level (Optional[int]): Specify specific node level other than max level.
@@ -139,9 +119,11 @@ def retrieve_key_properties(
   if sorted:
     key_props = [prop for nd in nodes if nd.properties for prop in nd.properties[:n]]
   else:
-    with concurrent.futures.ThreadPoolExecutor(max_workers=llm.max_threads) as executor:
+    with concurrent.futures.ThreadPoolExecutor(
+      max_workers=graph.model.max_threads
+    ) as executor:
       props_per_node = list(
-        executor.map(lambda nd: order_properties(nd, llm=llm), nodes)
+        executor.map(lambda nd: order_properties(nd, llm=graph.model), nodes)
       )
     key_props = [prop for props in props_per_node for prop in props[:n]]
   return key_props

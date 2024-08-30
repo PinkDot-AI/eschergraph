@@ -85,7 +85,10 @@ def _get_attributes(
 
   # Initialize search metadata for attributes
   search_metadata = {
-    "$and": [{"level": 0}, {"$or": [{"type": "edge"}, {"type": "property"}]}]
+    "$and": [
+      {"level": 0},
+      {"$or": [{"type": "edge"}, {"type": "property"}, {"type": "node"}]},
+    ]
   }
 
   # Perform initial search for nodes if any extracted entities are found
