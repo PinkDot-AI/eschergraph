@@ -649,6 +649,10 @@ class SimpleRepository(Repository):
     """
     self.documents[document_data.id] = document_data
 
+    # If the document does not yet exist, add to document node name index
+    if not (doc_id := document_data.id) in self.doc_node_name_index:
+      self.doc_node_name_index[doc_id] = {}
+
   def get_documents_by_id(self, ids: list[UUID]) -> list[DocumentData]:
     """Retrieves documents based on a list of document UUIDs.
 
@@ -678,6 +682,18 @@ class SimpleRepository(Repository):
       original_build_logs (list[BuildLog]): A list of build logs to add.
     """
     self.original_build_logs = {log.id: log for log in original_build_logs}
+
+  def get_original_build_logs(self) -> list[BuildLog]:
+    """Add the original build logs for storage.
+
+    The original build logs are used for the evaluation that calculates
+    a loss of information score. Original refers to the build logs from before
+    applying the node matcher.
+
+    Returns:
+      original_build_logs (list[BuildLog]): A list of build logs.
+    """
+    return list(self.original_build_logs.values())
 
   def remove_node_by_id(self, id: UUID) -> None:
     """Remove a node by id.
@@ -768,6 +784,10 @@ class SimpleRepository(Repository):
         edge_model: EdgeModel = self.edges[edge_id]
         if {id} == {md["document_id"] for md in edge_model["metadata"]}:
           self._remove_edge(edge_model, edge_id, through_node=node_id)
+
+    # Remove the document and update the doc node name index
+    del self.documents[id]
+    del self.doc_node_name_index[id]
 
   def _remove_edge(
     self, edge_model: EdgeModel, edge_id: UUID, through_node: UUID
