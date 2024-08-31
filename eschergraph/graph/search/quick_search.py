@@ -48,6 +48,7 @@ def quick_search(
     return "please ask a question"
   attributes: list[AttributeSearch] = _get_attributes(graph, query)
   chunks_string: str = ""
+
   if len(attributes) == 0:
     chunks_string = "Nothing found in the graph regarding this question!"
   else:
