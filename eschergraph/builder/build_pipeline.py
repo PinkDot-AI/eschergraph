@@ -75,7 +75,6 @@ class BuildPipeline:
     # Adding changes to vector db
     graph.sync_vectordb()
 
-    # # TODO build upperlayer
     # self._save_logs()
 
     # Save graph (perhaps make explicit)

@@ -12,6 +12,10 @@ class PromptFormattingException(BaseEscherGraphException):
   """
 
 
+class UnlogicalActionException(BaseEscherGraphException):
+  """When something unlogical happens, like searching before building a graph."""
+
+
 class ExternalProviderException(BaseEscherGraphException):
   """When something unexpected occurs during an interation with an external service."""
 

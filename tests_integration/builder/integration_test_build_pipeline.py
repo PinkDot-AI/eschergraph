@@ -40,10 +40,24 @@ def integration_test_building() -> None:
   t = time.time()
   graph.build(files=TEST_FILE)
 
-  graph.dashboard()
   print("processing time", time.time() - t)
+
+  t = time.time()
+
+  query = "what are the main theams of this document?"
+  r = graph.global_search(query)
+  print(r)
+  print("global search time", time.time() - t)
+  t = time.time()
+
+  print()
+  r = graph.search(query)
+  print(r)
+
+  print("quick search time", time.time() - t)
+
   # Wait a few seconds before cleaning up to open the visuals
-  time.sleep(10)
+  time.sleep(8)
 
   # Clean up all the persistent data
   temp_dir.cleanup()
