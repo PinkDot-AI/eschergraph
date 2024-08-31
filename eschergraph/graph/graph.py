@@ -176,8 +176,7 @@ class Graph:
         self.vector_db.delete_with_id(ids, collection)
 
     # Delete records in both collections
-    print(len(ids_to_delete))
-    print(len(delete_node_name_ids), "names")
+
     delete_records(ids_to_delete, collection_main)
     delete_records(delete_node_name_ids, collection_nodes)
 
