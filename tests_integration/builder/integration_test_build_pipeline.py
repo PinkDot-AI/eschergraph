@@ -15,7 +15,8 @@ from eschergraph.graph.persistence.repository import Repository
 from eschergraph.graph.persistence.vector_db.adapters.chromadb import ChromaDB
 from eschergraph.graph.persistence.vector_db.vector_db import VectorDB
 
-TEST_FILE: str = "./test_files/test_file.pdf"
+TEST_FILE_SMALL: str = "./test_files/test_file.pdf"
+TEST_FILE_BIG: str = "./test_files/Attention Is All You Need.pdf"
 
 
 def integration_test_building() -> None:
@@ -38,7 +39,7 @@ def integration_test_building() -> None:
     vector_db=chroma,
   )
   t = time.time()
-  graph.build(files=TEST_FILE)
+  graph.build(files=TEST_FILE_BIG)
 
   print("processing time", time.time() - t)
 

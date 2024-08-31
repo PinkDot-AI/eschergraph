@@ -165,10 +165,12 @@ class OpenAIProvider(ModelProvider, Embedding):
     try:
       response = self.client.embeddings.create(input=list_text, model=model).data
       return [e.embedding for e in response]
-    except BadRequestError:
+    except BadRequestError as error:
       print("Bad request for the embedding")
       print(f"This was the input for which it went wrong: {list_text}")
-      raise ExternalProviderException("Something went wrong creating embeddings")
+      raise ExternalProviderException(
+        f"Something went wrong creating embeddings {error}"
+      )
 
   @staticmethod
   def _get_tools_for_chat(tools: list[Tool]) -> list[ChatCompletionToolParam]:
