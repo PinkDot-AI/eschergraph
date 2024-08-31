@@ -135,7 +135,11 @@ def create_simple_extracted_graph(
       level=node_data.level,
       metadata=random.choice(metadata),
     )
-    # TODO: add the properties to the node
+
+    num_properties: int = random.randint(5, 20)
+    for _ in range(num_properties):
+      property: Property = create_property(node=node, repository=repository)
+      repository.add(property)
 
     nodes.append(node)
 

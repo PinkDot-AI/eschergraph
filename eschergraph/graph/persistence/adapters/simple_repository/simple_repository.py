@@ -287,7 +287,21 @@ class SimpleRepository(Repository):
       node_model: NodeModel = self.nodes[node.id]
       for attr in attributes_to_check:
         if attr == "edges":
+          # Also allows for edges to be altered / deleted through a node
+          removed_edges: set[UUID] = node_model["edges"].difference({
+            edge.id for edge in node.edges
+          })
+          for edge_id in removed_edges:
+            self._remove_edge(
+              edge_model=self.edges[edge_id], edge_id=edge_id, through_node=node.id
+            )
+
+          # Update the edges on the node
           node_model["edges"] = {edge.id for edge in node.edges}
+
+          # Persist the changes made to the edge itself
+          for edge in node.edges:
+            self._add_edge(edge)
         elif attr == "metadata":
           node_model["metadata"] = [
             cast(MetadataModel, asdict(md)) for md in node.metadata
@@ -301,7 +315,17 @@ class SimpleRepository(Repository):
         elif attr == "child_nodes":
           node_model["child_nodes"] = {child.id for child in node.child_nodes}
         elif attr == "properties":
+          # Also allow for properties to be altered / deleted through a node
+          removed_properties: set[UUID] = set(node_model["properties"]).difference(
+            set(node.properties)
+          )
+          for prop_id in removed_properties:
+            self._remove_property(id=prop_id, property_model=self.properties[prop_id])
+
+          # Update the properties on the node
           node_model["properties"] = [p.id for p in node.properties]
+
+          # Persist the properties themselves
           for property in node.properties:
             self._add_property(property=property, through_node=True)
         elif attr == "name":
@@ -674,7 +698,7 @@ class SimpleRepository(Repository):
     for edge_id in node_model["edges"]:
       # Remove the edge itself
       edge_model: EdgeModel = self.edges[edge_id]
-      self._remove_edge(edge_model, edge_id)
+      self._remove_edge(edge_model, edge_id, through_node=id)
 
     # Remove all the properties
     for prop_id in node_model["properties"]:
@@ -685,9 +709,10 @@ class SimpleRepository(Repository):
       child_node_model: NodeModel = self.nodes[child_node_id]
       child_node_model["community"] = None
 
-    # Update impacted community node
-    community_node_model: NodeModel = self.nodes[node_model["community"]]
-    community_node_model["child_nodes"].remove(id)
+    # Update impacted community node (if it is has one)
+    if community_id := node_model["community"]:
+      community_node_model: NodeModel = self.nodes[community_id]
+      community_node_model["child_nodes"].remove(id)
 
     # Update the doc_node_name_index
     for doc_id in {md["document_id"] for md in node_model["metadata"]}:
@@ -715,21 +740,22 @@ class SimpleRepository(Repository):
       )
 
     # Select all nodes that are impacted (= all attributes must be checked)
-    doc_nodes: list[NodeModel] = [
-      self.nodes[node_id] for node_id in self.doc_node_name_index[id].values()
+    doc_nodes: list[tuple[UUID, NodeModel]] = [
+      (node_id, self.nodes[node_id])
+      for node_id in self.doc_node_name_index[id].values()
     ]
-    nodes_to_check: list[NodeModel] = []
+    nodes_to_check: list[tuple[UUID, NodeModel]] = []
 
-    for node_model in doc_nodes:
+    for node_id, node_model in doc_nodes:
       if {id} == {md["document_id"] for md in node_model["metadata"]}:
         self.remove_node_by_id(node_model["id"])
       else:
-        nodes_to_check.append(node_model)
+        nodes_to_check.append((node_id, node_model))
 
     # Check all the properties / edges of the node to see if they need to be deleted
     # Same logic for deletion applies as to the node
 
-    for node_model in nodes_to_check:
+    for node_id, node_model in nodes_to_check:
       # Check all the properties
       for prop_id in node_model["properties"]:
         prop_model: PropertyModel = self.properties[prop_id]
@@ -741,9 +767,11 @@ class SimpleRepository(Repository):
       for edge_id in node_model["edges"]:
         edge_model: EdgeModel = self.edges[edge_id]
         if {id} == {md["document_id"] for md in edge_model["metadata"]}:
-          self._remove_edge(edge_model, edge_id)
+          self._remove_edge(edge_model, edge_id, through_node=node_id)
 
-  def _remove_edge(self, edge_model: EdgeModel, edge_id: UUID) -> None:
+  def _remove_edge(
+    self, edge_model: EdgeModel, edge_id: UUID, through_node: UUID
+  ) -> None:
     """Remove an edge from the repository.
 
     This method removes the edge from the stored edges and also
@@ -752,12 +780,26 @@ class SimpleRepository(Repository):
     Args:
       edge_model (EdgeModel): The edge's model as stored in the repository.
       edge_id (UUID): The edge's id.
+      through_node (UUID): The id of the node through which this edge is being deleted.
     """
-    del self.edges[edge_model[edge_id]]
+    del self.edges[edge_id]
 
     # Remove the edge from the other node's edges
     for impacted_node_id in {edge_model["frm"], edge_model["to"]}:
+      if impacted_node_id == through_node:
+        continue
       self.nodes[impacted_node_id]["edges"].remove(edge_id)
+
+      # Log the deletion of an edge as a change log on both nodes
+      self.change_log.append(
+        ChangeLog(
+          id=impacted_node_id,
+          action=Action.UPDATE,
+          type=Node,
+          level=self.nodes[impacted_node_id]["level"],
+          attributes=["edges"],
+        )
+      )
 
     self.change_log.append(
       ChangeLog(

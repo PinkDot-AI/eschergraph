@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Callable
+from uuid import UUID
 
 import pytest
 
@@ -232,16 +233,24 @@ def test_change_log_initial(saved_graph_dir: Path) -> None:
   assert SimpleRepository(save_location=saved_graph_dir.as_posix()).change_log == []
 
 
-def test_change_log_adding(saved_graph_dir: Path) -> None:
-  repository: SimpleRepository = SimpleRepository(
-    save_location=saved_graph_dir.as_posix()
-  )
+def setup_change_log_objects(
+  repository: SimpleRepository,
+) -> tuple[Node, Node, Edge, Property]:
   node1: Node = create_basic_node(repository=repository)
   node2: Node = create_basic_node(repository=repository)
   node1._properties = []
   node2._properties = []
   edge: Edge = create_edge(repository=repository, frm=node1, to=node2)
   property: Property = create_property(node=node1, repository=repository)
+
+  return node1, node2, edge, property
+
+
+def test_change_log_adding(saved_graph_dir: Path) -> None:
+  repository: SimpleRepository = SimpleRepository(
+    save_location=saved_graph_dir.as_posix()
+  )
+  node1, node2, edge, property = setup_change_log_objects(repository)
 
   assert repository.get_change_log() == []
 
@@ -256,12 +265,102 @@ def test_change_log_adding(saved_graph_dir: Path) -> None:
   for log in change_logs:
     object_logs[log.id].append(log.action)
 
-  for id, action_list in object_logs.items():
+  # Assert that each item was logged as created
+  for action_list in object_logs.values():
     assert Action.CREATE in action_list
 
-  print([(log.type, log.action) for log in change_logs])
-  assert [log.action for log in change_logs] == [Action.CREATE for _ in range(4)]
-  assert [log.id for log in change_logs] == [node1.id, node2.id, edge.id, property.id]
+  assert {log.id for log in change_logs} == {node1.id, node2.id, edge.id, property.id}
 
   repository.clear_change_log()
   assert repository.get_change_log() == []
+
+
+def test_change_log_adding_indirectly(saved_graph_dir: Path) -> None:
+  repository: SimpleRepository = SimpleRepository(
+    save_location=saved_graph_dir.as_posix()
+  )
+
+  node1, node2, edge, property = setup_change_log_objects(repository)
+
+  assert repository.get_change_log() == []
+
+  repository.add(node1)
+
+  change_logs: list[ChangeLog] = repository.get_change_log()
+  print(change_logs)
+  object_logs: dict[UUID, list[ChangeLog]] = {log.id: [] for log in change_logs}
+  for log in change_logs:
+    object_logs[log.id].append(log.action)
+
+  # Assert that each item was logged as created
+  for action_list in object_logs.values():
+    assert Action.CREATE in action_list
+
+  assert {log.id for log in change_logs} == {node1.id, node2.id, edge.id, property.id}
+
+  repository.clear_change_log()
+  assert repository.get_change_log() == []
+
+
+def test_change_log_updating(saved_graph_dir: Path) -> None:
+  repository: SimpleRepository = SimpleRepository(
+    save_location=saved_graph_dir.as_posix()
+  )
+
+  node1, node2, edge, property = setup_change_log_objects(repository)
+
+  repository.add(node1)
+  repository.clear_change_log()
+  assert repository.get_change_log() == []
+
+  node1.name = "new name1"
+  node2.name = "new name2"
+  edge.description = "new edge description"
+  property.description = "new property description"
+
+  repository.add(node1)
+  repository.add(node2)
+
+  change_logs: list[ChangeLog] = repository.get_change_log()
+  objects_actions: dict[UUID, list[Action]] = {log.id: [] for log in change_logs}
+
+  for log in change_logs:
+    objects_actions[log.id].append(log.action)
+
+  assert {
+    action for log_id in objects_actions.keys() for action in objects_actions[log_id]
+  }
+  assert set(objects_actions.keys()) == {node1.id, node2.id, edge.id, property.id}
+
+
+def test_change_log_deleting_indirectly(saved_graph_dir: Path) -> None:
+  repository: SimpleRepository = SimpleRepository(
+    save_location=saved_graph_dir.as_posix()
+  )
+
+  node1, node2, edge, property = setup_change_log_objects(repository)
+
+  repository.add(node1)
+  repository.clear_change_log()
+
+  node1.edges = set()
+  node1.properties = []
+  repository.add(node1)
+
+  change_logs: list[ChangeLog] = repository.get_change_log()
+  objects_logs: dict[UUID, list[ChangeLog]] = {log.id: [] for log in change_logs}
+  for log in change_logs:
+    objects_logs[log.id].append(log)
+
+  assert [log.action for log in objects_logs[edge.id]] == [Action.DELETE]
+  assert [log.action for log in objects_logs[property.id]] == [Action.DELETE]
+  assert [log.action for log in objects_logs[node1.id]] == [Action.UPDATE]
+  assert [log.action for log in objects_logs[node2.id]] == [Action.UPDATE]
+
+
+def test_change_log_deleting_document(saved_graph_dir: Path) -> None:
+  repository: SimpleRepository = SimpleRepository(
+    save_location=saved_graph_dir.as_posix()
+  )
+
+  graph, nodes, edges = create_simple_extracted_graph(repository=repository)
