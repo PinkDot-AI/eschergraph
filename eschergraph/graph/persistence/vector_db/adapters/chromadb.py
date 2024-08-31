@@ -72,6 +72,8 @@ class ChromaDB(VectorDB):
     """
     collection = self.client.get_collection(name=collection_name)
     # TODO: add more error handling / communication to operating classes
+    documents = ["null" if d.strip() == "" else d for d in documents]
+
     try:
       embeddings = self.embedding_model.get_embedding(list_text=documents)
     except ExternalProviderException as e:

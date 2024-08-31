@@ -388,6 +388,11 @@ class SimpleRepository(Repository):
       ChangeLog(id=node.id, action=Action.CREATE, type=Node, level=node.level)
     )
 
+    # Log the addition of a new node
+    self.change_log.append(
+      ChangeLog(id=node.id, action=Action.CREATE, type=Node, level=node.level)
+    )
+
   def _add_property(self, property: Property, through_node: bool = False) -> None:
     # Check if the property has been added to the repository directly
     if not through_node and not property.node.id in self.nodes:
