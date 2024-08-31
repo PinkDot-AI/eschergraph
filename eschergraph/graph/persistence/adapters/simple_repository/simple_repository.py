@@ -748,7 +748,7 @@ class SimpleRepository(Repository):
 
     for node_id, node_model in doc_nodes:
       if {id} == {md["document_id"] for md in node_model["metadata"]}:
-        self.remove_node_by_id(node_model["id"])
+        self.remove_node_by_id(node_id)
       else:
         nodes_to_check.append((node_id, node_model))
 

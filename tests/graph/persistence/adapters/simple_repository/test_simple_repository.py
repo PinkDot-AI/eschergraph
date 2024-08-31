@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from itertools import chain
 from pathlib import Path
 from typing import Callable
 from uuid import UUID
@@ -19,6 +20,7 @@ from eschergraph.graph.persistence.adapters.simple_repository.models import Edge
 from eschergraph.graph.persistence.adapters.simple_repository.models import NodeModel
 from eschergraph.graph.persistence.change_log import Action
 from eschergraph.graph.persistence.change_log import ChangeLog
+from eschergraph.graph.persistence.document import DocumentData
 from eschergraph.graph.persistence.exceptions import DirectoryDoesNotExistException
 from eschergraph.graph.persistence.exceptions import FilesMissingException
 from tests.graph.help import create_basic_node
@@ -363,4 +365,24 @@ def test_change_log_deleting_document(saved_graph_dir: Path) -> None:
     save_location=saved_graph_dir.as_posix()
   )
 
-  graph, nodes, edges = create_simple_extracted_graph(repository=repository)
+  _, nodes, edges = create_simple_extracted_graph(repository=repository)
+  property_ids: list[UUID] = [prop.id for node in nodes for prop in node.properties]
+
+  assert repository.get_change_log()
+  repository.clear_change_log()
+
+  # Add and create the document object
+  metadata: Metadata = next(iter(nodes[0].metadata))
+  document: DocumentData = DocumentData(
+    id=metadata.document_id, name="test.pdf", chunk_num=100, token_num=100
+  )
+  repository.add_document(document)
+
+  repository.remove_document_by_id(document.id)
+  change_logs: list[ChangeLog] = repository.get_change_log()
+  objects_logs: dict[UUID, list[ChangeLog]] = {log.id: [] for log in change_logs}
+  for log in change_logs:
+    objects_logs[log.id].append(log)
+
+  for object_id in chain([n.id for n in nodes], [e.id for e in edges], property_ids):
+    assert Action.DELETE in {log.action for log in objects_logs[object_id]}
