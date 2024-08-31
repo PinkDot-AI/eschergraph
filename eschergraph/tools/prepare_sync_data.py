@@ -30,6 +30,13 @@ def prepare_sync_data(
   for log in change_logs:
     objects_logs[log.id].append(log)
 
+  for id, logs in objects_logs.items():
+    if not Action.CREATE in {log.action for log in logs}:
+      print(logs[0].type)
+      for l in logs:
+        print(l)
+        print()
+
   ids_to_create, ids_to_delete = _get_actions_for_objects(objects_logs)
   delete_node_name_ids: list[UUID] = []
   create_main: list[tuple[UUID, str, dict[str, str | float]]] = []

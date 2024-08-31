@@ -260,9 +260,6 @@ class SimpleRepository(Repository):
     # Check if the node already exists
     if not node.id in self.nodes:
       self._add_new_node(node)
-      self.change_log.append(
-        ChangeLog(id=node.id, action=Action.CREATE, type=Node, level=node.level)
-      )
     else:
       attributes_to_check: list[str] = self._select_attributes_to_add(node)
       self.change_log.append(
@@ -337,6 +334,11 @@ class SimpleRepository(Repository):
         self.node_name_index[mtd.document_id] = {}
 
       self.node_name_index[mtd.document_id][node.name] = node.id
+
+    # Log the addition of a new node
+    self.change_log.append(
+      ChangeLog(id=node.id, action=Action.CREATE, type=Node, level=node.level)
+    )
 
   def _add_property(self, property: Property, through_node: bool = False) -> None:
     # Check if the property has been added to the repository directly
