@@ -16,4 +16,4 @@ class FilesMissingException(PersistenceException):
 
 
 class PersistingEdgeException(PersistenceException):
-  """Both referenced edges need to exist when an edge is persisted directly."""
+  """Both referenced nodes need to exist when an edge is persisted directly."""

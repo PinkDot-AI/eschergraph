@@ -26,8 +26,10 @@ def test_full_graph_loading(saved_graph_dir: Path) -> None:
 
   assert node_ids_repository == {node.id for node in nodes}
   assert set(repository.edges.keys()) == {edge.id for edge in edges}
-  assert set(repository.node_name_index.keys()) == {document_id}
-  assert node_ids_repository == set(repository.node_name_index[document_id].values())
+  assert set(repository.doc_node_name_index.keys()) == {document_id}
+  assert node_ids_repository == set(
+    repository.doc_node_name_index[document_id].values()
+  )
 
   repository.save()
   del repository

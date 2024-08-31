@@ -4,6 +4,7 @@ import os
 import pickle
 from typing import cast
 from typing import Optional
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from attrs import asdict
@@ -13,8 +14,9 @@ from attrs import fields_dict
 
 from eschergraph.config import DEFAULT_GRAPH_NAME
 from eschergraph.config import DEFAULT_SAVE_LOCATION
+from eschergraph.exceptions import DocumentDoesNotExistException
 from eschergraph.exceptions import NodeCreationException
-from eschergraph.graph.base import EscherBase
+from eschergraph.exceptions import NodeDoesNotExistException
 from eschergraph.graph.community import Community
 from eschergraph.graph.edge import Edge
 from eschergraph.graph.loading import LoadState
@@ -38,6 +40,10 @@ from eschergraph.graph.persistence.metadata import Metadata
 from eschergraph.graph.persistence.repository import Repository
 from eschergraph.graph.property import Property
 
+if TYPE_CHECKING:
+  from eschergraph.graph.base import EscherBase
+  from eschergraph.builder.build_log import BuildLog
+
 
 @define
 class SimpleRepository(Repository):
@@ -48,8 +54,10 @@ class SimpleRepository(Repository):
   nodes: dict[UUID, NodeModel] = field(init=False)
   edges: dict[UUID, EdgeModel] = field(init=False)
   properties: dict[UUID, PropertyModel] = field(init=False)
-  node_name_index: dict[UUID, dict[str, UUID]] = field(init=False)
+  doc_node_name_index: dict[UUID, dict[str, UUID]] = field(init=False)
   change_log: list[ChangeLog] = field(init=False)
+  documents: dict[UUID, DocumentData] = field(init=False)
+  original_build_logs: dict[UUID, BuildLog] = field(init=False)
 
   def __init__(
     self, name: Optional[str] = None, save_location: Optional[str] = None
@@ -82,29 +90,30 @@ class SimpleRepository(Repository):
       )
 
     filenames: dict[str, str] = self._filenames(save_location, name)
+    new_graph: bool = True
+    all_files: bool = True
 
-    # Check if this is a new graph
-    if (
-      not os.path.isfile(filenames["nodes"])
-      and not os.path.isfile(filenames["edges"])
-      and not os.path.isfile(filenames["properties"])
-      and not os.path.isfile(filenames["node_name_index"])
-    ):
+    # Check if this is a new graph and if all files are present
+    for filename in filenames.values():
+      if os.path.isfile(filename):
+        new_graph = False
+      if not os.path.isfile(filename):
+        all_files = False
+
+    if new_graph:
       self.nodes = dict()
       self.edges = dict()
       self.properties = dict()
-      self.node_name_index = dict()
+      self.doc_node_name_index = dict()
+      self.documents = dict()
+      self.original_build_logs = dict()
       return
 
     # If some files are missing
-    if (
-      not os.path.isfile(filenames["nodes"])
-      or not os.path.isfile(filenames["edges"])
-      or not os.path.isfile(filenames["properties"])
-      or not os.path.isfile(filenames["node_name_index"])
-    ):
+    if not all_files:
       raise FilesMissingException("Some files are missing or corrupted.")
 
+    # Load existing data
     for key, value in filenames.items():
       with open(value, "rb") as file:
         setattr(self, key, pickle.load(file))
@@ -116,7 +125,9 @@ class SimpleRepository(Repository):
       "nodes": base_filename + "-nodes.pkl",
       "edges": base_filename + "-edges.pkl",
       "properties": base_filename + "-properties.pkl",
-      "node_name_index": base_filename + "-nnindex.pkl",
+      "doc_node_name_index": base_filename + "-nnindex.pkl",
+      "documents": base_filename + "-documents.pkl",
+      "original_build_logs": base_filename + "-ogbuidlogs.pkl",
     }
 
   def load(self, object: EscherBase, loadstate: LoadState = LoadState.CORE) -> None:
@@ -257,6 +268,8 @@ class SimpleRepository(Repository):
       self._add_property(property=object)
 
   def _add_node(self, node: Node) -> None:
+    # Keep track of the old name for the (doc) node name index
+    old_name: str = ""
     # Check if the node already exists
     if not node.id in self.nodes:
       self._add_new_node(node)
@@ -294,6 +307,11 @@ class SimpleRepository(Repository):
           node_model["properties"] = [p.id for p in node.properties]
           for property in node.properties:
             self._add_property(property=property, through_node=True)
+        elif attr == "name":
+          name_changed: bool = node_model["name"] == node.name
+          if name_changed:
+            old_name = node_model["name"]
+            node_model["name"] = node.name
         else:
           node_model[attr] = Node.__dict__[attr].fget(node)  # type: ignore
 
@@ -310,6 +328,12 @@ class SimpleRepository(Repository):
     for child in node.child_nodes:
       if not child.id in self.nodes:
         self._add_new_node(node=child, add_edges=False)
+
+    # Update the doc node name index
+    if old_name:
+      for doc_id in {md["document_id"] for md in node_model["metadata"]}:
+        del self.doc_node_name_index[doc_id][old_name]
+        self.doc_node_name_index[doc_id][node.name] = node.id
 
   def _add_new_node(self, node: Node, add_edges: bool = True) -> None:
     if not node.loadstate == LoadState.FULL:
@@ -333,10 +357,10 @@ class SimpleRepository(Repository):
 
     # Keep the node-name index updated
     for mtd in node.metadata:
-      if not mtd.document_id in self.node_name_index:
-        self.node_name_index[mtd.document_id] = {}
+      if not mtd.document_id in self.doc_node_name_index:
+        self.doc_node_name_index[mtd.document_id] = {}
 
-      self.node_name_index[mtd.document_id][node.name] = node.id
+      self.doc_node_name_index[mtd.document_id][node.name] = node.id
 
   def _add_property(self, property: Property, through_node: bool = False) -> None:
     # Check if the property has been added to the repository directly
@@ -464,9 +488,9 @@ class SimpleRepository(Repository):
     Returns:
       The node that matches the name in the specified document.
     """
-    if not document_id in self.node_name_index:
+    if not document_id in self.doc_node_name_index:
       return None
-    id: Optional[UUID] = self.node_name_index[document_id].get(name)
+    id: Optional[UUID] = self.doc_node_name_index[document_id].get(name)
     if not id:
       return None
     node_id: UUID = id
@@ -591,21 +615,139 @@ class SimpleRepository(Repository):
   def add_document(self, document_data: DocumentData) -> None:
     """Adds a document to the system.
 
+    If a document with the same ID already exists, then the existing
+    data will be overwritten with the specified object.
+
     Args:
-        document_data (DocumentData): The document data that needs to be added.
-
-    Returns:
-        None: This method does not return any value.
+      document_data (DocumentData): The document data that needs to be added.
     """
-    ...
+    self.documents[document_data.id] = document_data
 
-  def get_document(self, ids: list[UUID]) -> list[DocumentData]:
+  def get_documents_by_id(self, ids: list[UUID]) -> list[DocumentData]:
     """Retrieves documents based on a list of document UUIDs.
 
     Args:
-        ids (List[UUID]): A list of UUIDs representing the documents to be fetched.
+      ids (list[UUID]): A list of UUIDs representing the documents to be fetched.
 
     Returns:
-        List[DocumentData]: A list of `DocumentData` instances for the requested documents.
+      list[DocumentData]: A list of DocumentData instances for the requested documents.
     """
-    ...
+    doc_result: list[DocumentData] = []
+    for doc_id in ids:
+      document: DocumentData = self.documents.get(doc_id)
+
+      if document:
+        doc_result.append(document)
+
+    return doc_result
+
+  def add_original_build_logs(self, original_build_logs: list[BuildLog]) -> None:
+    """Add the original build logs for storage.
+
+    The original build logs are used for the evaluation that calculates
+    a loss of information score. Original refers to the build logs from before
+    applying the node matcher.
+
+    Args:
+      original_build_logs (list[BuildLog]): A list of build logs to add.
+    """
+    self.original_build_logs = {log.id: log for log in original_build_logs}
+
+  def remove_node_by_id(self, id: UUID) -> None:
+    """Remove a node by id.
+
+    Also removes all the edges and properties that are related
+    to this node.
+
+    Args:
+      id (UUID): The node's id.
+    """
+    if not id in self.nodes:
+      raise NodeDoesNotExistException(
+        f"Cannot delete a node that does not exist, id: {id}."
+      )
+
+    # Remove all the edges
+    node_model: NodeModel = self.nodes[id]
+    for edge_id in node_model["edges"]:
+      # Remove the edge itself
+      edge_model: EdgeModel = self.edges[edge_id]
+      self._remove_edge(edge_model, edge_id)
+
+    # Remove all the properties
+    for prop_id in node_model["properties"]:
+      del self.properties[prop_id]
+
+    # Update impacted child nodes
+    for child_node_id in node_model["child_nodes"]:
+      child_node_model: NodeModel = self.nodes[child_node_id]
+      child_node_model["community"] = None
+
+    # Update impacted community node
+    community_node_model: NodeModel = self.nodes[node_model["community"]]
+    community_node_model["child_nodes"].remove(id)
+
+    # Update the doc_node_name_index
+    for doc_id in {md["document_id"] for md in node_model["metadata"]}:
+      del self.doc_node_name_index[doc_id][node_model["name"]]
+
+  def remove_document_by_id(self, id: UUID) -> None:
+    """Remove a document by id.
+
+    We only delete a node completely if it fully comes
+    from a single document. If it has also been extracted from
+    another document, then all of its attributes are considered
+    under the same logic.
+
+    Args:
+      id (UUID): The document's id.
+    """
+    if not id in self.documents:
+      raise DocumentDoesNotExistException(
+        f"The document cannot be deleted as it does not exist, id: {id}"
+      )
+
+    # Select all nodes that are impacted (= all attributes must be checked)
+    doc_nodes: list[NodeModel] = [
+      self.nodes[node_id] for node_id in self.doc_node_name_index[id].values()
+    ]
+    nodes_to_check: list[NodeModel] = []
+
+    for node_model in doc_nodes:
+      if {id} == {md["document_id"] for md in node_model["metadata"]}:
+        self.remove_node_by_id(node_model["id"])
+      else:
+        nodes_to_check.append(node_model)
+
+    # Check all the properties / edges of the node to see if they need to be deleted
+    # Same logic for deletion applies as to the node
+
+    for node_model in nodes_to_check:
+      # Check all the properties
+      for prop_id in node_model["properties"]:
+        prop_model: PropertyModel = self.properties[prop_id]
+        if {id} == {md["document_id"] for md in prop_model["metadata"]}:
+          node_model["properties"].remove(prop_id)
+          del self.properties[prop_id]
+
+      # Check all the edges
+      for edge_id in node_model["edges"]:
+        edge_model: EdgeModel = self.edges[edge_id]
+        if {id} == {md["document_id"] for md in edge_model["metadata"]}:
+          self._remove_edge(edge_model, edge_id)
+
+  def _remove_edge(self, edge_model: EdgeModel, edge_id: UUID) -> None:
+    """Remove an edge from the repository.
+
+    This method removes the edge from the stored edges and also
+    removes the edge from both its nodes.
+
+    Args:
+      edge_model (EdgeModel): The edge's model as stored in the repository.
+      edge_id (UUID): The edge's id.
+    """
+    del self.edges[edge_model[edge_id]]
+
+    # Remove the edge from the other node's edges
+    for impacted_node_id in {edge_model["frm"], edge_model["to"]}:
+      self.nodes[impacted_node_id]["edges"].remove(edge_id)

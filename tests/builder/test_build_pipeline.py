@@ -29,6 +29,7 @@ def builder_mock() -> BuildPipeline:
   return BuildPipeline(model=openai_mock, reranker=jina_mock)
 
 
+# TODO: refactor to use a mock for the repository
 def test_persist_to_graph(
   tmp_path: Path, builder_mock: BuildPipeline, graph_unit: Graph
 ):

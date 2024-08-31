@@ -157,8 +157,7 @@ class Graph:
     """Synchronizes the vector database with the latest changes in the repository.
 
     Args:
-        collection_name (str): The name of the vector database collection where documents should be stored.
-        level (int, optional): The hierarchical level at which the metadata is being synced. Default is 0.
+      collection_name (str): The name of the vector database collection where documents should be stored.
     """
     # Prepare data for synchronization
     docs, ids, metadata, ids_to_delete = prepare_sync_data(repository=self.repository)
@@ -182,10 +181,10 @@ class Graph:
     """Executes a search query using a vector database and a specified model.
 
     Args:
-        query (str): The search query as a string.
+      query (str): The search query as a string.
 
     Returns:
-        str: The result of the search, typically a string that represents the most relevant information or document found by the search.
+      The result of the search, typically a string that represents the most relevant information or document found by the search.
     """
     result = quick_search(vector_db=self.vector_db, query=query, model=self.model)
     return result

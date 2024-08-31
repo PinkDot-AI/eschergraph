@@ -31,8 +31,10 @@ def test_filenames_function_default() -> None:
   assert filenames == {
     "nodes": base_filename + "-nodes.pkl",
     "edges": base_filename + "-edges.pkl",
-    "node_name_index": base_filename + "-nnindex.pkl",
+    "doc_node_name_index": base_filename + "-nnindex.pkl",
     "properties": base_filename + "-properties.pkl",
+    "documents": base_filename + "-documents.pkl",
+    "original_build_logs": base_filename + "-ogbuidlogs.pkl",
   }
 
 
@@ -46,8 +48,10 @@ def test_filenames_function_specified() -> None:
   assert filenames == {
     "nodes": base_filename + "-nodes.pkl",
     "edges": base_filename + "-edges.pkl",
-    "node_name_index": base_filename + "-nnindex.pkl",
+    "doc_node_name_index": base_filename + "-nnindex.pkl",
     "properties": base_filename + "-properties.pkl",
+    "documents": base_filename + "-documents.pkl",
+    "original_build_logs": base_filename + "-ogbuidlogs.pkl",
   }
 
 
@@ -56,7 +60,9 @@ def test_new_graph_init_default(tmp_path: Path) -> None:
 
   assert repository.nodes == dict()
   assert repository.edges == dict()
-  assert repository.node_name_index == dict()
+  assert repository.doc_node_name_index == dict()
+  assert repository.documents == dict()
+  assert repository.original_build_logs == dict()
 
 
 def test_init_dir_does_not_exist() -> None:

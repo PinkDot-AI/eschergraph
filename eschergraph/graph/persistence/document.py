@@ -7,7 +7,7 @@ from attrs import define
 
 @define
 class DocumentData:
-  """This is the document data object."""
+  """The document data object."""
 
   id: UUID
   name: str
