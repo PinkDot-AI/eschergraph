@@ -273,9 +273,6 @@ class SimpleRepository(Repository):
     # Check if the node already exists
     if not node.id in self.nodes:
       self._add_new_node(node)
-      self.change_log.append(
-        ChangeLog(id=node.id, action=Action.CREATE, type=Node, level=node.level)
-      )
     else:
       attributes_to_check: list[str] = self._select_attributes_to_add(node)
       self.change_log.append(
@@ -361,6 +358,11 @@ class SimpleRepository(Repository):
         self.doc_node_name_index[mtd.document_id] = {}
 
       self.doc_node_name_index[mtd.document_id][node.name] = node.id
+
+    # Log the addition of a new node
+    self.change_log.append(
+      ChangeLog(id=node.id, action=Action.CREATE, type=Node, level=node.level)
+    )
 
   def _add_property(self, property: Property, through_node: bool = False) -> None:
     # Check if the property has been added to the repository directly
@@ -676,7 +678,7 @@ class SimpleRepository(Repository):
 
     # Remove all the properties
     for prop_id in node_model["properties"]:
-      del self.properties[prop_id]
+      self._remove_property(id=prop_id, property_model=self.properties[prop_id])
 
     # Update impacted child nodes
     for child_node_id in node_model["child_nodes"]:
@@ -690,6 +692,11 @@ class SimpleRepository(Repository):
     # Update the doc_node_name_index
     for doc_id in {md["document_id"] for md in node_model["metadata"]}:
       del self.doc_node_name_index[doc_id][node_model["name"]]
+
+    del self.nodes[id]
+    self.change_log.append(
+      ChangeLog(id=id, action=Action.DELETE, type=Node, level=node_model["level"])
+    )
 
   def remove_document_by_id(self, id: UUID) -> None:
     """Remove a document by id.
@@ -728,7 +735,7 @@ class SimpleRepository(Repository):
         prop_model: PropertyModel = self.properties[prop_id]
         if {id} == {md["document_id"] for md in prop_model["metadata"]}:
           node_model["properties"].remove(prop_id)
-          del self.properties[prop_id]
+          self._remove_property(id=prop_id, property_model=self.properties["prop_id"])
 
       # Check all the edges
       for edge_id in node_model["edges"]:
@@ -751,3 +758,24 @@ class SimpleRepository(Repository):
     # Remove the edge from the other node's edges
     for impacted_node_id in {edge_model["frm"], edge_model["to"]}:
       self.nodes[impacted_node_id]["edges"].remove(edge_id)
+
+    self.change_log.append(
+      ChangeLog(
+        id=edge_id,
+        action=Action.DELETE,
+        type=Edge,
+        level=self.nodes[edge_model["frm"]]["level"],
+      )
+    )
+
+  def _remove_property(self, id: UUID, property_model: PropertyModel) -> None:
+    del self.properties[id]
+
+    self.change_log.append(
+      ChangeLog(
+        id=id,
+        action=Action.DELETE,
+        type=Property,
+        level=self.nodes[property_model["node"]]["level"],
+      )
+    )

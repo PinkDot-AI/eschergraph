@@ -9,17 +9,21 @@ from eschergraph.config import DEFAULT_GRAPH_NAME
 from eschergraph.config import DEFAULT_SAVE_LOCATION
 from eschergraph.graph import Edge
 from eschergraph.graph import Node
+from eschergraph.graph import Property
 from eschergraph.graph.base import EscherBase
 from eschergraph.graph.loading import LoadState
 from eschergraph.graph.persistence import Metadata
 from eschergraph.graph.persistence.adapters.simple_repository import SimpleRepository
 from eschergraph.graph.persistence.adapters.simple_repository.models import EdgeModel
 from eschergraph.graph.persistence.adapters.simple_repository.models import NodeModel
+from eschergraph.graph.persistence.change_log import Action
+from eschergraph.graph.persistence.change_log import ChangeLog
 from eschergraph.graph.persistence.exceptions import DirectoryDoesNotExistException
 from eschergraph.graph.persistence.exceptions import FilesMissingException
 from tests.graph.help import create_basic_node
 from tests.graph.help import create_edge
 from tests.graph.help import create_node_only_multi_level_graph
+from tests.graph.help import create_property
 from tests.graph.help import create_simple_extracted_graph
 
 
@@ -222,3 +226,42 @@ def test_get_max_level(saved_graph_dir: Path) -> None:
   _ = create_node_only_multi_level_graph(max_level=max_level, repository=repository)
 
   assert repository.get_max_level() == max_level
+
+
+def test_change_log_initial(saved_graph_dir: Path) -> None:
+  assert SimpleRepository(save_location=saved_graph_dir.as_posix()).change_log == []
+
+
+def test_change_log_adding(saved_graph_dir: Path) -> None:
+  repository: SimpleRepository = SimpleRepository(
+    save_location=saved_graph_dir.as_posix()
+  )
+  node1: Node = create_basic_node(repository=repository)
+  node2: Node = create_basic_node(repository=repository)
+  node1._properties = []
+  node2._properties = []
+  edge: Edge = create_edge(repository=repository, frm=node1, to=node2)
+  property: Property = create_property(node=node1, repository=repository)
+
+  assert repository.get_change_log() == []
+
+  repository.add(node1)
+  repository.add(node2)
+  repository.add(edge)
+  repository.add(property)
+
+  change_logs: list[ChangeLog] = repository.get_change_log()
+  print(change_logs)
+  object_logs = {log.id: [] for log in change_logs}
+  for log in change_logs:
+    object_logs[log.id].append(log.action)
+
+  for id, action_list in object_logs.items():
+    assert Action.CREATE in action_list
+
+  print([(log.type, log.action) for log in change_logs])
+  assert [log.action for log in change_logs] == [Action.CREATE for _ in range(4)]
+  assert [log.id for log in change_logs] == [node1.id, node2.id, edge.id, property.id]
+
+  repository.clear_change_log()
+  assert repository.get_change_log() == []
