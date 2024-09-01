@@ -154,6 +154,10 @@ def create_simple_extracted_graph(
     pair: tuple[int, int] = random.choice(valid_pairs)
     valid_pairs.remove(pair)
 
+    # Avoid cases where random names collide (happens very rarely)
+    if nodes[pair[0]].id == nodes[pair[1]].id:
+      continue
+
     edges.append(
       graph.add_edge(
         frm=nodes[pair[0]],

@@ -316,9 +316,9 @@ class SimpleRepository(Repository):
           node_model["child_nodes"] = {child.id for child in node.child_nodes}
         elif attr == "properties":
           # Also allow for properties to be altered / deleted through a node
-          removed_properties: set[UUID] = set(node_model["properties"]).difference(
-            set(node.properties)
-          )
+          removed_properties: set[UUID] = set(node_model["properties"]).difference({
+            prop.id for prop in node.properties
+          })
           for prop_id in removed_properties:
             self._remove_property(id=prop_id, property_model=self.properties[prop_id])
 
@@ -401,6 +401,9 @@ class SimpleRepository(Repository):
       )
 
     if not property.id in self.properties:
+      if not property.loadstate == LoadState.FULL:
+        raise PersistenceException("A newly created property should be fully loaded.")
+
       new_model: PropertyModel = self._new_property_to_property_model(property)
       self.properties[property.id] = new_model
       self.change_log.append(
