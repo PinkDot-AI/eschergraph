@@ -10,7 +10,7 @@ if TYPE_CHECKING:
   from eschergraph.graph import Graph
 
 
-def global_search(graph: Graph, query: str) -> str | None:
+def global_search(graph: Graph, query: str) -> str:
   """Search a graph globally through its communities.
 
   Note that the findings for a community should be sorted, this is the default behavior when building a graph.
@@ -20,14 +20,18 @@ def global_search(graph: Graph, query: str) -> str | None:
     query (str): The query string used to search within the graph.
 
   Returns:
-    str | None: The processed response from the graph model based on the search results, or None if no results are found.
+    str: The processed response from the graph model based on the search results..
   """
   extractions: list[AttributeSearch] = _get_relevant_extractions(graph, query)
 
   ans_template = "search/question_with_context.jinja"
   context = "\n".join([a.text for a in extractions])
   full_prompt = process_template(ans_template, {"CONTEXT": context, "QUERY": query})
-  return graph.model.get_plain_response(full_prompt)
+  response: str | None = graph.model.get_plain_response(full_prompt)
+  if not response:
+    return ""
+
+  return response
 
 
 def _get_relevant_extractions(graph: Graph, prompt: str) -> list[AttributeSearch]:

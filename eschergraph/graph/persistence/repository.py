@@ -215,6 +215,19 @@ class Repository(ABC):
     raise NotImplementedError
 
   @abstractmethod
+  def get_all_original_building_logs(self) -> list[BuildLog]:
+    """Get all the original build logs.
+
+    The original build logs are used for the evaluation that calculates
+    a loss of information score. Original refers to the build logs from before
+    applying the node matcher.
+
+    Returns:
+      original_build_logs (list[BuildLog]): A list of build logs.
+    """
+    raise NotImplementedError
+
+  @abstractmethod
   def remove_node_by_id(self, id: UUID) -> None:
     """Remove a node by id.
 

@@ -114,3 +114,36 @@ def test_original_building_logs_overwrite(saved_graph_dir: Path) -> None:
 
   assert repository.get_original_build_logs_by_document_id(doc1_id) == list1_new
   assert repository.get_original_build_logs_by_document_id(doc2_id) == list2_new
+
+
+def test_original_building_logs_get_all(saved_graph_dir: Path) -> None:
+  repository: SimpleRepository = SimpleRepository(
+    save_location=saved_graph_dir.as_posix()
+  )
+  list1, list2, list3 = create_build_logs(), create_build_logs(), create_build_logs()
+
+  repository.add_original_build_logs(list1 + list2 + list3)
+
+  # Check that the results were saved as expected
+  doc1_id: UUID = list1[0].metadata.document_id
+  doc2_id: UUID = list2[0].metadata.document_id
+  doc3_id: UUID = list3[0].metadata.document_id
+
+  assert repository.original_build_logs == {
+    doc1_id: list1,
+    doc2_id: list2,
+    doc3_id: list3,
+  }
+
+  repository.save()
+  del repository
+  new_repo: SimpleRepository = SimpleRepository(
+    save_location=saved_graph_dir.as_posix()
+  )
+
+  original_building_logs: list[BuildLog] = new_repo.get_all_original_building_logs()
+
+  assert len(list1 + list2 + list3) == len(original_building_logs)
+  assert all(log in original_building_logs for log in list1)
+  assert all(log in original_building_logs for log in list2)
+  assert all(log in original_building_logs for log in list3)

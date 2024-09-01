@@ -28,7 +28,7 @@ class LogAnalysisResult(TypedDict):
   possible_loss_of_information_sentences: list[dict[str, Any]]
 
 
-def evaluate_information_consistency(graph: Graph) -> dict:
+def evaluate_information_consistency(graph: Graph) -> dict[str, float]:
   """Evaluate information consistency across the graph using parallel processing.
 
   Args:
@@ -40,7 +40,7 @@ def evaluate_information_consistency(graph: Graph) -> dict:
   data: list[LogAnalysisResult] = []
   lock = threading.Lock()
 
-  def process_log(log):
+  def process_log(log) -> None:
     result = _handle_log(log, graph)
     with lock:
       data.append(result)
@@ -70,8 +70,8 @@ def _calculate_statistics(data: list[LogAnalysisResult]) -> dict[str, float]:
   similarity_differences = [log["similarity_mean_difference"] for log in data]
   std_differences = [log["std_mean_difference"] for log in data]
 
-  avg_similarity = round(np.mean(similarity_differences), 3)
-  avg_std = round(np.mean(std_differences), 3)
+  avg_similarity: float = float(round(np.mean(similarity_differences), 3))
+  avg_std: float = float(round(np.mean(std_differences), 3))
 
   return {
     "Average of mean similarity differences ": avg_similarity,

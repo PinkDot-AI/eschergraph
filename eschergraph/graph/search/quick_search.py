@@ -78,7 +78,7 @@ def _get_attributes(graph: Graph, query: str) -> list[AttributeSearch]:
   extracted_nodes: list[str] = extract_entities_from(query=query, llm=graph.model)
 
   # Initialize search metadata for attributes
-  search_metadata = {"level": 0}
+  search_metadata: dict[str, Any] = {"level": 0}
 
   # Perform initial search for nodes if any extracted entities are found
   if extracted_nodes:
@@ -154,7 +154,7 @@ def rerank_and_filter_attributes(
   query: str,
   attributes_string: list[str],
   attributes_results: list[dict[str, UUID | int | str | float | dict[str, Any]]],
-  threshold: int = 0,
+  threshold: float = 0.0,
 ) -> list[AttributeSearch]:
   """Filters and reformats a list of reranked attributes based on relevance score.
 
@@ -212,7 +212,7 @@ def extract_entities_from(query: str, llm: ModelProvider) -> list[str]:
     List[str]: list of entities
   """
   entity_extraction_template = "search/entity_extraction.jinja"
-  prompt = process_template(
+  prompt: str = process_template(
     entity_extraction_template,
     {"query": query},
   )
@@ -220,6 +220,6 @@ def extract_entities_from(query: str, llm: ModelProvider) -> list[str]:
   if not res:
     raise ExternalProviderException("Empty message response while extracting entities")
   try:
-    return res["entities"]
+    return res["entities"]  # type: ignore
   except:
     raise ExternalProviderException("jsonify failed at extracting entities from query")
