@@ -10,8 +10,10 @@ from eschergraph.exceptions import NodeDoesNotExistException
 from eschergraph.graph import Edge
 from eschergraph.graph import Node
 from eschergraph.graph import Property
+from eschergraph.graph.persistence import Metadata
 from eschergraph.graph.persistence.adapters.simple_repository import SimpleRepository
 from eschergraph.graph.persistence.document import DocumentData
+from tests.graph.help import create_edge
 from tests.graph.help import create_simple_extracted_graph
 
 
@@ -124,3 +126,73 @@ def test_delete_document_fully(saved_graph_dir: Path) -> None:
   for prop_id in deleted_prop_ids:
     assert not prop_id in repository.properties
     assert not repository.get_property_by_id(prop_id)
+
+
+# This test method tests the case where a node and some of its properties
+# and edges come from multiple documents. Currently, this cannot yet occur,
+# but it has been added to cater for future merges between entities
+# from different documents.
+def test_delete_document_partially(saved_graph_dir: Path) -> None:
+  repository: SimpleRepository = SimpleRepository(
+    save_location=saved_graph_dir.as_posix()
+  )
+  _, nodes1, edges1 = create_simple_extracted_graph(repository=repository)
+  _, nodes2, _ = create_simple_extracted_graph(repository=repository)
+
+  # Check whether the test has been set up correctly
+  assert {n.id for n in nodes1} | {n.id for n in nodes2} == {
+    n.id for n in repository.get_all_at_level(0)
+  }
+
+  document_id1: UUID = next(iter(nodes1[0].metadata)).document_id
+  document_id2: UUID = next(iter(nodes2[0].metadata)).document_id
+
+  # Add both documents
+  repository.add_document(
+    DocumentData(id=document_id1, name="doc1", chunk_num=100, token_num=100)
+  )
+  repository.add_document(
+    DocumentData(id=document_id2, name="doc2", chunk_num=100, token_num=100)
+  )
+
+  # Select a node that will come from both documents
+  md_removed: Metadata = next(iter(nodes1[0].metadata))
+  md_other: Metadata = next(iter(nodes2[0].metadata))
+  frm_node, to_node = nodes1[0], nodes1[1]
+  frm_node.metadata.add(md_other)
+  to_node.metadata.add(md_other)
+  edge_between: Edge = create_edge(frm=frm_node, to=to_node, repository=repository)
+  edge_between.metadata = frm_node.metadata
+  edge_delete_between: Edge = create_edge(
+    frm=frm_node, to=to_node, repository=repository
+  )
+  edge_delete_between.metadata = {md_removed}
+
+  # Two properties on the node that come from both documents
+  prop1, prop2 = frm_node.properties[0], frm_node.properties[1]
+  prop1.metadata.add(md_other)
+  prop2.metadata.add(md_other)
+
+  for prop in frm_node.properties:
+    if prop != prop1 and prop != prop2:
+      assert len(prop.metadata) == 1
+
+  repository.add(frm_node)
+  repository.add(to_node)
+
+  repository.remove_document_by_id(document_id1)
+  frm_new, to_new = (
+    repository.get_node_by_id(frm_node.id),
+    repository.get_node_by_id(to_node.id),
+  )
+
+  assert frm_new
+  assert to_new
+  assert {n.id for n in nodes2} | {frm_new.id, to_new.id} == {
+    n.id for n in repository.get_all_at_level(0)
+  }
+  assert {e.id for e in frm_new.edges} | {e.id for e in to_new.edges} == {
+    edge_between.id
+  }
+  assert {p.id for p in frm_new.properties} == {prop1.id, prop2.id}
+  assert not to_new.properties

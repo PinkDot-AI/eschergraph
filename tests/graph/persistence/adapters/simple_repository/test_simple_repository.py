@@ -262,7 +262,6 @@ def test_change_log_adding(saved_graph_dir: Path) -> None:
   repository.add(property)
 
   change_logs: list[ChangeLog] = repository.get_change_log()
-  print(change_logs)
   object_logs = {log.id: [] for log in change_logs}
   for log in change_logs:
     object_logs[log.id].append(log.action)
@@ -289,7 +288,6 @@ def test_change_log_adding_indirectly(saved_graph_dir: Path) -> None:
   repository.add(node1)
 
   change_logs: list[ChangeLog] = repository.get_change_log()
-  print(change_logs)
   object_logs: dict[UUID, list[ChangeLog]] = {log.id: [] for log in change_logs}
   for log in change_logs:
     object_logs[log.id].append(log.action)

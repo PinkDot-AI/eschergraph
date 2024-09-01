@@ -303,6 +303,17 @@ class SimpleRepository(Repository):
           for edge in node.edges:
             self._add_edge(edge)
         elif attr == "metadata":
+          # Update the node name index if the metadata changes
+          if (old_doc_ids := {md["document_id"] for md in node_model["metadata"]}) != (
+            new_doc_ids := {md.document_id for md in node.metadata}
+          ):
+            # Remove the old node name index values
+            for doc_id in old_doc_ids:
+              del self.doc_node_name_index[doc_id][node_model["name"]]
+
+            # Add the new node name index values
+            for doc_id in new_doc_ids:
+              self.doc_node_name_index[doc_id][node_model["name"]] = node.id
           node_model["metadata"] = [
             cast(MetadataModel, asdict(md)) for md in node.metadata
           ]
@@ -781,17 +792,28 @@ class SimpleRepository(Repository):
 
     for node_id, node_model in nodes_to_check:
       # Check all the properties
+      props_to_delete: list[UUID] = []
       for prop_id in node_model["properties"]:
         prop_model: PropertyModel = self.properties[prop_id]
         if {id} == {md["document_id"] for md in prop_model["metadata"]}:
-          node_model["properties"].remove(prop_id)
-          self._remove_property(id=prop_id, property_model=self.properties["prop_id"])
+          props_to_delete.append(prop_id)
+          self._remove_property(id=prop_id, property_model=self.properties[prop_id])
+
+      # Remove the properties from the node
+      for prop_id in props_to_delete:
+        node_model["properties"].remove(prop_id)
 
       # Check all the edges
+      edges_to_delete: list[UUID] = []
       for edge_id in node_model["edges"]:
         edge_model: EdgeModel = self.edges[edge_id]
         if {id} == {md["document_id"] for md in edge_model["metadata"]}:
+          edges_to_delete.append(edge_id)
           self._remove_edge(edge_model, edge_id, through_node=node_id)
+
+      # Remove the edges from the node
+      for edge_id in edges_to_delete:
+        node_model["edges"].remove(edge_id)
 
     # Remove the document and update the doc node name index
     del self.documents[id]

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import random
 from typing import Optional
 from unittest.mock import MagicMock
@@ -63,7 +64,9 @@ def create_property(
   if not node:
     node: Node = create_basic_node(repository=repository)
   return Property.create(
-    node=node, description=faker.text(max_nb_chars=80), metadata=node.metadata
+    node=node,
+    description=faker.text(max_nb_chars=80),
+    metadata=copy.copy(node.metadata),
   )
 
 
