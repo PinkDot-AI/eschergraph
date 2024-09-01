@@ -51,11 +51,7 @@ def integration_test_building() -> None:
   print("global search time", time.time() - t)
   t = time.time()
 
-  print()
-  r = graph.search(query)
-  print(r)
-
-  print("quick search time", time.time() - t)
+  graph.dashboard()
 
   # Wait a few seconds before cleaning up to open the visuals
   time.sleep(8)
