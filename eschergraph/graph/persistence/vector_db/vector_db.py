@@ -3,8 +3,7 @@ from __future__ import annotations
 from abc import ABC
 from abc import abstractmethod
 from typing import Any
-from typing import Dict
-from typing import List
+from typing import Optional
 from uuid import UUID
 
 
@@ -30,9 +29,9 @@ class VectorDB(ABC):
   @abstractmethod
   def insert(
     self,
-    documents: List[str],
-    ids: List[UUID],
-    metadata: List[Dict[str, str]],
+    documents: list[str],
+    ids: list[UUID],
+    metadata: list[dict[str, str]],
     collection_name: str,
   ) -> None:
     """Store documents with their embeddings, ids, and metadata.
@@ -51,28 +50,28 @@ class VectorDB(ABC):
     self,
     query: str,
     top_n: int,
-    metadata: Dict[str, Any],
     collection_name: str,
-  ) -> Dict[str, str]:
+    metadata: Optional[dict[str, Any]] = None,
+  ) -> dict[str, str]:
     """Search for the top_n documents that are most similar to the given embedding.
 
     Args:
       query (str): the query to search for
       query (str): the query to search for
       top_n (int): Number of top documents to retrieve.
-      metadata (dict[str, Any]): Metadata to filter the search results.
       collection_name (str): The name of the collection.
+      metadata (Optional[dict[str, Any]]): Metadata to filter the search results.
 
     Returns:
-      Dictionary with results that match the que
+      Dictionary with results that match the query.
     """
     raise NotImplementedError
 
   @abstractmethod
   def format_search_results(
     self,
-    result: Dict[str, str],
-  ) -> List[Dict[str, UUID | int | str | float | Dict[str, Any]]]:
+    result: dict[str, str],
+  ) -> list[dict[str, UUID | int | str | float | dict[str, Any]]]:
     """Format search results into a standard.
 
     Args:
@@ -100,7 +99,7 @@ class VectorDB(ABC):
   @abstractmethod
   def delete_with_metadata(
     self,
-    metadata: Dict[str, Any],
+    metadata: dict[str, Any],
     collection_name: str,
   ) -> None:
     """Delete an item in the vectordb by metadata filters.
