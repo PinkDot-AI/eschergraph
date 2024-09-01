@@ -188,3 +188,8 @@ no_implicit_reexport = true
 
 # This one can be tricky to get passing if you use a lot of untyped libraries
 warn_return_any = true
+
+[[tool.mypy.overrides]]
+module = ["tests.*"]
+# Unable to get passing when using mocks
+disable_error_code = "attr-defined"
