@@ -51,14 +51,13 @@ def integration_test_building() -> None:
   print("global search time", time.time() - t)
   t = time.time()
 
-  print("started evaluating, this may take a while")
-  graph.evaluate()
+  graph.dashboard()
 
   # Wait a few seconds before cleaning up to open the visuals
-  # time.sleep(8)
+  time.sleep(8)
 
-  # # Clean up all the persistent data
-  # temp_dir.cleanup()
+  # Clean up all the persistent data
+  temp_dir.cleanup()
 
 
 integration_test_building()

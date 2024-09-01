@@ -270,7 +270,7 @@ class Graph:
   def dashboard(self) -> None:
     """Gathers data and visualizes the dashboard using DashboardMaker."""
     # Step 1: Gather data
-    data: DashboardData = DashboardMaker.gather_data(self.repository, self.model)
+    data: DashboardData = DashboardMaker.gather_data(graph=self)
 
     # Step 2: Visualize the data
     DashboardMaker.visualizer_print(data)

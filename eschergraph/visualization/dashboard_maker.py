@@ -86,6 +86,7 @@ class DashboardMaker:
         data (DashboardData): Dictionary containing the dashboard data.
     """
     llm_model_type: str = data["llm_model_type"]
+    reranker_type: str = data["reranker_model_type"]
     documents: list[DocumentData] = data["documents"]
     top_5_nodes: list[Node] = data["top_5_nodes"]
     top_3_communities: list[Node] = data["top_3_communities"]
@@ -98,7 +99,8 @@ class DashboardMaker:
 
     # Output dashboard data
     print("\n------------ DASHBOARD ------------")
-    print(f"1) LLM Model Type: {llm_model_type}")
+    print(f"LLM Model Type: {llm_model_type}")
+    print(f"Reranker Model Type: {reranker_type}")
 
     # Display document data in tabulated form
     print("\n------------ DOCUMENT DATA ------------")
