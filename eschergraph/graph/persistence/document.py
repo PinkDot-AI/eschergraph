@@ -15,3 +15,4 @@ class DocumentData:
   chunk_num: int
   token_num: int
   loss_of_information: float | None = field(default=None)
+  std_loss_of_information: float | None = field(default=None)
