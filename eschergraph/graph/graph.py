@@ -199,10 +199,10 @@ class Graph:
     """Executes a search query using a vector database and a specified model.
 
     Args:
-        query (str): The search query as a string.
+      query (str): The search query as a string.
 
     Returns:
-        str: The result of the search, typically a string that represents the most relevant information or document found by the search.
+      The result of the search, typically a string that represents the most relevant information or document found by the search.
     """
     if not self._search_check():
       raise UnlogicalActionException("You cannot search a graph before building it")

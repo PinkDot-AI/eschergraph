@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import random
 from typing import Optional
 from unittest.mock import MagicMock
@@ -62,7 +63,11 @@ def create_property(
 ) -> Property:
   if not node:
     node: Node = create_basic_node(repository=repository)
-  return Property.create(node=node, description=faker.text(max_nb_chars=80))
+  return Property.create(
+    node=node,
+    description=faker.text(max_nb_chars=80),
+    metadata=copy.copy(node.metadata),
+  )
 
 
 def create_edge(
@@ -135,7 +140,11 @@ def create_simple_extracted_graph(
       level=node_data.level,
       metadata=random.choice(metadata),
     )
-    # TODO: add the properties to the node
+
+    num_properties: int = random.randint(5, 20)
+    for _ in range(num_properties):
+      property: Property = create_property(node=node, repository=repository)
+      repository.add(property)
 
     nodes.append(node)
 
@@ -147,6 +156,10 @@ def create_simple_extracted_graph(
   for _ in range(min(num_edges, len(valid_pairs))):
     pair: tuple[int, int] = random.choice(valid_pairs)
     valid_pairs.remove(pair)
+
+    # Avoid cases where random names collide (happens very rarely)
+    if nodes[pair[0]].id == nodes[pair[1]].id:
+      continue
 
     edges.append(
       graph.add_edge(

@@ -73,10 +73,13 @@ class Visualizer:
       filter_menu=False,
     )
 
+    # Map all nodes in comms to their id for lookup
+    node_id: dict[UUID, Node] = {nd.id: nd for comm in comms for nd in comm}
+
     for idx, comm in enumerate(comms):
       for nd in comm:
         net.add_node(
-          str(nd.id),
+          nd.name,
           label=nd.name,
           title=nd.description,
           value=len(nd.edges),
@@ -84,7 +87,9 @@ class Visualizer:
         )
 
     for edge in edges:
-      net.add_edge(str(edge.frm.id), str(edge.to.id), title=edge.description)
+      net.add_edge(
+        node_id[edge.frm.id].name, node_id[edge.to.id].name, title=edge.description
+      )
 
     net.force_atlas_2based(central_gravity=0.015, gravity=-31)
     net.show_buttons(filter_=["physics"])

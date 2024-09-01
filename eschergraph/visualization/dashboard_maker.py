@@ -52,7 +52,7 @@ class DashboardMaker:
         document_ids.add(metadata.document_id)
 
     # Fetch documents based on collected document IDs
-    documents = repository.get_document(list(document_ids))
+    documents = repository.get_documents_by_id(list(document_ids))
 
     # Total number of nodes (lower-level + community)
     total_num_nodes = len(all_nodes)

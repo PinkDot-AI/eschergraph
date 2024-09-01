@@ -54,3 +54,7 @@ class RepositoryException(BaseEscherGraphException):
 
 class ExternalDependencyException(BaseEscherGraphException):
   """When an external dependency (outside of Python) is missing."""
+
+
+class DocumentDoesNotExistException(BaseEscherGraphException):
+  """When the specified document does not exist in the graph."""

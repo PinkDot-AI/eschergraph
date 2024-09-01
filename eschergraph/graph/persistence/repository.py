@@ -16,6 +16,7 @@ if TYPE_CHECKING:
   from eschergraph.graph.property import Property
   from eschergraph.graph.persistence.change_log import ChangeLog
   from eschergraph.graph.persistence.document import DocumentData
+  from eschergraph.builder.build_log import BuildLog
 
 
 class Repository(ABC):
@@ -167,20 +168,65 @@ class Repository(ABC):
     """Adds a document to the system.
 
     Args:
-        document_data (DocumentData): The document data that needs to be added.
-
-    Returns:
-        None: This method does not return any value.
+      document_data (DocumentData): The document data that needs to be added.
     """
     raise NotImplementedError
 
-  def get_document(self, ids: list[UUID]) -> list[DocumentData]:
+  @abstractmethod
+  def get_documents_by_id(self, ids: list[UUID]) -> list[DocumentData]:
     """Retrieves documents based on a list of document UUIDs.
 
     Args:
-        ids (List[UUID]): A list of UUIDs representing the documents to be fetched.
+      ids (list[UUID]): A list of UUIDs representing the documents to be fetched.
 
     Returns:
-        List[DocumentData]: A list of `DocumentData` instances for the requested documents.
+      list[DocumentData]: A list of DocumentData instances for the requested documents.
+    """
+    raise NotImplementedError
+
+  @abstractmethod
+  def add_original_build_logs(self, original_build_logs: list[BuildLog]) -> None:
+    """Add the original build logs for storage.
+
+    The original build logs are used for the evaluation that calculates
+    a loss of information score. Original refers to the build logs from before
+    applying the node matcher.
+
+    Args:
+      original_build_logs (list[BuildLog]): A list of build logs to add.
+    """
+    raise NotImplementedError
+
+  @abstractmethod
+  def get_original_build_logs(self) -> list[BuildLog]:
+    """Add the original build logs for storage.
+
+    The original build logs are used for the evaluation that calculates
+    a loss of information score. Original refers to the build logs from before
+    applying the node matcher.
+
+    Returns:
+      original_build_logs (list[BuildLog]): A list of build logs.
+    """
+    raise NotImplementedError
+
+  @abstractmethod
+  def remove_node_by_id(self, id: UUID) -> None:
+    """Remove a node by id.
+
+    Also removes all the edges and properties that are related
+    to this node.
+
+    Args:
+      id (UUID): The node's id.
+    """
+    raise NotImplementedError
+
+  @abstractmethod
+  def remove_document_by_id(self, id: UUID) -> None:
+    """Remove a document by id.
+
+    Args:
+      id (UUID): The document's id.
     """
     raise NotImplementedError
