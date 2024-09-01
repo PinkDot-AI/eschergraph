@@ -32,16 +32,16 @@ def evaluate_information_consistency(graph: Graph) -> dict:
   """Evaluate information consistency across the graph using parallel processing.
 
   Args:
-      graph: The Graph object to evaluate.
+    graph: The Graph object to evaluate.
 
   Returns:
-      A dictionary containing statistical results of the evaluation.
+    A dictionary containing statistical results of the evaluation.
   """
   data: list[LogAnalysisResult] = []
   lock = threading.Lock()
 
   def process_log(log):
-    result = handle_log(log, graph)
+    result = _handle_log(log, graph)
     with lock:
       data.append(result)
 
@@ -50,22 +50,22 @@ def evaluate_information_consistency(graph: Graph) -> dict:
       executor.submit(process_log, log) for log in graph.pre_persist_building_logs
     ]
     for future in as_completed(futures):
-      future.result()  # This will raise any exceptions that occurred during execution
+      future.result()
   output_path = f"eschergraph_storage/{graph.name}-graph_build_evaluation"
   with open(output_path, "w") as outfile:
     json.dump(data, outfile, indent=4)
 
-  return calculate_statistics(data)
+  return _calculate_statistics(data)
 
 
-def calculate_statistics(data: list[LogAnalysisResult]) -> dict[str, float]:
+def _calculate_statistics(data: list[LogAnalysisResult]) -> dict[str, float]:
   """Calculate statistics on similarity and standard deviation differences.
 
   Args:
-      data: A list of LogAnalysisResult objects.
+    data: A list of LogAnalysisResult objects.
 
   Returns:
-      A dictionary containing calculated statistics.
+    A dictionary containing calculated statistics.
   """
   similarity_differences = [log["similarity_mean_difference"] for log in data]
   std_differences = [log["std_mean_difference"] for log in data]
@@ -79,7 +79,7 @@ def calculate_statistics(data: list[LogAnalysisResult]) -> dict[str, float]:
   }
 
 
-def handle_log(log: BuildLog, graph: Graph) -> LogAnalysisResult:
+def _handle_log(log: BuildLog, graph: Graph) -> LogAnalysisResult:
   """Process a single build log and analyze its content.
 
   Args:
@@ -100,10 +100,12 @@ def handle_log(log: BuildLog, graph: Graph) -> LogAnalysisResult:
 
   sentences_chunk: list[str] = nltk.tokenize.sent_tokenize(log.chunk_text.strip())
   embedding_model: Embedding = get_embedding_model()
-  information_loss_sentences, hallucinated_sentences = detector(
+  information_loss_sentences, hallucinated_sentences = _detector(
     graph, sentences_chunk, chunk_extractions
   )
-  sim_mean_difference, similarity_std = compare_sentence_and_extraction(embedding_model)
+  sim_mean_difference, similarity_std = _compare_sentence_and_extraction(
+    embedding_model
+  )
 
   return {
     "chunk_num": log.metadata.chunk_id,
@@ -115,7 +117,7 @@ def handle_log(log: BuildLog, graph: Graph) -> LogAnalysisResult:
   }
 
 
-def detector(
+def _detector(
   graph: Graph, sentences_chunk: list[str], chunk_extractions: list[str]
 ) -> tuple[list[dict[str, Any]], dict[str, int | float]]:
   """Detect information loss and hallucinations in the given sentences and extractions.
@@ -142,7 +144,7 @@ def detector(
     )
     scores = [i["relevance_score"] for i in ranked_extractions]
 
-    if not detect_information_loss(scores):
+    if not _detect_information_loss(scores):
       info_loss_sentences.append({
         "information_loss_sentence": sen,
         "top 3 json scores": [round(i, 3) for i in scores[:3]],
@@ -156,25 +158,25 @@ def detector(
         extraction_scores[extract["index"]], extract["relevance_score"]
       )
 
-  hallucinated_sentences = filter_hallucinations(
+  hallucinated_sentences = _filter_hallucinations(
     chunk_extractions, extraction_scores, threshold=0.4
   )
   return info_loss_sentences, hallucinated_sentences
 
 
-def detect_information_loss(scores: list[float]) -> bool:
+def _detect_information_loss(scores: list[float]) -> bool:
   """Detect if there is information loss based on relevance scores.
 
   Args:
-      scores: A list of relevance scores.
+    scores: A list of relevance scores.
 
   Returns:
-      True if there is no information loss, False otherwise.
+    True if there is no information loss, False otherwise.
   """
   return sum(1 for score in scores if score > 0.5) >= 1
 
 
-def filter_hallucinations(
+def _filter_hallucinations(
   chunk_extractions: list[str],
   extraction_scores: dict[str, int | float],
   threshold: int = 0.4,
@@ -182,12 +184,12 @@ def filter_hallucinations(
   """Filter out potential hallucinations based on extraction scores.
 
   Args:
-      chunk_extractions: A list of extracted information chunks.
-      extraction_scores: A dictionary of extraction scores.
-      threshold: The threshold score for considering an extraction as a hallucination.
+    chunk_extractions: A list of extracted information chunks.
+    extraction_scores: A dictionary of extraction scores.
+    threshold: The threshold score for considering an extraction as a hallucination.
 
   Returns:
-      A list of dictionaries containing potential hallucinations.
+    A list of dictionaries containing potential hallucinations.
   """
   return [
     {
@@ -200,18 +202,18 @@ def filter_hallucinations(
   ]
 
 
-def compare_sentence_and_extraction(
+def _compare_sentence_and_extraction(
   embedding: Embedding, sentences: list[str], json_list: list[str]
 ) -> tuple[float, float]:
   """Compare sentences and extractions using embeddings and cosine similarity.
 
   Args:
-      embedding: The Embedding object to use for generating embeddings.
-      sentences: A list of sentences to compare.
-      json_list: A list of JSON extractions to compare.
+    embedding: The Embedding object to use for generating embeddings.
+    sentences: A list of sentences to compare.
+    json_list: A list of JSON extractions to compare.
 
   Returns:
-      A tuple containing the similarity mean difference and standard deviation difference.
+    A tuple containing the similarity mean difference and standard deviation difference.
   """
   sentences_embeddings = embedding.get_embedding(text_list=sentences)
   sentence_embeddings_matrix = np.array(sentences_embeddings)

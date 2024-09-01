@@ -198,7 +198,7 @@ class Repository(ABC):
     raise NotImplementedError
 
   @abstractmethod
-  def get_original_build_logs_by_document_id(self) -> list[BuildLog]:
+  def get_original_build_logs_by_document_id(self, document_id: UUID) -> list[BuildLog]:
     """Get the original build logs by document_id.
 
     The original build logs are used for the evaluation that calculates
