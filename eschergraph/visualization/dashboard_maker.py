@@ -70,7 +70,7 @@ class DashboardMaker:
     }
 
   @staticmethod
-  def visualizer_print(data: dict[str, Any]) -> str:
+  def visualizer_print(data: dict[str, Any]) -> None:
     """Visualizes the gathered data as a dashboard.
 
     Args:

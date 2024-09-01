@@ -13,7 +13,10 @@ from eschergraph.graph.property import Property
 def prepare_sync_data(
   repository: Repository,
 ) -> tuple[
-  list[dict[str, str | float]], list[dict[str, str | float]], list[UUID], list[UUID]
+  list[tuple[UUID, str, dict[str, str | int]]],
+  list[tuple[UUID, str, dict[str, str | int]]],
+  list[UUID],
+  list[UUID],
 ]:
   """Prepares data for synchronization with the vector database.
 
@@ -32,57 +35,57 @@ def prepare_sync_data(
 
   ids_to_create, ids_to_delete = _get_actions_for_objects(objects_logs)
   delete_node_name_ids: list[UUID] = []
-  create_main: list[tuple[UUID, str, dict[str, str | float]]] = []
-  create_node_name: list[tuple[UUID, str, dict[str, str | float]]] = []
+  create_main: list[tuple[UUID, str, dict[str, str | int]]] = []
+  create_node_name: list[tuple[UUID, str, dict[str, str | int]]] = []
 
   for id in ids_to_delete:
-    log: ChangeLog = objects_logs[id][0]
-    if log.type == Node and log.level == 0:
+    log_del: ChangeLog = objects_logs[id][0]
+    if log_del.type == Node and log_del.level == 0:
       delete_node_name_ids.append(id)
 
   for id in ids_to_create:
-    log: ChangeLog = objects_logs[id][0]
+    cur_log: ChangeLog = objects_logs[id][0]
     # Prepare metadata based on log type
-    if log.type == Node:
+    if cur_log.type == Node:
       node: Node | None = repository.get_node_by_id(id)
       if not node:
         continue
       # add node description
-      metadata_entry = {
+      md_node: dict[str, str | int] = {
         "level": log.level,
         "type": "node",
         "entity_frm": node.name,
         "entity_to": "",
       }
-      create_main.append((id, node.description, metadata_entry))
+      create_main.append((id, node.description, md_node))
 
-      if log.level == 0:
-        metadata_entry["type"] = "node_name"
-        create_node_name.append((id, node.name, metadata_entry))
+      if cur_log.level == 0:
+        md_node["type"] = "node_name"
+        create_node_name.append((id, node.name, md_node))
 
-    elif log.type == Edge:
-      edge: Edge | None = repository.get_edge_by_id(log.id)
+    elif cur_log.type == Edge:
+      edge: Edge | None = repository.get_edge_by_id(id)
       if not edge:
         continue
-      metadata_entry = {
+      md_edge: dict[str, str | int] = {
         "level": log.level,
         "type": "edge",
         "entity_frm": edge.frm.name,
         "entity_to": edge.to.name,
       }
-      create_main.append((id, edge.description, metadata_entry))
+      create_main.append((id, edge.description, md_edge))
 
-    elif log.type == Property:
-      property: Property | None = repository.get_property_by_id(log.id)
+    elif cur_log.type == Property:
+      property: Property | None = repository.get_property_by_id(id)
       if not property:
         continue
-      metadata_entry = {
+      md_prop: dict[str, str | int] = {
         "level": log.level,
         "type": "property",
         "entity_frm": property.node.name,
         "entity_to": "",
       }
-      create_main.append((id, property.description, metadata_entry))
+      create_main.append((id, property.description, md_prop))
 
   return create_main, create_node_name, ids_to_delete, delete_node_name_ids
 
