@@ -6,6 +6,7 @@ from concurrent.futures import as_completed
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 from typing import TypedDict
+from uuid import UUID
 
 import nltk
 import numpy as np
@@ -13,6 +14,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 from eschergraph.agents.embedding import Embedding
 from eschergraph.agents.embedding import get_embedding_model
+from eschergraph.agents.reranker import RerankerResult
 from eschergraph.builder.build_log import BuildLog
 from eschergraph.graph import Graph
 
@@ -21,7 +23,7 @@ class LogAnalysisResult(TypedDict):
   """This is a typed dict used in the evaluate information consistency in the graph."""
 
   chunk_num: int
-  document_id: str
+  document_id: UUID
   similarity_mean_difference: float
   std_mean_difference: float
   possible_hallucinations: dict[str, int | float]
@@ -40,7 +42,7 @@ def evaluate_information_consistency(graph: Graph) -> dict[str, float]:
   data: list[LogAnalysisResult] = []
   lock = threading.Lock()
 
-  def process_log(log) -> None:
+  def process_log(log: BuildLog) -> None:
     result = _handle_log(log, graph)
     with lock:
       data.append(result)
@@ -104,7 +106,7 @@ def _handle_log(log: BuildLog, graph: Graph) -> LogAnalysisResult:
     graph, sentences_chunk, chunk_extractions
   )
   sim_mean_difference, similarity_std = _compare_sentence_and_extraction(
-    embedding_model
+    embedding_model, sentences_chunk, chunk_extractions
   )
 
   return {
@@ -123,12 +125,12 @@ def _detector(
   """Detect information loss and hallucinations in the given sentences and extractions.
 
   Args:
-      graph: The Graph object to use for reranking.
-      sentences_chunk: A list of sentences to analyze.
-      chunk_extractions: A list of extracted information chunks.
+    graph (Graph): The Graph object to use for reranking.
+    sentences_chunk (list[str]): A list of sentences to analyze.
+    chunk_extractions (list[str]): A list of extracted information chunks.
 
   Returns:
-      A tuple containing a list of information loss sentences and a dictionary of hallucinated sentences.
+    A tuple containing a list of information loss sentences and a dictionary of hallucinated sentences.
   """
   extraction_scores: dict[str, int | float] = dict.fromkeys(
     range(len(chunk_extractions)), 0
@@ -139,11 +141,13 @@ def _detector(
     if sen.split() == "":
       continue
 
-    ranked_extractions = graph.reranker.rerank(
+    ranked_extractions: list[RerankerResult] = graph.reranker.rerank(
       query=sen, text_list=chunk_extractions, top_n=len(chunk_extractions)
     )
-    scores = [i["relevance_score"] for i in ranked_extractions]
+    scores = [i.relevance_score for i in ranked_extractions]
 
+    # TODO: check this code again!
+    # The document result is not contained in the reranker results?
     if not _detect_information_loss(scores):
       info_loss_sentences.append({
         "information_loss_sentence": sen,
@@ -179,8 +183,8 @@ def _detect_information_loss(scores: list[float]) -> bool:
 def _filter_hallucinations(
   chunk_extractions: list[str],
   extraction_scores: dict[str, int | float],
-  threshold: int = 0.4,
-) -> list[dict]:
+  threshold: float = 0.4,
+) -> list[dict[str, str | float]]:
   """Filter out potential hallucinations based on extraction scores.
 
   Args:
