@@ -3,12 +3,13 @@ from __future__ import annotations
 import os
 from typing import Optional
 from typing import TYPE_CHECKING
+from uuid import UUID
 
 from eschergraph.agents.llm import ModelProvider
 from eschergraph.agents.reranker import Reranker
 from eschergraph.config import DEFAULT_GRAPH_NAME
 from eschergraph.exceptions import CredentialException
-from eschergraph.exceptions import UnlogicalActionException
+from eschergraph.exceptions import IllogicalActionException
 from eschergraph.graph.edge import Edge
 from eschergraph.graph.node import Node
 from eschergraph.graph.persistence import Metadata
@@ -171,17 +172,18 @@ class Graph:
     self.vector_db.get_or_create_collection(collection_nodes)
 
     # Function to delete records if any
-    def delete_records(ids, collection):
+    def delete_records(ids: list[UUID], collection: str) -> None:
       if ids:
         self.vector_db.delete_with_id(ids, collection)
 
     # Delete records in both collections
-
     delete_records(ids_to_delete, collection_main)
     delete_records(delete_node_name_ids, collection_nodes)
 
     # Function to insert new or updated entries into a collection
-    def insert_records(data, collection):
+    def insert_records(
+      data: list[tuple[UUID, str, dict[str, str | int]]], collection: str
+    ) -> None:
       if data:
         ids, docs, metadata = zip(*data)
         self.vector_db.insert(
@@ -205,7 +207,7 @@ class Graph:
       The result of the search, typically a string that represents the most relevant information or document found by the search.
     """
     if not self._search_check():
-      raise UnlogicalActionException("You cannot search a graph before building it")
+      raise IllogicalActionException("You cannot search a graph before building it")
     return quick_search(graph=self, query=query)
 
   def global_search(self, query: str) -> str:
@@ -218,7 +220,7 @@ class Graph:
         str: The result of the search, is a string
     """
     if not self._search_check():
-      raise UnlogicalActionException("You cannot search a graph before building it")
+      raise IllogicalActionException("You cannot search a graph before building it")
     return global_search(graph=self, query=query)
 
   def _search_check(self) -> bool:
@@ -258,8 +260,9 @@ class Graph:
     builder = BuildPipeline(model=self.model, reranker=self.reranker)
     builder.run(chunks=chunks, graph=self)
 
-    # Add document data to repository
-    self.repository.add_document(document_data=document_data)
+    # Add document data objects to the repository
+    for doc_data in document_data:
+      self.repository.add_document(document_data=doc_data)
 
     return self
 

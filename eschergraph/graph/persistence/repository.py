@@ -198,7 +198,7 @@ class Repository(ABC):
     raise NotImplementedError
 
   @abstractmethod
-  def get_original_build_logs_by_document_id(self) -> list[BuildLog]:
+  def get_original_build_logs_by_document_id(self, document_id: UUID) -> list[BuildLog]:
     """Get the original build logs by document_id.
 
     The original build logs are used for the evaluation that calculates
@@ -208,6 +208,19 @@ class Repository(ABC):
     Args:
      document_id (UUID): The document to get the original build logs for, specified
        by its id.
+
+    Returns:
+      original_build_logs (list[BuildLog]): A list of build logs.
+    """
+    raise NotImplementedError
+
+  @abstractmethod
+  def get_all_original_building_logs(self) -> list[BuildLog]:
+    """Get all the original build logs.
+
+    The original build logs are used for the evaluation that calculates
+    a loss of information score. Original refers to the build logs from before
+    applying the node matcher.
 
     Returns:
       original_build_logs (list[BuildLog]): A list of build logs.

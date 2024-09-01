@@ -12,7 +12,7 @@ class PromptFormattingException(BaseEscherGraphException):
   """
 
 
-class UnlogicalActionException(BaseEscherGraphException):
+class IllogicalActionException(BaseEscherGraphException):
   """When something unlogical happens, like searching before building a graph."""
 
 

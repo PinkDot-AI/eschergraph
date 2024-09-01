@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import itertools
 import os
 import pickle
 from typing import cast
@@ -12,6 +13,7 @@ from attrs import define
 from attrs import field
 from attrs import fields_dict
 
+from eschergraph.builder.build_log import BuildLog
 from eschergraph.config import DEFAULT_GRAPH_NAME
 from eschergraph.config import DEFAULT_SAVE_LOCATION
 from eschergraph.exceptions import DocumentDoesNotExistException
@@ -727,6 +729,18 @@ class SimpleRepository(Repository):
       return []
 
     return self.original_build_logs[document_id]
+
+  def get_all_original_building_logs(self) -> list[BuildLog]:
+    """Get all the original build logs.
+
+    The original build logs are used for the evaluation that calculates
+    a loss of information score. Original refers to the build logs from before
+    applying the node matcher.
+
+    Returns:
+      original_build_logs (list[BuildLog]): A list of build logs.
+    """
+    return list(itertools.chain(*self.original_build_logs.values()))
 
   def remove_node_by_id(self, id: UUID) -> None:
     """Remove a node by id.
