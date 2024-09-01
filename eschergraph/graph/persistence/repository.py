@@ -193,17 +193,21 @@ class Repository(ABC):
     applying the node matcher.
 
     Args:
-      original_build_logs (list[BuildLog]): A list of build logs to add.
+     original_build_logs (list[BuildLog]): The original building logs to add.
     """
     raise NotImplementedError
 
   @abstractmethod
-  def get_original_build_logs(self) -> list[BuildLog]:
-    """Add the original build logs for storage.
+  def get_original_build_logs_by_document_id(self) -> list[BuildLog]:
+    """Get the original build logs by document_id.
 
     The original build logs are used for the evaluation that calculates
     a loss of information score. Original refers to the build logs from before
     applying the node matcher.
+
+    Args:
+     document_id (UUID): The document to get the original build logs for, specified
+       by its id.
 
     Returns:
       original_build_logs (list[BuildLog]): A list of build logs.

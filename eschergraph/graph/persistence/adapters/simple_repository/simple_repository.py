@@ -57,7 +57,7 @@ class SimpleRepository(Repository):
   doc_node_name_index: dict[UUID, dict[str, UUID]] = field(init=False)
   change_log: list[ChangeLog] = field(init=False)
   documents: dict[UUID, DocumentData] = field(init=False)
-  original_build_logs: dict[UUID, BuildLog] = field(init=False)
+  original_build_logs: dict[UUID, list[BuildLog]] = field(init=False)
 
   def __init__(
     self, name: Optional[str] = None, save_location: Optional[str] = None
@@ -683,7 +683,7 @@ class SimpleRepository(Repository):
     """
     doc_result: list[DocumentData] = []
     for doc_id in ids:
-      document: DocumentData = self.documents.get(doc_id)
+      document: DocumentData | None = self.documents.get(doc_id)
 
       if document:
         doc_result.append(document)
@@ -695,24 +695,38 @@ class SimpleRepository(Repository):
 
     The original build logs are used for the evaluation that calculates
     a loss of information score. Original refers to the build logs from before
-    applying the node matcher.
+    applying the node matcher. Note that the build logs are stored for each document.
+    If the build logs for a document do already exist, then they are overwritten.
 
     Args:
-      original_build_logs (list[BuildLog]): A list of build logs to add.
+      original_build_logs (list[BuildLog]): A list of build logs.
     """
-    self.original_build_logs = {log.id: log for log in original_build_logs}
+    docs_encountered: set[UUID] = set()
+    for log in original_build_logs:
+      if not (document_id := log.metadata.document_id) in docs_encountered:
+        self.original_build_logs[document_id] = [log]
+        docs_encountered.add(document_id)
+      else:
+        self.original_build_logs[document_id].append(log)
 
-  def get_original_build_logs(self) -> list[BuildLog]:
-    """Add the original build logs for storage.
+  def get_original_build_logs_by_document_id(self, document_id: UUID) -> list[BuildLog]:
+    """Get the original build logs by document_id.
 
     The original build logs are used for the evaluation that calculates
     a loss of information score. Original refers to the build logs from before
     applying the node matcher.
 
+    Args:
+     document_id (UUID): The document to get the original build logs for, specified
+       by its id.
+
     Returns:
       original_build_logs (list[BuildLog]): A list of build logs.
     """
-    return list(self.original_build_logs.values())
+    if not document_id in self.original_build_logs:
+      return []
+
+    return self.original_build_logs[document_id]
 
   def remove_node_by_id(self, id: UUID) -> None:
     """Remove a node by id.
