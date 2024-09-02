@@ -21,9 +21,15 @@ class JinaReranker(Reranker):
   Methods:
       rerank(query: str, text_list: list[str], top_n: int) -> Optional[list[RerankerResult]]:
           Sends a request to Jina's API to rerank the provided text list according to the query.
+      get_model_name() -> str: returns the string of the model name
   """
 
   required_credentials: list[str] = ["JINA_API_KEY"]
+  model: str = "jina-reranker-v2-base-multilingual"
+
+  def get_model_name(self) -> str:
+    """Returns the name of the model."""
+    return self.model
 
   def rerank(
     self, query: str, text_list: list[str], top_n: int
@@ -53,7 +59,7 @@ class JinaReranker(Reranker):
       "Authorization": f"Bearer {api_key}",
     }
     data = {
-      "model": "jina-reranker-v2-base-multilingual",
+      "model": self.model,
       "query": query,
       "documents": text_list,
       "top_n": top_n,

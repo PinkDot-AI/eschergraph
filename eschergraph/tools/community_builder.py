@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 from concurrent.futures import as_completed
 from concurrent.futures import ThreadPoolExecutor
 from typing import TYPE_CHECKING
@@ -8,7 +7,6 @@ from uuid import UUID
 
 from eschergraph.agents.jinja_helper import process_template
 from eschergraph.config import COMMUNITY_TEMPLATE
-from eschergraph.config import TEMPLATE_IMPORTANCE
 from eschergraph.exceptions import EdgeDoesNotExistException
 from eschergraph.exceptions import ExternalProviderException
 from eschergraph.graph import Community
@@ -198,16 +196,14 @@ class CommunityBuilder:
       or "findings" not in parsed_json
     ):
       raise ExternalProviderException("LLM JSON Response did not contain correct keys")
-    jsonized: str = json.dumps(parsed_json["findings"], indent=4)
-    reorder_prompt = process_template(TEMPLATE_IMPORTANCE, {"json_list": jsonized})
-    findings = graph.model.get_json_response(prompt=reorder_prompt)
+
+    # Use the findings directly from parsed_json without reordering
+    findings = parsed_json["findings"]
+
+    # Ensure findings is a list
     if not isinstance(findings, list):
-      key: str = list(findings.keys())[0]
-      findings = findings[key]
-    # Returns a json with the findings under the key findings
-    if findings is None:
-      raise ExternalProviderException("Invalid response from LLM for reordering")
-    if not isinstance(findings, list):
-      raise ExternalProviderException("Invalid response from LLM for reordering")
+      raise ExternalProviderException(
+        "Invalid response from LLM: findings is not a list"
+      )
 
     return parsed_json["title"], parsed_json["summary"], findings

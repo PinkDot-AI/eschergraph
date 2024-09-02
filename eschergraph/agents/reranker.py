@@ -41,3 +41,7 @@ class Reranker(ABC):
       A list of reranked results.
     """
     raise NotImplementedError
+
+  def get_model_name(self) -> str:
+    """Returns the models name."""
+    raise NotImplementedError

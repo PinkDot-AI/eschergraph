@@ -41,6 +41,7 @@ faker = "^26.3.0"
 update-toml = "^0.2.1"
 mypy = "^1.11.1"
 ruff = "^0.6.2"
+types-tabulate = "^0.9.0.20240106"
 
 [tool.poetry_dynamic_versioning]
 enable = true
@@ -187,3 +188,8 @@ no_implicit_reexport = true
 
 # This one can be tricky to get passing if you use a lot of untyped libraries
 warn_return_any = true
+
+[[tool.mypy.overrides]]
+module = ["tests.*"]
+# Unable to get passing when using mocks
+disable_error_code = "attr-defined"

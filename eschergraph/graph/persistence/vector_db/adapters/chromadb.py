@@ -2,14 +2,14 @@ from __future__ import annotations
 
 import os
 from typing import Any
-from typing import Dict
-from typing import List
+from typing import Optional
 from uuid import UUID
 
 import chromadb
 
 from eschergraph.agents.embedding import Embedding
 from eschergraph.agents.embedding import get_embedding_model
+from eschergraph.exceptions import ExternalProviderException
 from eschergraph.graph.persistence.vector_db.vector_db import VectorDB
 
 
@@ -70,7 +70,15 @@ class ChromaDB(VectorDB):
       collection_name (str): Name of the collection to add documents to.
     """
     collection = self.client.get_collection(name=collection_name)
-    embeddings = self.embedding_model.get_embedding(list_text=documents)
+    # TODO: add more error handling / communication to operating classes
+    documents = ["null" if d.strip() == "" else d for d in documents]
+
+    try:
+      embeddings = self.embedding_model.get_embedding(list_text=documents)
+    except ExternalProviderException as e:
+      print(f"Something went wrong generating embeddings: {e}")
+      return
+
     ids: list[str] = [str(id) for id in ids]
     collection.add(
       documents=documents,
@@ -83,16 +91,16 @@ class ChromaDB(VectorDB):
     self,
     query: str,
     top_n: int,
-    metadata: dict[str, Any],
     collection_name: str,
+    metadata: Optional[dict[str, Any]] = None,
   ) -> dict[str, str]:
     """Search for documents in a ChromaDB collection.
 
     Args:
       query (list[float]): The query to search for.
       top_n (int): The number of top results to return.
-      metadata (dict): Metadata to filter the search results.
       collection_name (str): Name of the collection to search in.
+      metadata (Optional[dict[str, Any]]): Optional metadata to filter by.
 
     Returns:
       dict: Search results containing the documents.
@@ -110,8 +118,8 @@ class ChromaDB(VectorDB):
 
   def format_search_results(
     self,
-    result: Dict[str, str],
-  ) -> List[Dict[str, UUID | int | str | float | Dict[str, Any]]]:
+    result: dict[str, str],
+  ) -> list[dict[str, UUID | int | str | float | dict[str, Any]]]:
     """Format search results into a standard.
 
     Args:
@@ -142,7 +150,7 @@ class ChromaDB(VectorDB):
     collection.delete(ids=ids)
 
   def delete_with_metadata(
-    self, metadata: Dict[str, Any], collection_name: str
+    self, metadata: dict[str, Any], collection_name: str
   ) -> None:
     """Delete an item in the vectordb by metadata filters.
 

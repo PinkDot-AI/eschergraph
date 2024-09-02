@@ -12,6 +12,10 @@ class PromptFormattingException(BaseEscherGraphException):
   """
 
 
+class IllogicalActionException(BaseEscherGraphException):
+  """When something unlogical happens, like searching before building a graph."""
+
+
 class ExternalProviderException(BaseEscherGraphException):
   """When something unexpected occurs during an interation with an external service."""
 
@@ -50,3 +54,7 @@ class RepositoryException(BaseEscherGraphException):
 
 class ExternalDependencyException(BaseEscherGraphException):
   """When an external dependency (outside of Python) is missing."""
+
+
+class DocumentDoesNotExistException(BaseEscherGraphException):
+  """When the specified document does not exist in the graph."""

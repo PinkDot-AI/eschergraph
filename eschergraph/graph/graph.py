@@ -2,18 +2,17 @@ from __future__ import annotations
 
 import os
 from typing import Optional
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from eschergraph.agents.llm import ModelProvider
 from eschergraph.agents.reranker import Reranker
-from eschergraph.builder.build_log import BuildLog
-from eschergraph.builder.build_pipeline import BuildPipeline
-from eschergraph.builder.building_tools import BuildingTools
 from eschergraph.config import DEFAULT_GRAPH_NAME
 from eschergraph.evaluation.graph_build_evaluation import (
   evaluate_information_consistency,
 )
 from eschergraph.exceptions import CredentialException
+from eschergraph.exceptions import IllogicalActionException
 from eschergraph.graph.edge import Edge
 from eschergraph.graph.node import Node
 from eschergraph.graph.persistence import Metadata
@@ -22,9 +21,14 @@ from eschergraph.graph.persistence.document import DocumentData
 from eschergraph.graph.persistence.factory import get_default_repository
 from eschergraph.graph.persistence.vector_db import get_vector_db
 from eschergraph.graph.persistence.vector_db import VectorDB
+from eschergraph.graph.search.global_search import global_search
 from eschergraph.graph.search.quick_search import quick_search
 from eschergraph.tools.prepare_sync_data import prepare_sync_data
+from eschergraph.visualization.dashboard_maker import DashboardData
 from eschergraph.visualization.dashboard_maker import DashboardMaker
+
+if TYPE_CHECKING:
+  from eschergraph.builder.build_log import BuildLog
 
 
 class Graph:
@@ -157,42 +161,83 @@ class Graph:
 
     return edge
 
-  def sync_vectordb(self, collection_name: str = "main_collection") -> None:
-    """Synchronizes the vector database with the latest changes in the repository.
-
-    Args:
-        collection_name (str): The name of the vector database collection where documents should be stored.
-        level (int, optional): The hierarchical level at which the metadata is being synced. Default is 0.
-    """
+  def sync_vectordb(self) -> None:
+    """Synchronizes the vector database with the latest changes in the repository."""
     # Prepare data for synchronization
-    docs, ids, metadata, ids_to_delete = prepare_sync_data(repository=self.repository)
+    create_main, create_node_name, ids_to_delete, delete_node_name_ids = (
+      prepare_sync_data(repository=self.repository)
+    )
 
-    self.vector_db.get_or_create_collection(collection_name)
+    # Collection names
+    collection_main = "main_collection"
+    collection_nodes = "node_name_collection"
 
-    # Delete all records marked for deletion
-    if ids_to_delete:
-      self.vector_db.delete_with_id(ids_to_delete, collection_name)
+    # Ensure the collections exist
+    self.vector_db.get_or_create_collection(collection_main)
+    self.vector_db.get_or_create_collection(collection_nodes)
 
-    # Embed all new or updated entries and insert into the vector database
-    if docs:
-      self.vector_db.insert(
-        documents=docs,
-        ids=ids,
-        metadata=metadata,
-        collection_name=collection_name,
-      )
+    # Function to delete records if any
+    def delete_records(ids: list[UUID], collection: str) -> None:
+      if ids:
+        self.vector_db.delete_with_id(ids, collection)
+
+    # Delete records in both collections
+    delete_records(ids_to_delete, collection_main)
+    delete_records(delete_node_name_ids, collection_nodes)
+
+    # Function to insert new or updated entries into a collection
+    def insert_records(
+      data: list[tuple[UUID, str, dict[str, str | int]]], collection: str
+    ) -> None:
+      if data:
+        ids, docs, metadata = zip(*data)
+        self.vector_db.insert(
+          documents=list(docs),
+          ids=list(ids),
+          metadata=list(metadata),
+          collection_name=collection,
+        )
+
+    # Insert into main and node collections
+    insert_records(create_main, collection_main)
+    insert_records(create_node_name, collection_nodes)
 
   def search(self, query: str) -> str:
     """Executes a search query using a vector database and a specified model.
 
     Args:
+      query (str): The search query as a string.
+
+    Returns:
+      The result of the search, typically a string that represents the most relevant information or document found by the search.
+    """
+    if not self._search_check():
+      raise IllogicalActionException("You cannot search a graph before building it")
+    return quick_search(graph=self, query=query)
+
+  def global_search(self, query: str) -> str:
+    """Executes a search query using a vector database and a specified model on the upper layers of the graph.
+
+    Args:
         query (str): The search query as a string.
 
     Returns:
-        str: The result of the search, typically a string that represents the most relevant information or document found by the search.
+        str: The result of the search, is a string
     """
-    result = quick_search(vector_db=self.vector_db, query=query, model=self.model)
-    return result
+    if not self._search_check():
+      raise IllogicalActionException("You cannot search a graph before building it")
+    return global_search(graph=self, query=query)
+
+  def _search_check(self) -> bool:
+    """Check if there are any elements at level 0 in the graph repository.
+
+    Args:
+      graph (Graph): The graph object to check.
+
+    Returns:
+      bool: True if there are elements at level 0, otherwise False.
+    """
+    return len(self.repository.get_all_at_level(0)) > 0
 
   def build(self, files: str | list[str], always_approve: bool = False) -> Graph:
     """Build a graph from the given files.
@@ -204,6 +249,10 @@ class Graph:
     Returns:
         Graph: The built graph object.
     """
+    # Prevent circular import errors
+    from eschergraph.builder.build_pipeline import BuildPipeline
+    from eschergraph.builder.building_tools import BuildingTools
+
     chunks, document_data, total_tokens = BuildingTools.process_files(files)
 
     BuildingTools.display_build_info(chunks, total_tokens, model=self.model)
@@ -216,15 +265,16 @@ class Graph:
     builder = BuildPipeline(model=self.model, reranker=self.reranker)
     builder.run(chunks=chunks, graph=self)
 
-    # Add document data to repository
-    self.repository.add_document(document_data=document_data)
+    # Add document data objects to the repository
+    for doc_data in document_data:
+      self.repository.add_document(document_data=doc_data)
 
     return self
 
   def dashboard(self) -> None:
     """Gathers data and visualizes the dashboard using DashboardMaker."""
     # Step 1: Gather data
-    data = DashboardMaker.gather_data(self.repository, self.model)
+    data: DashboardData = DashboardMaker.gather_data(graph=self)
 
     # Step 2: Visualize the data
     DashboardMaker.visualizer_print(data)

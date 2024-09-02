@@ -15,7 +15,8 @@ from eschergraph.graph.persistence.repository import Repository
 from eschergraph.graph.persistence.vector_db.adapters.chromadb import ChromaDB
 from eschergraph.graph.persistence.vector_db.vector_db import VectorDB
 
-TEST_FILE: str = "./test_files/test_file.pdf"
+TEST_FILE_SMALL: str = "./test_files/test_file.pdf"
+TEST_FILE_BIG: str = "./test_files/Attention Is All You Need.pdf"
 
 
 def integration_test_building() -> None:
@@ -38,12 +39,22 @@ def integration_test_building() -> None:
     vector_db=chroma,
   )
   t = time.time()
-  graph.build(files=TEST_FILE)
+  graph.build(files=TEST_FILE_BIG)
+
+  print("processing time", time.time() - t)
+
+  t = time.time()
+
+  query = "what are the main theams of this document?"
+  r = graph.global_search(query)
+  print(r)
+  print("global search time", time.time() - t)
+  t = time.time()
 
   graph.dashboard()
-  print("processing time", time.time() - t)
+
   # Wait a few seconds before cleaning up to open the visuals
-  time.sleep(10)
+  time.sleep(8)
 
   # Clean up all the persistent data
   temp_dir.cleanup()

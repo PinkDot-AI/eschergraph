@@ -12,10 +12,7 @@ from eschergraph.agents.jinja_helper import process_template
 from eschergraph.agents.llm import ModelProvider
 from eschergraph.agents.reranker import Reranker
 from eschergraph.builder.build_log import BuildLog
-from eschergraph.builder.build_log import EdgeExt
 from eschergraph.builder.build_log import NodeEdgeExt
-from eschergraph.builder.build_log import NodeExt
-from eschergraph.builder.build_log import PropertyExt
 from eschergraph.config import JSON_BUILD
 from eschergraph.config import JSON_PROPERTY
 from eschergraph.graph.persistence import Metadata
@@ -24,7 +21,7 @@ from eschergraph.tools.node_matcher import NodeMatcher
 from eschergraph.tools.reader import Chunk
 
 if TYPE_CHECKING:
-  from eschergraph.graph import Graph
+  from eschergraph.graph.graph import Graph
   from eschergraph.graph.node import Node
 
 
@@ -75,7 +72,6 @@ class BuildPipeline:
     # Adding changes to vector db
     graph.sync_vectordb()
 
-    # # TODO build upperlayer
     # self._save_logs()
 
     # Save graph (perhaps make explicit)
@@ -168,11 +164,10 @@ class BuildPipeline:
 
     return list(unique_entities)
 
-  def _persist_to_graph(self, graph: Graph, updated_logs: list[BuildLog]):
+  def _persist_to_graph(self, graph: Graph, updated_logs: list[BuildLog]) -> None:
     # first add all nodes
     for log in updated_logs:
       for node_ext in log.nodes:
-        node_ext: NodeExt = node_ext
         if graph.repository.get_node_by_name(
           node_ext["name"].lower(), document_id=log.metadata.document_id
         ):
@@ -188,7 +183,6 @@ class BuildPipeline:
     for log in updated_logs:
       # adding edges
       for edge_ext in log.edges:
-        edge_ext: EdgeExt = edge_ext
         frm: Node | None = graph.repository.get_node_by_name(
           edge_ext["source"].lower(), document_id=log.metadata.document_id
         )
@@ -213,7 +207,6 @@ class BuildPipeline:
 
       # adding properties
       for prop_ext in log.properties:
-        prop_ext: PropertyExt = prop_ext
         node: Node | None = graph.repository.get_node_by_name(
           prop_ext["entity_name"].lower(), document_id=log.metadata.document_id
         )

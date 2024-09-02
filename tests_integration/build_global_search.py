@@ -52,6 +52,7 @@ def build_global_search() -> None:
     model=graph.model, reranker=graph.reranker
   )
   build_pipeline.run(chunks, graph)
+
   Visualizer.visualize_graph(
     graph, level=0, save_location=temp_path.as_posix() + "/level0.html"
   )
