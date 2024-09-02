@@ -4,7 +4,7 @@ sidebar_position: 1
 
 # Getting started
 
-Lets learn how to build, and RAGsearch with **EscherGraph** in under 5 min
+Lets learn how to build, and RAGsearch with **EscherGraph** in under 5 min.
 
 ## Quick start
 
