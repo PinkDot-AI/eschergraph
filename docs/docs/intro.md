@@ -69,4 +69,4 @@ Global search is search on the higher levels of the graph, and is great for answ
 ```python
 graph.dashboard()
 ```
-Print general info and statistics about the graph using the dashboard
+Print general info and statistics about the graph using the dashboard.
