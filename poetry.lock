@@ -855,6 +855,20 @@ test-full = ["adlfs", "aiohttp (!=4.0.0a0,!=4.0.0a1)", "cloudpickle", "dask", "d
 tqdm = ["tqdm"]
 
 [[package]]
+name = "fuzzywuzzy"
+version = "0.18.0"
+description = "Fuzzy string matching in python"
+optional = false
+python-versions = "*"
+files = [
+    {file = "fuzzywuzzy-0.18.0-py2.py3-none-any.whl", hash = "sha256:928244b28db720d1e0ee7587acf660ea49d7e4c632569cad4f1cd7e68a5f0993"},
+    {file = "fuzzywuzzy-0.18.0.tar.gz", hash = "sha256:45016e92264780e58972dca1b3d939ac864b78437422beecebb3095f8efd00e8"},
+]
+
+[package.extras]
+speedup = ["python-levenshtein (>=0.12)"]
+
+[[package]]
 name = "google-auth"
 version = "2.34.0"
 description = "Google Authentication Library"
@@ -5041,4 +5055,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "4efb7c1118917d58cfc1f7bcd9acef056a7ea2a6a4ca1960b0e20bcc29a50ebb"
+content-hash = "3448632adeca3a3b5171bbe1f4e6e76f5311340b40a0745d27470c8561109407"
