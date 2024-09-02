@@ -5,6 +5,7 @@ import threading
 from concurrent.futures import as_completed
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
+from typing import TYPE_CHECKING
 from typing import TypedDict
 from uuid import UUID
 
@@ -15,7 +16,9 @@ from sklearn.metrics.pairwise import cosine_similarity
 from eschergraph.agents.embedding import Embedding
 from eschergraph.agents.embedding import get_embedding_model
 from eschergraph.builder.build_log import BuildLog
-from eschergraph.graph import Graph
+
+if TYPE_CHECKING:
+  from eschergraph.graph import Graph
 
 
 class LogAnalysisResult(TypedDict):
