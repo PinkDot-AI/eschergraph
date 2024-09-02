@@ -49,7 +49,7 @@ def graph_communities_setup(
   return graph, nodes, edges
 
 
-def generate_random_community_findings() -> tuple[str, str, dict[str, str]]:
+def generate_random_community_findings() -> tuple[str, str, list[dict[str, str]]]:
   # Generate a random number of findings
   findings: list[dict[str, str]] = [
     {"summary": faker.text(max_nb_chars=80), "explanation": faker.text(max_nb_chars=80)}
@@ -124,6 +124,8 @@ def test_building_community_nodes(
   # Check whether each child node has been assigned the correct community node
   for child_node in child_nodes:
     comm_id: UUID = comm_nodes[node_comm[child_node.id]]
+    if not child_node.community.node:
+      pytest.fail(reason="Every child node should be assigned a community")
     assert child_node.community.node.id == comm_id
 
   assert graph.repository.add.call_count == num_comms + len(nodes)
@@ -154,7 +156,7 @@ def test_building_community_edges(
   # Assert that the correct edges were added
   # Start by creating a dict that matches community node to community index
   node_comm: dict[Node, int] = {}
-  nodes: list[Node] = []
+  nodes = []
   # Only make assertions for the community nodes that have been added
   for idx, call in enumerate(graph.repository.add.call_args_list):
     if idx == num_comms:

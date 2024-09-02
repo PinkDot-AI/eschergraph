@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import Any
 from unittest.mock import MagicMock
 from unittest.mock import patch
 
@@ -7,6 +8,7 @@ import pytest
 
 from eschergraph.agents.jinja_helper import process_template
 from eschergraph.agents.reranker import RerankerResult
+from eschergraph.graph.graph import Graph
 from eschergraph.graph.search.quick_search import _get_attributes
 from eschergraph.graph.search.quick_search import AttributeSearch
 from eschergraph.graph.search.quick_search import extract_entities_from
@@ -16,7 +18,7 @@ from eschergraph.graph.search.quick_search import rerank_and_filter_attributes
 RAG_SEARCH = "search/rag_prompt.jinja"
 
 
-def test_quick_search(graph_unit):
+def test_quick_search(graph_unit: Graph) -> None:
   # Test case 1: Empty query
   assert quick_search(graph_unit, "") == "please ask a question"
 
@@ -69,7 +71,7 @@ def test_quick_search(graph_unit):
 
 
 @pytest.mark.usefixtures("graph_unit")
-def test_get_attributes(graph_unit):
+def test_get_attributes(graph_unit: Graph) -> None:
   query = "Find attributes for node"
 
   # Mock extract_entities_from to return a list of nodes/entities
@@ -86,7 +88,7 @@ def test_get_attributes(graph_unit):
     ]
 
     # Mock the graph's vector_db search and format_search_results methods
-    graph_unit.vector_db.search = MagicMock()
+    graph_unit.vector_db.search = MagicMock()  # type: ignore
     graph_unit.vector_db.format_search_results.side_effect = [
       search_results_nodes,  # First search for nodes
       search_results_attributes,  # Second search for attributes
@@ -135,11 +137,11 @@ def test_get_attributes(graph_unit):
       )
 
 
-def test_rerank_and_filter_attributes():
+def test_rerank_and_filter_attributes() -> None:
   # Define the mock data for the test
   query = "Find attributes"
   attributes_string = ["attribute 1", "attribute 2", "attribute 3"]
-  attributes_results = [
+  attributes_results: list[dict[str, Any]] = [
     {"chunk": "attribute 1", "metadata": {"entity1": "node1"}},
     {"chunk": "attribute 2", "metadata": {"entity2": "node2"}},
     {"chunk": "attribute 3", "metadata": {"entity3": "node3"}},
@@ -181,7 +183,7 @@ def test_rerank_and_filter_attributes():
 
 
 # Test extract_entities_from function
-def test_extract_entities_from(graph_unit):
+def test_extract_entities_from(graph_unit: Graph) -> None:
   # Mock the LLM model's response to return some entities
   graph_unit.model.get_json_response.return_value = {"entities": ["entity1", "entity2"]}
 

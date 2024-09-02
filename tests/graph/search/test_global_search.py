@@ -2,12 +2,13 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
+from eschergraph.graph.graph import Graph
 from eschergraph.graph.search.global_search import _get_relevant_extractions
 from eschergraph.graph.search.global_search import AttributeSearch
 from eschergraph.graph.search.global_search import global_search
 
 
-def test_global_search(graph_unit):
+def test_global_search(graph_unit: Graph) -> None:
   query = "test query"
   context = "Attribute 1\nAttribute 2"
   full_prompt = "Processed template with context and query"
@@ -35,7 +36,7 @@ def test_global_search(graph_unit):
       graph_unit.model.get_plain_response.assert_called_once_with(full_prompt)
 
 
-def test_get_relevant_extractions(graph_unit):
+def test_get_relevant_extractions(graph_unit: Graph) -> None:
   prompt = "test prompt"
   search_results = [
     {"chunk": "Chunk 1", "metadata": {"level": 1}},
