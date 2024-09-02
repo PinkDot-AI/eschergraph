@@ -1,0 +1,71 @@
+name: Docs Release
+on:
+  release:
+    types: [created]
+
+concurrency:
+    group: pypi
+    cancel-in-progress: true
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  cloudfront_distribution_id: "E1QOC2R1C8483Z"
+  role_to_assume: "arn:aws:iam::872847351395:role/GitHub_pypi_s3_role"
+  aws_region: "us-east-1"
+  s3_bucket: "eschergraph.docs.pinkdot.ai"
+
+jobs:
+  build:
+    environment: pypi
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./docs
+    steps:
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies    
+        run: npm ci
+      
+      - name: Build
+        run: npm run build --if-present
+      
+      - name: Upload build files as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vite-build-docs
+          path: build # Still to check
+  
+  deploy:
+    environment: pypi
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.role_to_assume }}
+          aws-region: ${{ env.aws_region }}
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: vite-build-docs
+          path: build
+          
+      - name: Upload the files to s3
+        run: |
+          aws s3 sync build s3://${{ env.s3_bucket }} --delete
+      
+      - name: Invalidate the Cloudfront distribution
+        env:
+          DISTRIBUTION_ID: ${{ env.cloudfront_distribution_id }}
+        run: |
+          aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths "/*"
