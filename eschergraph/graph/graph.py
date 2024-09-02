@@ -10,6 +10,7 @@ from eschergraph.agents.providers.jina import JinaReranker
 from eschergraph.agents.providers.openai import OpenAIModel
 from eschergraph.agents.providers.openai import OpenAIProvider
 from eschergraph.agents.reranker import Reranker
+from eschergraph.config import DEFAULT_GRAPH_NAME
 from eschergraph.exceptions import CredentialException
 from eschergraph.exceptions import IllogicalActionException
 from eschergraph.graph.edge import Edge
@@ -42,7 +43,7 @@ class Graph:
 
   def __init__(
     self,
-    name: str,
+    name: str = DEFAULT_GRAPH_NAME,
     reranker: Optional[Reranker] = None,
     model: Optional[ModelProvider] = None,
     repository: Optional[Repository] = None,
