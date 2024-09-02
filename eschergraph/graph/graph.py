@@ -6,6 +6,9 @@ from typing import TYPE_CHECKING
 from uuid import UUID
 
 from eschergraph.agents.llm import ModelProvider
+from eschergraph.agents.providers.jina import JinaReranker
+from eschergraph.agents.providers.openai import OpenAIModel
+from eschergraph.agents.providers.openai import OpenAIProvider
 from eschergraph.agents.reranker import Reranker
 from eschergraph.config import DEFAULT_GRAPH_NAME
 from eschergraph.exceptions import CredentialException
@@ -40,9 +43,9 @@ class Graph:
 
   def __init__(
     self,
-    model: ModelProvider,
-    reranker: Reranker,
     name: str = DEFAULT_GRAPH_NAME,
+    reranker: Optional[Reranker] = None,
+    model: Optional[ModelProvider] = None,
     repository: Optional[Repository] = None,
     vector_db: Optional[VectorDB] = None,
     **kwargs: str,
@@ -66,6 +69,10 @@ class Graph:
     self.reranker = reranker
     self.pre_persist_building_logs = []
 
+    if not reranker:
+      reranker = JinaReranker()
+    if not model:
+      model = ModelProvider(model=OpenAIProvider(model=OpenAIModel.GPT_4o))
     if not repository:
       repository = get_default_repository(name=name)
     if not vector_db:
@@ -269,8 +276,6 @@ class Graph:
 
   def dashboard(self) -> None:
     """Gathers data and visualizes the dashboard using DashboardMaker."""
-    # Step 1: Gather data
     data: DashboardData = DashboardMaker.gather_data(graph=self)
 
-    # Step 2: Visualize the data
     DashboardMaker.visualizer_print(data)
