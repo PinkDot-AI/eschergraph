@@ -8,12 +8,12 @@ import {themes as prismThemes} from 'prism-react-renderer';
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'Eschergraph | PinkDot AI',
-  tagline: 'The Eschergraph!',
+  title: 'EscherGraph | PinkDot AI',
+  tagline: 'The EscherGraph!',
   favicon: 'img/favicon.ico',
 
   // Set the production url of your site here
-  url: 'https://your-docusaurus-site.example.com',
+  url: 'https://eschergraph.docs.pinkdot.ai',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: '/',
@@ -137,7 +137,7 @@ const config = {
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} Eschergraph | PinkDot AI B.V.`,
+        copyright: `Copyright © ${new Date().getFullYear()} EscherGraph | PinkDot AI B.V.`,
       },
       prism: {
         theme: prismThemes.github,

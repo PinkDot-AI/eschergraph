@@ -71,7 +71,10 @@ def test_delete_edge_indirectly(saved_graph_dir: Path) -> None:
   # Check whether it has been deleted from the other node
   edge_node_ids: set[UUID] = {edge_deleted.to.id, edge_deleted.frm.id}
   edge_node_ids.remove(node.id)
-  other_node: Node = repository.get_node_by_id(edge_node_ids.pop())
+  other_node: Node | None = repository.get_node_by_id(edge_node_ids.pop())
+
+  if not other_node:
+    pytest.fail(reason="The edge should have two nodes that exist")
 
   assert not edge_deleted in other_node.edges
 
@@ -82,12 +85,19 @@ def test_delete_property_indirectly(saved_graph_dir: Path) -> None:
   )
   _, nodes, _ = create_simple_extracted_graph(repository=repository)
   node: Node = nodes[0]
+
   property_deleted: Property = node.properties.pop()
   repository.add(node)
 
   assert not property_deleted.id in repository.properties
   assert not repository.get_property_by_id(property_deleted.id)
-  assert not property_deleted in repository.get_node_by_id(node.id).properties
+
+  updated_node: Node | None = repository.get_node_by_id(node.id)
+
+  if not updated_node:
+    pytest.fail("The node should be findable")
+
+  assert not property_deleted in updated_node.properties
 
 
 def test_delete_document_fully(saved_graph_dir: Path) -> None:

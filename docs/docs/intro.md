@@ -4,7 +4,7 @@ sidebar_position: 1
 
 # Getting started
 
-Lets learn how to build, and RAGsearch with **EscherGraph** in under 5 min
+Lets learn how to build, and RAGsearch with **EscherGraph** in under 5 min.
 
 ## Quick start
 
@@ -69,4 +69,4 @@ Global search is search on the higher levels of the graph, and is great for answ
 ```python
 graph.dashboard()
 ```
-Print general info and statistics about the graph using the dashboard
+Print general info and statistics about the graph using the dashboard.

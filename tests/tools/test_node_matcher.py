@@ -51,7 +51,12 @@ def test_get_unique_nodes_gpt(node_matcher_mock: NodeMatcher) -> None:
       },
     ]
   }
-  suggested_match = ["Lennart", "Lennart Timmermans", "Patrick", "Patrick Timmermans"]
+  suggested_match: set[str] = {
+    "Lennart",
+    "Lennart Timmermans",
+    "Patrick",
+    "Patrick Timmermans",
+  }
 
   result = node_matcher_mock._get_unique_nodes_gpt(suggested_match)
   assert result == mock_response, f"Expected {mock_response}, but got {result}"
@@ -81,7 +86,7 @@ def test_assign_node(node_matcher_mock: NodeMatcher) -> None:
   ), f"Expected 'Patrick Timmermans' but got '{result}'"
 
 
-def test_collection_node_info(node_matcher_mock: NodeMatcher):
+def test_collection_node_info(node_matcher_mock: NodeMatcher) -> None:
   # Set up the build_log input with one entry
   build_log = [
     BuildLog(
@@ -121,7 +126,7 @@ def test_collection_node_info(node_matcher_mock: NodeMatcher):
   assert result == expected_result, f"Expected {expected_result} but got {result}"
 
 
-def test_handle_merge(node_matcher_mock: NodeMatcher):
+def test_handle_merge(node_matcher_mock: NodeMatcher) -> None:
   # Patch the _get_unique_nodes method at the class level
   with patch(
     "eschergraph.tools.node_matcher.NodeMatcher._get_unique_nodes",

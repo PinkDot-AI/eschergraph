@@ -32,7 +32,7 @@ def builder_mock() -> BuildPipeline:
 # TODO: refactor to use a mock for the repository
 def test_persist_to_graph(
   tmp_path: Path, builder_mock: BuildPipeline, graph_unit: Graph
-):
+) -> None:
   repository: SimpleRepository = SimpleRepository(save_location=tmp_path.as_posix())
 
   graph_unit.name = "test graph"

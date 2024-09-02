@@ -62,7 +62,7 @@ def create_property(
   node: Optional[Node] = None, repository: Optional[Repository] = None
 ) -> Property:
   if not node:
-    node: Node = create_basic_node(repository=repository)
+    node = create_basic_node(repository=repository)
   return Property.create(
     node=node,
     description=faker.text(max_nb_chars=80),

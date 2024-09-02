@@ -4,7 +4,7 @@ from enum import Enum
 
 
 class LoadState(Enum):
-  """The enum class that contains the load states for an Eschergraph object.
+  """The enum class that contains the load states for an EscherGraph object.
 
   The integer values indicate the loading hierarchy. A load state includes also
   all the states with a lower value.
