@@ -72,7 +72,7 @@ class Graph:
     if not reranker:
       reranker = JinaReranker()
     if not model:
-      model = ModelProvider(z=OpenAIProvider(model=OpenAIModel.GPT_4o))
+      model = ModelProvider(model=OpenAIProvider(model=OpenAIModel.GPT_4o))
     if not repository:
       repository = get_default_repository(name=name)
     if not vector_db:
