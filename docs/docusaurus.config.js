@@ -10,13 +10,13 @@ import {themes as prismThemes} from 'prism-react-renderer';
 const config = {
   title: 'Eschergraph',
   tagline: 'The Eschergraph!',
-  favicon: 'img/favicon.ico',
+  favicon: './img/favicon.ico',
 
   // Set the production url of your site here
   url: 'https://eschergraph.docs.pinkdot.ai',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: '/docs/getting_started',
+  baseUrl: '/',
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
@@ -60,12 +60,12 @@ const config = {
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
       // Replace with your project's social card
-      image: 'img/docusaurus-social-card.jpg',
+      image: 'img/pinkdot.png',
       navbar: {
         title: 'EscherGraph',
         logo: {
           alt: 'PinkDot AI logo',
-          src: 'img/pinkdot.png',
+          src: './img/pinkdot.png',
         },
         items: [
           {

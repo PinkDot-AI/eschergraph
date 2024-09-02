@@ -35,7 +35,7 @@ graph = Graph(
     name=graph_name,
   )
 ```
-Currently are the available models GPT4o and GPT4o-mini. We recommond always using GPT4o for graph building. The GPT 4o-mini experiences too much variance on graph building. We recommond using GPT4o mini for playing around and testing.
+Currently are the available models GPT4o and GPT4o-mini. We recommond always using GPT4o for graph building. The GPT 4o-mini experiences too much variance on graph building. We recommend using GPT4o mini for playing around and testing.
 
 ### Build graph
 ```python
