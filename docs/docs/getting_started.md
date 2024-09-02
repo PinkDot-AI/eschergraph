@@ -39,9 +39,14 @@ Currently are the available models GPT4o and GPT4o-mini. We recommond always usi
 
 ### Build graph
 ```python
-my_file = 'test_files/Attention Is All You Need.pdf'
+my_file1 = 'test_files/Attention Is All You Need.pdf'
 
-graph.build(files = my_file)
+graph.build(files = my_file1)
+
+# Adding another file to the same graph, is possible by simply building again:
+my_file2 = 'test_files/Test file2.pdf'
+
+graph.build(files = my_file2)
 ```
 Files takes one file location, or a list of file locations. Currently only .pdf or .txt files are available file types.
 

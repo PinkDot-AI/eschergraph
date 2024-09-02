@@ -53,7 +53,6 @@ class BuildPipeline:
     unique_entities: list[str] = self._get_unique_entities()
 
     # Step 5: match the nodes together to extract entities from names
-
     updated_logs: list[BuildLog] = NodeMatcher(
       model=self.model, reranker=self.reranker
     ).match(

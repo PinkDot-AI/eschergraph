@@ -8,15 +8,15 @@ import {themes as prismThemes} from 'prism-react-renderer';
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'Eschergraph | PinkDot AI',
+  title: 'Eschergraph',
   tagline: 'The Eschergraph!',
   favicon: 'img/favicon.ico',
 
   // Set the production url of your site here
-  url: 'https://your-docusaurus-site.example.com',
+  url: 'https://eschergraph.docs.pinkdot.ai',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: '/',
+  baseUrl: '/docs/getting_started',
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
@@ -64,8 +64,8 @@ const config = {
       navbar: {
         title: 'EscherGraph',
         logo: {
-          alt: 'My Site Logo',
-          src: 'img/pinkdot png.png',
+          alt: 'PinkDot AI logo',
+          src: 'img/pinkdot.png',
         },
         items: [
           {
@@ -74,7 +74,7 @@ const config = {
             position: 'left',
             label: 'Tutorial',
           },
-          {href:'https://pinkdot.ai', label: 'Blog', position: 'left'},
+          {href:'https://pinkdot.ai/blogs', label: 'Blog', position: 'left'},
           {
             href: 'https://github.com/pinkdotai/eschergraph',
             label: 'GitHub',
@@ -90,15 +90,15 @@ const config = {
             items: [
               {
                 label: 'Getting started',
-                to: '/docs/intro',
+                to: '/docs/getting_started',
               },
               {
-                label: 'Tutorials',
-                to: '/docs/tutorial-graph',
+                label: 'EscherGraph Explained',
+                to: '/docs/category/explained-eschergraph',
               },
               {
                 label: 'Comming soon | Contributions',
-                to: '/docs/future_plans',
+                to: '/docs/coming_soon',
               },
               {
                 label: 'PinkDot AI Home',
@@ -128,7 +128,7 @@ const config = {
             items: [
               {
                 label: 'Blog',
-                href:'https://pinkdot.ai',
+                href:'https://pinkdot.ai/blogs',
               },
               {
                 label: 'GitHub',
