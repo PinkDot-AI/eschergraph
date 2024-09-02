@@ -2,46 +2,71 @@
 sidebar_position: 1
 ---
 
-# Tutorial Intro
+# Getting started
 
-Let's discover **Docusaurus in less than 5 minutes**.
+Lets learn how to build, and RAGsearch with **EscherGraph** in under 5 min
 
-## Getting Started
-
-Get started by **creating a new site**.
-
-Or **try Docusaurus immediately** with **[docusaurus.new](https://docusaurus.new)**.
-
-### What you'll need
-
-- [Node.js](https://nodejs.org/en/download/) version 18.0 or above:
-  - When installing Node.js, you are recommended to check all checkboxes related to dependencies.
-
-## Generate a new site
-
-Generate a new Docusaurus site using the **classic template**.
-
-The classic template will automatically be added to your project after you run the command:
+## Quick start
 
 ```bash
-npm init docusaurus@latest my-website classic
+pip install eschergraph
 ```
 
-You can type this command into Command Prompt, Powershell, Terminal, or any other integrated terminal of your code editor.
+For the graph building, a LLM and a reranker is needed. We recommond using GPT4o and the jina-reranker-v2-base-multilingual, these models are also defaulted.
 
-The command also installs all necessary dependencies you need to run Docusaurus.
+First put your OpenAI and Jina api key in a .env file
 
-## Start your site
-
-Run the development server:
-
-```bash
-cd my-website
-npm run start
+```python
+# .env file
+OPENAI_API_KEY = ... 
+JINA_API_KEY = ...
 ```
+Jina AI has a 1 million free tokens on their platform, get it here https://jina.ai/embeddings/
 
-The `cd` command changes the directory you're working with. In order to work with your newly created Docusaurus site, you'll need to navigate the terminal there.
+### Initialize graph
 
-The `npm run start` command builds your website locally and serves it through a development server, ready for you to view at http://localhost:3000/.
+```python
+from eschergraph import Graph
+#from eschergraph import OpenAIProvider, OpenAIModel
 
-Open `docs/intro.md` (this page) and edit some lines: the site **reloads automatically** and displays your changes.
+graph_name = 'pink graph'
+graph = Graph(
+    #model=OpenAIProvider(model=OpenAIModel.GPT_4o_MINI) # default model is GPT_4o
+    name=graph_name,
+  )
+```
+Currently are the available models GPT4o and GPT4o-mini. We recommond always using GPT4o for graph building. The GPT 4o-mini experiences too much variance on graph building. We recommond using GPT4o mini for playing around and testing.
+
+### Build graph
+```python
+my_file = 'test_files/Attention Is All You Need.pdf'
+
+graph.build(files = my_file)
+```
+Files takes one file location, or a list of file locations. Currently only .pdf or .txt files are available file types.
+
+Graph building will take a while, dependent on the size of the files.
+
+### Local RAG search
+```python
+question = 'On which hardware chips were the inital models trained?'
+
+answer = graph.search(question)
+print(answer)
+```
+Local search goes throught all, nodes, edges and properties to find the moest relevant answers using embedding similarity and reranking. 
+
+### Global RAG search
+```python
+global_question = 'What are the conclusions from the paper?'
+
+answer = graph.global_search(question)
+print(answer)
+```
+Global search is search on the higher levels of the graph, and is great for answering general topic question about the files in the graph.
+
+### Dashboard
+```python
+graph.dashboard()
+```
+Print general info and statistics about the graph using the dashboard
