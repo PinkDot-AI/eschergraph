@@ -20,7 +20,7 @@ class Visualizer:
 
   @staticmethod
   def visualize_graph(
-    graph: Graph, level: int = 0, save_location: str = "graph_visual"
+    graph: Graph, level: int = 0, save_location: str = "graph_visual.html"
   ) -> None:
     """Visualize a level of a graph.
 

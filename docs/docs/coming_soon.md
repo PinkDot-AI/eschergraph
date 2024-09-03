@@ -4,7 +4,7 @@ sidebar_position: 3
 
 # Coming Soon | Contributions
 
-We would love feedback on the EscherGraph on how we can improve it. Use our [Discord](https://discord.com/invite/P5gzsNVb) to ask us questions and be a part of the community!
+We would love to hear your feedback on the EscherGraph. Use our [Discord](https://discord.com/invite/P5gzsNVb) to ask us questions and be a part of the community!
 
 ### What We Are Working On:
 
