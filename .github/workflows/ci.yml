@@ -1,8 +1,8 @@
 name: CI
 # We need to save some CI minutes!!
 on:
-  push:
-    branches: [main]
+  # push:
+  #   branches: [main]
   pull_request:
     branches: [main]
 
