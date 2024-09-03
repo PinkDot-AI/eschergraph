@@ -70,6 +70,8 @@ jobs:
       
       - name: Invalidate the Cloudfront distribution
         env:
-          DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
+          ROOT_DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_ROOT_DISTRIBUTION_ID }}
+          WWW_DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_WWW_DISTRIBUTION_ID }}
         run: |
-          aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths "/*"
+          aws cloudfront create-invalidation --distribution-id $ROOT_DISTRIBUTION_ID --paths "/*"
+          aws cloudfront create-invalidation --distribution-id $WWW_DISTRIBUTION_ID --paths "/*"
