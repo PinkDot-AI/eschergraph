@@ -14,8 +14,6 @@ permissions:
   contents: read
 
 env:
-  cloudfront_distribution_id: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
-  role_to_assume: ${{ secrets.AWS_CD_ROLE }}
   aws_region: "us-east-1"
   s3_bucket: "eschergraph.docs.pinkdot.ai"
 
@@ -53,7 +51,7 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ env.role_to_assume }}
+          role-to-assume: ${{ secrets.AWS_CD_ROLE }}
           aws-region: ${{ env.aws_region }}
 
       - name: Download Artifacts
@@ -68,6 +66,6 @@ jobs:
       
       - name: Invalidate the Cloudfront distribution
         env:
-          DISTRIBUTION_ID: ${{ env.cloudfront_distribution_id }}
+          DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
         run: |
           aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths "/*"
