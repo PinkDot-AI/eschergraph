@@ -21,9 +21,12 @@ jobs:
   build:
     environment: pypi
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./docs
     steps:
-      - name: Go to docs
-        run: cd docs
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
       - name: Use Node.js
         uses: actions/setup-node@v3
