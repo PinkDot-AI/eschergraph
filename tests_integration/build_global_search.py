@@ -6,11 +6,8 @@ from tempfile import TemporaryDirectory
 
 from dotenv import load_dotenv
 
-from eschergraph.agents.providers.jina import JinaReranker
-from eschergraph.agents.providers.openai import OpenAIModel
-from eschergraph.agents.providers.openai import OpenAIProvider
+from eschergraph import Graph
 from eschergraph.builder import BuildPipeline
-from eschergraph.graph import Graph
 from eschergraph.graph.persistence import Repository
 from eschergraph.graph.persistence.adapters.simple_repository import SimpleRepository
 from eschergraph.graph.persistence.vector_db import VectorDB
@@ -37,8 +34,6 @@ def build_global_search() -> None:
   )
   chroma: VectorDB = ChromaDB(save_name=graph_name, persistent=False)
   graph: Graph = Graph(
-    model=OpenAIProvider(model=OpenAIModel.GPT_4o_MINI),
-    reranker=JinaReranker(),
     name=graph_name,
     repository=repository,
     vector_db=chroma,

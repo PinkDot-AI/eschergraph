@@ -27,7 +27,7 @@ from eschergraph.visualization.dashboard_maker import DashboardData
 from eschergraph.visualization.dashboard_maker import DashboardMaker
 
 if TYPE_CHECKING:
-  from eschergraph.builder.build_log import BuildLog
+  pass
 
 
 class Graph:
@@ -39,7 +39,6 @@ class Graph:
   repository: Repository
   vector_db: VectorDB
   credentials: dict[str, str]
-  pre_persist_building_logs: list[BuildLog]
 
   def __init__(
     self,
@@ -65,14 +64,11 @@ class Graph:
       **kwargs (dict[str, str]): The credentials as optional keyword arguments.
     """
     self.name = name
-    self.model = model
-    self.reranker = reranker
-    self.pre_persist_building_logs = []
 
     if not reranker:
       reranker = JinaReranker()
     if not model:
-      model = ModelProvider(model=OpenAIProvider(model=OpenAIModel.GPT_4o))
+      model = OpenAIProvider(model=OpenAIModel.GPT_4o)
     if not repository:
       repository = get_default_repository(name=name)
     if not vector_db:
@@ -80,6 +76,8 @@ class Graph:
 
     self.repository = repository
     self.vector_db = vector_db
+    self.model = model
+    self.reranker = reranker
     self.credentials = {}
 
     self.credentials = {provider.upper(): cred for provider, cred in kwargs.items()}

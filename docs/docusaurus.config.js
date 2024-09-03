@@ -8,9 +8,9 @@ import {themes as prismThemes} from 'prism-react-renderer';
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'Eschergraph',
-  tagline: 'The Eschergraph!',
-  favicon: './img/favicon.ico',
+  title: 'EscherGraph | PinkDot AI',
+  tagline: 'The EscherGraph!',
+  favicon: 'img/favicon.ico',
 
   // Set the production url of your site here
   url: 'https://eschergraph.docs.pinkdot.ai',
@@ -137,7 +137,7 @@ const config = {
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} Eschergraph | PinkDot AI B.V.`,
+        copyright: `Copyright © ${new Date().getFullYear()} EscherGraph | PinkDot AI B.V.`,
       },
       prism: {
         theme: prismThemes.github,
