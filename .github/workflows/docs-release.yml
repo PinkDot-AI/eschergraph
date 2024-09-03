@@ -1,9 +1,7 @@
 name: Docs Release
 on:
-  # release:
-  #   types: [created]
-  push:
-    branches: [main]
+  release:
+    types: [created]
 
 concurrency:
     group: pypi

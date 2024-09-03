@@ -25,6 +25,7 @@ from eschergraph.graph.search.quick_search import quick_search
 from eschergraph.tools.prepare_sync_data import prepare_sync_data
 from eschergraph.visualization.dashboard_maker import DashboardData
 from eschergraph.visualization.dashboard_maker import DashboardMaker
+from eschergraph.visualization.visualizer import Visualizer
 
 if TYPE_CHECKING:
   pass
@@ -277,3 +278,8 @@ class Graph:
     data: DashboardData = DashboardMaker.gather_data(graph=self)
 
     DashboardMaker.visualizer_print(data)
+
+  def visualize(self) -> None:
+    """Generate a plot of the graph's level 0 and level 1."""
+    Visualizer.visualize_graph(self, level=0, save_location=f"{self.name}_level_0.html")
+    Visualizer.visualize_graph(self, level=1, save_location=f"{self.name}_level_1.html")

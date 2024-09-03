@@ -7,6 +7,8 @@ from tempfile import TemporaryDirectory
 from dotenv import load_dotenv
 
 from eschergraph import Graph
+from eschergraph.agents import OpenAIModel
+from eschergraph.agents import OpenAIProvider
 from eschergraph.builder import BuildPipeline
 from eschergraph.graph.persistence import Repository
 from eschergraph.graph.persistence.adapters.simple_repository import SimpleRepository
@@ -16,7 +18,7 @@ from eschergraph.tools.reader import Chunk
 from eschergraph.tools.reader import Reader
 from eschergraph.visualization import Visualizer
 
-TEST_FILE: str = "./test_files/test_file.pdf"
+TEST_FILE: str = "./test_files/Attention Is All You Need.pdf"
 
 # Load all the credentials
 load_dotenv()
@@ -37,6 +39,7 @@ def build_global_search() -> None:
     name=graph_name,
     repository=repository,
     vector_db=chroma,
+    model=OpenAIProvider(model=OpenAIModel.GPT_4o),
   )
 
   # Read and parse the document
@@ -54,6 +57,7 @@ def build_global_search() -> None:
   Visualizer.visualize_graph(
     graph, level=1, save_location=temp_path.as_posix() + "/level1.html"
   )
+  # graph.visualize()
 
   # Wait a few seconds before cleaning up to open the visuals
   time.sleep(10)

@@ -76,7 +76,7 @@ const config = {
           },
           {href:'https://pinkdot.ai/blogs', label: 'Blog', position: 'left'},
           {
-            href: 'https://github.com/pinkdotai/eschergraph',
+            href: 'https://github.com/PinkDot-AI/eschergraph',
             label: 'GitHub',
             position: 'right',
           },
@@ -94,7 +94,7 @@ const config = {
               },
               {
                 label: 'EscherGraph Explained',
-                to: '/docs/category/explained-eschergraph',
+                to: '/docs/category/eschergraph-explained',
               },
               {
                 label: 'Comming soon | Contributions',
@@ -132,7 +132,7 @@ const config = {
               },
               {
                 label: 'GitHub',
-                href: 'https://github.com/pinkdotai/eschergraph',
+                href: 'https://github.com/PinkDot-AI/eschergraph',
               },
             ],
           },
