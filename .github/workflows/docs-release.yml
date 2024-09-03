@@ -1,7 +1,9 @@
 name: Docs Release
 on:
-  release:
-    types: [created]
+  # release:
+  #   types: [created]
+  push:
+    branches: [main]
 
 concurrency:
     group: pypi
@@ -12,8 +14,8 @@ permissions:
   contents: read
 
 env:
-  cloudfront_distribution_id: "E1QOC2R1C8483Z"
-  role_to_assume: "arn:aws:iam::872847351395:role/GitHub_pypi_s3_role"
+  cloudfront_distribution_id: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
+  role_to_assume: ${{ secrets.AWS_CD_ROLE }}
   aws_region: "us-east-1"
   s3_bucket: "eschergraph.docs.pinkdot.ai"
 
