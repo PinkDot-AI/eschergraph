@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "description": "Add documentation and some missing features for the official release",
+      "type": "minor"
+    }
+  ],
+  "created_at": "2024-09-03T18:52:39+00:00",
+  "version": "0.2.0"
+}

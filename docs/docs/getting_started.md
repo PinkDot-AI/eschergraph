@@ -35,7 +35,9 @@ OPENAI_API_KEY = ...
 JINA_API_KEY = ...
 ```
 
-Then, when instantiating a graph, make sure to include the following code at the top of the file.
+Then, when instantiating a graph, make sure to have the environment variables loaded.
+For example, you can use the `load_dotenv` function from the library `python-dotenv` to load them
+from a `.env` file.
 ```python
 from dotenv import load_dotenv
 from eschergraph import Graph
@@ -118,5 +120,7 @@ An interactive plot for the graph's lowest and community level can be generated 
 ```python
 graph.visualize()
 ```
+
+![EscherGraph Interactive Plot](img/InteractivePlot.png)
 
 

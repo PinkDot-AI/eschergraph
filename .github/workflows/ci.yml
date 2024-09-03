@@ -1,5 +1,4 @@
 name: CI
-# We need to save some CI minutes!!
 on:
   # push:
   #   branches: [main]
@@ -23,8 +22,8 @@ jobs:
   ci:
     strategy:
       matrix:
-        python-version: ["3.12"] # "3.10", "3.11", add later to save minutes
-        os: [ubuntu-latest] # add later , windows-latest
+        python-version: ["3.12", "3.11", "3.10"]
+        os: [ubuntu-latest, windows-latest]
       fail-fast: false
     
     runs-on: ${{ matrix.os }}

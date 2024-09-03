@@ -94,7 +94,7 @@ const config = {
               },
               {
                 label: 'EscherGraph Explained',
-                to: '/docs/category/explained-eschergraph',
+                to: '/docs/category/eschergraph-explained',
               },
               {
                 label: 'Comming soon | Contributions',
