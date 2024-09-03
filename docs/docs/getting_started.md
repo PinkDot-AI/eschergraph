@@ -35,13 +35,18 @@ graph = Graph(
     name=graph_name,
   )
 ```
-Currently are the available models GPT4o and GPT4o-mini. We recommond always using GPT4o for graph building. The GPT 4o-mini experiences too much variance on graph building. We recommond using GPT4o mini for playing around and testing.
+Currently are the available models GPT4o and GPT4o-mini. We recommond always using GPT4o for graph building. The GPT 4o-mini experiences too much variance on graph building. We recommend using GPT4o mini for playing around and testing.
 
 ### Build graph
 ```python
-my_file = 'test_files/Attention Is All You Need.pdf'
+my_file1 = 'test_files/Attention Is All You Need.pdf'
 
-graph.build(files = my_file)
+graph.build(files = my_file1)
+
+# Adding another file to the same graph, is possible by simply building again:
+my_file2 = 'test_files/Test file2.pdf'
+
+graph.build(files = my_file2)
 ```
 Files takes one file location, or a list of file locations. Currently only .pdf or .txt files are available file types.
 
