@@ -5,10 +5,6 @@ Let's learn how to build, and RAG search with **EscherGraph** in under 5 min.
 
 ![EscherGraph](docs/docs/explained-eschergraph/img/Eschergraph.png)
 
-A big shout some contributors: 
-- Steven van den Wildenberg 
-- Luc Braks 
-
 ### Installing
 Install the package in your Python environment with the following command.
 
@@ -128,3 +124,9 @@ graph.visualize()
 As mentioned previously, our PDF parser uses Poppler internally to convert PDF into XML. Therefore, you are required to have Poppler installed when building a graph from PDF files with our package. Unfortunately, it can be quite a hassle to install Poppler on Windows. In order to mitigate this, our package will automatically install Poppler on Windows, if not already present. We do this by checking if the required functionality is in the path, if not, then we download a Poppler binary from [poppler-windows](https://github.com/oschwartz10612/poppler-windows). The zip file is then extracted and placed in the package's source. It is only during runtime that the binary is placed in the PATH and executed. Hence, this will only occur within the process that runs EscherGraph whilst parsing a PDF.
 
 We wanted to be fully transparent about this, since a package downloading and running binaries on your hardware can also be done with malicious intent. However, we have done this to make it as easy as possible for Windows users to use our package. If interested, the corresponding code can be found in `eschergraph/tools/fast_pdf_parse/parser.py`.
+
+### Contributors
+- @BjarneBepaData
+- @lennartbob
+- @StevenJW
+- @luckyluc99
