@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from pathlib import Path
 from typing import Any
 
 from jinja2 import BaseLoader
@@ -24,8 +25,9 @@ def process_template(template_file: str, data: dict[str, str]) -> str:
   Returns:
     The formatted prompt as a string.
   """
+  parent_path: str = Path(__file__).parent.absolute().as_posix()
   jinja_env: Environment = Environment(
-    loader=FileSystemLoader(searchpath="./eschergraph/agents/prompts"),
+    loader=FileSystemLoader(searchpath=parent_path + "/prompts"),
     autoescape=select_autoescape(),
   )
 

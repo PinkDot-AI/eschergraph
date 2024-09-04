@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "eschergraph"
-version = "0.2.0"
+version = "0.2.1"
 description = "The library that uses AI agents to enable building and searching in generalized knowledge graphs."
 authors = ["PinkDot AI"]
 license = "MIT"
@@ -14,7 +14,6 @@ jinja2 = "^3.1.4"
 tenacity = "^8.4.2"
 openai = "^1.35.7"
 chromadb = "^0.5.5"
-sentence-transformers = "^3.0.1"
 requests = "^2.32.3"
 types-requests = "^2.32.0.20240712"
 tiktoken = "^0.7.0"
@@ -27,8 +26,8 @@ pypdf = "^4.3.1"
 lxml = "^5.3.0"
 lightgbm = "^4.5.0"
 tabulate = "^0.9.0"
-nltk = "^3.9.1"
 fuzzywuzzy = "^0.18.0"
+python-levenshtein = "^0.25.1"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.7.1"
