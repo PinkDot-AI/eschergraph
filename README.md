@@ -18,3 +18,5 @@ As HTML.
 ```bash
 coverage html
 ```
+
+![EscherGraph](docs/docs/explained-eschergraph/img/Eschergraph.png)

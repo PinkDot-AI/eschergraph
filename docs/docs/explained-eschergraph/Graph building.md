@@ -28,8 +28,8 @@ The steps for the EscherGraph building are:
      - 'Sam' and 'Sam Altman'
 
 2) Edge Cases: When dealing with nodes that have similar names but could refer to different entities (e.g., 'Sam', 'Sam Altman', and 'Sam Bankman-Fried'), the matcher uses additional context to differentiate between them. This involves:
-
-     - Re-Ranking for Similarity: A re-ranker evaluates the similarity of the nodes based on context, metadata, or additional attributes to accurately determine which specific entity a node is pointing to. This helps in distinguishing between nodes like:
+     - LLM identifies node name ambigouities 
+     - Classification with similarity: A re-ranker evaluates the similarity of the nodes based on context, metadata, or additional attributes to accurately determine which specific entity a node is pointing to. This helps in distinguishing between nodes like:
 
         - 'Sam' (could refer to Sam Altman or Sam Bankman-Fried)
         - 'Sam Altman'
