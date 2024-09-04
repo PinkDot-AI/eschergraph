@@ -126,7 +126,7 @@ As mentioned previously, our PDF parser uses Poppler internally to convert PDF i
 We wanted to be fully transparent about this, since a package downloading and running binaries on your hardware can also be done with malicious intent. However, we have done this to make it as easy as possible for Windows users to use our package. If interested, the corresponding code can be found in `eschergraph/tools/fast_pdf_parse/parser.py`.
 
 ### Contributors
-- @BjarneBepaData
-- @lennartbob
-- @StevenJW
-- @luckyluc99
+- [@BjarneBepaData](https://github.com/BjarneBepaData)
+- [@lennartbob](https://github.com/lennartbob)
+- [@StevenJW](https://github.com/StevenJW)
+- [@luckyluc99](https://github.com/luckyluc99)
