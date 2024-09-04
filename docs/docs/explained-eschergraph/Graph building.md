@@ -31,6 +31,8 @@ It involves two steps.
 
 2) Decide on potential matches using LLM reasoning and contextual clues. This is done to make the right decision, even for edge cases: when dealing with different entities that are referenced by the same name across different chunks. For example, 'Sam', 'Sam Altman', and 'Sam Bankman-Fried'.
 Therefore, the node matcher utilizes additional context to differentiate between them. This process involves:
+     - LLM identifies node name ambiguities: given a list of potentially matching entity names, the LLM returns a list of edge cases.
+
      - Re-ranking potential matches: a re-ranker evaluates the similarity of the nodes based on context, metadata, or additional attributes to accurately determine which specific entity a node is referring to.
 
-     - Contextual clues: the re-ranker leverages additional contextual information from the surrounding data or relationships to clarify which node is the correct match. This might include looking at node connections, associated attributes, or other identifiers to make a more informed decision.
+     - Contextual clues: the re-ranker leverages additional contextual information from the surrounding data or relationships to classify which node is the correct match. This might include looking at node connections, associated attributes, or other identifiers to make a more informed decision.

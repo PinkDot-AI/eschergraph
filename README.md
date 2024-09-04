@@ -3,6 +3,8 @@
 
 Let's learn how to build, and RAG search with **EscherGraph** in under 5 min.
 
+![EscherGraph](docs/docs/explained-eschergraph/img/Eschergraph.png)
+
 ### Installing
 Install the package in your Python environment with the following command.
 
@@ -76,13 +78,13 @@ my_file1 = 'test_files/Attention Is All You Need.pdf'
 
 graph.build(files = my_file1)
 
-# Adding another file to the graph, is possible by simply building again:
-my_file2 = 'test_files/Test file2.pdf'
+# Adding more files to the graph is possible by simply building again:
+my_file2 = "test_files/test_file2.txt"
+my_file3 = "test_files/test_file3.pdf"
 
-graph.build(files = my_file2)
+graph.build(files = [my_file2, my_file3])
 ```
-Files takes one file location, or a list of file locations. Currently only .pdf or .txt files are supported.
-Graph building might take a while, dependending on the size of the files.
+Build can be used to add documents to the graph. All you need to do is specify the filepath of the files that you want to add to the graph. It is possible to specify both a string of a single filepath or a list containing multiple filepaths.
 
 ### Search
 #### Local RAG search
