@@ -6,7 +6,6 @@ from typing import Any
 import requests
 from attr import define
 from requests import Response
-from sentence_transformers import CrossEncoder
 
 from eschergraph.agents.reranker import Reranker
 from eschergraph.agents.reranker import RerankerResult
@@ -83,56 +82,3 @@ class JinaReranker(Reranker):
       raise ExternalProviderException(f"Request failed: {e}")
     except ValueError as e:
       raise ExternalProviderException(f"Something went wrong parsing the resulf: {e}")
-
-
-class JinaRerankerTurbo(Reranker):
-  """A reranker that uses a local model downloaded via the sentence_transformers library.
-
-  Methods:
-      rerank(docs: list[str], query: str, top_n: int) -> Optional[list[RerankerResult]]:
-          Reranks the provided list of documents using the locally hosted model.
-  """
-
-  required_credentials: list[str] = []
-
-  def __init__(self) -> None:
-    """Initializes the JinaRerankerTurbo with a pre-trained model."""
-    self.model: CrossEncoder = CrossEncoder(
-      "jinaai/jina-reranker-v1-turbo-en", trust_remote_code=True
-    )
-
-  def rerank(
-    self, query: str, text_list: list[str], top_n: int
-  ) -> list[RerankerResult]:
-    """Reranks a list of text documents based on their relevance to the query using the locally hosted model.
-
-    Args:
-        text_list (list[str]): The list of documents (texts) to be reranked.
-        query (str): The query string for which documents are being reranked.
-        top_n (int): The number of top relevant documents to return.
-
-    Returns:
-        Optional[list[RerankerResult]]: A list of reranked items with their relevance scores and text.
-    """
-    if not text_list:
-      return []
-
-    # Perform the ranking
-    results = self.model.rank(query, text_list, return_documents=True, top_k=top_n)
-
-    # Convert results to list of RerankerResult
-    try:
-      reranked_items = [
-        RerankerResult(
-          index=int(r["corpus_id"]),
-          relevance_score=float(r["score"]),
-          text=str(r["text"]),
-        )
-        for r in results
-      ]
-
-      return reranked_items
-    except (KeyError, TypeError):
-      raise ExternalProviderException(
-        "Something went wrong obtaining the reranker results."
-      )
