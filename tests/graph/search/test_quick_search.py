@@ -15,7 +15,7 @@ from eschergraph.graph.search.quick_search import extract_entities_from
 from eschergraph.graph.search.quick_search import quick_search
 from eschergraph.graph.search.quick_search import rerank_and_filter_attributes
 
-RAG_SEARCH = "search/rag_prompt.jinja"
+RAG_SEARCH = "search/question_with_context.jinja"
 
 
 def test_quick_search(graph_unit: Graph) -> None:
@@ -32,8 +32,8 @@ def test_quick_search(graph_unit: Graph) -> None:
       process_template(
         RAG_SEARCH,
         data={
-          "chunks": "Nothing found in the graph regarding this question!",
-          "query": "test query",
+          "CONTEXT": "Nothing found in the graph regarding this question!",
+          "QUERY": "test query",
         },
       )
     )
@@ -54,8 +54,8 @@ def test_quick_search(graph_unit: Graph) -> None:
       process_template(
         RAG_SEARCH,
         data={
-          "chunks": "Attribute 1\nAttribute 2\n",
-          "query": "test query with attributes",
+          "CONTEXT": "Attribute 1\nAttribute 2\n",
+          "QUERY": "test query with attributes",
         },
       )
     )
@@ -74,67 +74,44 @@ def test_quick_search(graph_unit: Graph) -> None:
 def test_get_attributes(graph_unit: Graph) -> None:
   query = "Find attributes for node"
 
-  # Mock extract_entities_from to return a list of nodes/entities
-  extracted_entities = ["node1", "node2"]
+  # Mock the VectorDB search and format results
+  search_results_nodes = [{"chunk": "node1"}, {"chunk": "node2"}]
+  search_results_attributes = [
+    {"chunk": "attribute 1", "metadata": {"entity1": "node1"}},
+    {"chunk": "attribute 2", "metadata": {"entity2": "node2"}},
+  ]
+
+  # Mock the graph's vector_db search and format_search_results methods
+  graph_unit.vector_db.search = MagicMock()  # type: ignore
+  graph_unit.vector_db.format_search_results.side_effect = [
+    search_results_nodes,  # First search for nodes
+    search_results_attributes,  # Second search for attributes
+  ]
+
+  # Mock rerank_and_filter_attributes to return filtered attributes
+  filtered_attributes = [
+    AttributeSearch(text="attribute 1", metadata=None, parent_node=""),
+    AttributeSearch(text="attribute 2", metadata=None, parent_node=""),
+  ]
   with patch(
-    "eschergraph.graph.search.quick_search.extract_entities_from",
-    return_value=extracted_entities,
+    "eschergraph.graph.search.quick_search.rerank_and_filter_attributes",
+    return_value=filtered_attributes,
   ):
-    # Mock the VectorDB search and format results
-    search_results_nodes = [{"chunk": "node1"}, {"chunk": "node2"}]
-    search_results_attributes = [
-      {"chunk": "attribute 1", "metadata": {"entity1": "node1"}},
-      {"chunk": "attribute 2", "metadata": {"entity2": "node2"}},
-    ]
+    # Call the function under test
+    result = _get_attributes(graph=graph_unit, query=query)
 
-    # Mock the graph's vector_db search and format_search_results methods
-    graph_unit.vector_db.search = MagicMock()  # type: ignore
-    graph_unit.vector_db.format_search_results.side_effect = [
-      search_results_nodes,  # First search for nodes
-      search_results_attributes,  # Second search for attributes
-    ]
+    # Assertions
+    assert len(result) == 2
+    assert result[0].text == "attribute 1"
+    assert result[1].text == "attribute 2"
 
-    # Mock rerank_and_filter_attributes to return filtered attributes
-    filtered_attributes = [
-      AttributeSearch(text="attribute 1", metadata=None, parent_node=""),
-      AttributeSearch(text="attribute 2", metadata=None, parent_node=""),
-    ]
-    with patch(
-      "eschergraph.graph.search.quick_search.rerank_and_filter_attributes",
-      return_value=filtered_attributes,
-    ):
-      # Call the function under test
-      result = _get_attributes(graph=graph_unit, query=query)
-
-      # Assertions
-      assert len(result) == 2
-      assert result[0].text == "attribute 1"
-      assert result[1].text == "attribute 2"
-
-      # Ensure vector_db.search was called with the extracted entities
-      graph_unit.vector_db.search.assert_any_call(
-        query=", ".join(extracted_entities),
-        top_n=10,
-        collection_name="node_name_collection",
-      )
-
-      # Ensure vector_db.search was called for attributes
-      graph_unit.vector_db.search.assert_any_call(
-        query=query,
-        top_n=30,
-        metadata={
-          "$and": [
-            {"level": 0},
-            {
-              "$or": [
-                {"entity1": {"$in": extracted_entities}},
-                {"entity2": {"$in": extracted_entities}},
-              ]
-            },
-          ]
-        },
-        collection_name="main_collection",
-      )
+    # Ensure vector_db.search was called for attributes
+    graph_unit.vector_db.search.assert_any_call(
+      query=query,
+      top_n=40,
+      metadata={"level": 0},
+      collection_name="main_collection",
+    )
 
 
 def test_rerank_and_filter_attributes() -> None:
@@ -142,9 +119,9 @@ def test_rerank_and_filter_attributes() -> None:
   query = "Find attributes"
   attributes_string = ["attribute 1", "attribute 2", "attribute 3"]
   attributes_results: list[dict[str, Any]] = [
-    {"chunk": "attribute 1", "metadata": {"entity1": "node1"}},
-    {"chunk": "attribute 2", "metadata": {"entity2": "node2"}},
-    {"chunk": "attribute 3", "metadata": {"entity3": "node3"}},
+    {"chunk": "attribute 1", "metadata": {"level": 0}},
+    {"chunk": "attribute 2", "metadata": {"level": 0}},
+    {"chunk": "attribute 3", "metadata": {"level": 0}},
   ]
 
   # Mock reranked results from the rerank function
@@ -174,10 +151,10 @@ def test_rerank_and_filter_attributes() -> None:
     assert filtered_attributes[1].text == "attribute 2"
 
     # Verify that the metadata has been properly added to the result
-    assert (
-      filtered_attributes[0].metadata is None
-    )  # Add actual metadata enrichment check if necessary
-    assert filtered_attributes[1].metadata is None
+    assert filtered_attributes[0].metadata == {
+      "level": 0
+    }  # Add actual metadata enrichment check if necessary
+    assert filtered_attributes[1].metadata == {"level": 0}
 
     # Test if filtering based on threshold works (attribute 3 has a score of 0.1, below threshold)
 

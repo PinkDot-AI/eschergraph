@@ -15,7 +15,7 @@ pip install eschergraph
 To build and search with EscherGraph: an LLM, an embedding model, and a reranker are needed. We recommend using OpenAI's GPT4o and text-embedding-3-large models, and the jina-reranker-v2-base-multilingual from Jina AI. These are also the defaults.
 In the upcoming examples, we will assume that these defaults are used.
 
-In case you still need to obtain a Jina AI API key, you can get a key with 1 million tokens, free and without registration [here](https://jina.ai/).
+In case you still need to obtain a Jina AI API key, you can get a k ey with 1 million tokens, free and without registration [here](https://jina.ai/).
 
 ### Credentials
 The API keys needed to connect with external API's can be supplied to the graph in two ways:

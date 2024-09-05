@@ -18,7 +18,7 @@ if TYPE_CHECKING:
   from eschergraph.graph import Graph
 
 load_dotenv()
-RAG_SEARCH = "search/rag_prompt.jinja"
+RAG_SEARCH = "search/question_with_context.jinja"
 
 
 @define
@@ -54,7 +54,7 @@ def quick_search(
     for a in attributes:
       chunks_string += a.text + "\n"
   prompt: str = process_template(
-    RAG_SEARCH, data={"chunks": chunks_string, "query": query}
+    RAG_SEARCH, data={"CONTEXT": chunks_string, "QUERY": query}
   )
   answer: str | None = graph.model.get_plain_response(prompt)
   if answer:
@@ -73,42 +73,14 @@ def _get_attributes(graph: Graph, query: str) -> list[AttributeSearch]:
   Returns:
       list[AttributeSearch]: A list of AttributeSearch objects representing the ranked attributes relevant to the query.
   """
-  # Extract nodes/entities from the query using the language model
-  extracted_nodes: list[str] = extract_entities_from(query=query, llm=graph.model)
-
   # Initialize search metadata for attributes
   search_metadata: dict[str, Any] = {"level": 0}
-
-  # Perform initial search for nodes if any extracted entities are found
-  if extracted_nodes:
-    results = graph.vector_db.format_search_results(
-      graph.vector_db.search(
-        query=", ".join(extracted_nodes),
-        top_n=10,
-        collection_name="node_name_collection",
-      )
-    )
-    filtered_nodes = [r["chunk"] for r in results]
-
-    # Add filtering conditions to the search metadata if nodes were found
-    if filtered_nodes:
-      search_metadata = {
-        "$and": [
-          {"level": 0},
-          {
-            "$or": [
-              {"entity1": {"$in": filtered_nodes}},
-              {"entity2": {"$in": filtered_nodes}},
-            ]
-          },
-        ]
-      }
 
   # Perform the final search for attributes
   attributes_results = graph.vector_db.format_search_results(
     graph.vector_db.search(
       query=query,
-      top_n=30,
+      top_n=40,
       metadata=search_metadata,
       collection_name="main_collection",
     )
@@ -190,9 +162,10 @@ def rerank_and_filter_attributes(
 
     if metadata:
       # Create the AttributeSearch object with the metadata and parent nodes
+
       obj = AttributeSearch(
         text=r.text,
-        metadata=None,
+        metadata=metadata,
         parent_node="",
       )
 
