@@ -12,6 +12,8 @@ from eschergraph.agents.llm import ModelProvider
 from eschergraph.agents.providers.jina import JinaReranker
 from eschergraph.agents.reranker import RerankerResult
 from eschergraph.exceptions import ExternalProviderException
+from eschergraph.graph.edge import Edge
+from eschergraph.graph.node import Node
 from eschergraph.graph.persistence.metadata import Metadata
 
 if TYPE_CHECKING:
@@ -26,8 +28,8 @@ class AttributeSearch:
   """This is the dataclass for the attribute search object."""
 
   text: str
-  metadata: Metadata | None
-  parent_node: str
+  metadata: set[Metadata] | None
+  parent_nodes: list[str]
 
 
 def quick_search(
@@ -85,14 +87,9 @@ def _get_attributes(graph: Graph, query: str) -> list[AttributeSearch]:
       collection_name="main_collection",
     )
   )
-  attributes_string: list[str] = [
-    a["chunk"] for a in attributes_results if isinstance(a["chunk"], str)
-  ]
 
   # Filter and reformat the reranked attributes before returning them
-  return rerank_and_filter_attributes(
-    query, attributes_string, attributes_results, threshold=0.18
-  )
+  return rerank_and_filter_attributes(graph, query, attributes_results, threshold=0.18)
 
 
 def rerank(query: str, text_list: list[str], top_n: int = 10) -> list[RerankerResult]:
@@ -122,16 +119,16 @@ def rerank(query: str, text_list: list[str], top_n: int = 10) -> list[RerankerRe
 
 
 def rerank_and_filter_attributes(
+  graph: Graph,
   query: str,
-  attributes_string: list[str],
   attributes_results: list[dict[str, UUID | int | str | float | dict[str, Any]]],
   threshold: float = 0.0,
 ) -> list[AttributeSearch]:
   """Filters and reformats a list of reranked attributes based on relevance score.
 
   Args:
+      graph (Graph): the graph holding the repository
       query (str): the regarding question in the search
-      attributes_string (list[str]): a list of attributes as strings for reranking
       attributes_results (list[dict[str, UUID | int | str | float | dict[str, Any]]]):
           A list of dictionaries containing the original search results with associated metadata.
       threshold (int): is the reranker threshhold
@@ -141,10 +138,12 @@ def rerank_and_filter_attributes(
       score and enriched with the corresponding metadata and parent nodes.
   """
   # Preprocess attributes_results into a dictionary for quick lookups
+  attributes_string: list[str] = [
+    a["chunk"] for a in attributes_results if isinstance(a["chunk"], str)
+  ]
   reranked_attributes: list[RerankerResult] = rerank(
     query, attributes_string, top_n=len(attributes_string)
   )
-
   results_dict: dict[str, dict[str, Any]] = {
     a["chunk"]: a["metadata"]
     for a in attributes_results
@@ -162,11 +161,23 @@ def rerank_and_filter_attributes(
 
     if metadata:
       # Create the AttributeSearch object with the metadata and parent nodes
+      if metadata["type"] == "node":
+        node: Node = graph.repository.get_node_by_id(UUID(metadata["id"]))
+        metadata: set[Metadata] = node.metadata
+        parrent_nodes: list[str] = [node.name]
+      elif metadata["type"] == "edge":
+        edge: Edge = graph.repository.get_edge_by_id(UUID(metadata["id"]))
+        metadata: set[Metadata] = edge.metadata
+        parrent_nodes: list[str] = [edge.to, edge.frm]
+      elif metadata["type"] == "property":
+        prop = graph.repository.get_property_by_id(UUID(metadata["id"]))
+        metadata: set[Metadata] = prop.metadata
+        parrent_nodes: list[str] = [prop.node.name]
 
       obj = AttributeSearch(
         text=r.text,
         metadata=metadata,
-        parent_node="",
+        parent_nodes=parrent_nodes,
       )
 
       attributes_filtered.append(obj)

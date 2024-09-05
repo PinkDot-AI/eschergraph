@@ -3,7 +3,7 @@
 
 Let's learn how to build, and RAG search with **EscherGraph** in under 5 min.
 
-![EscherGraph](docs/docs/explained-eschergraph/img/Eschergraph.png)
+![EscherGraph](docs/static/img/Eschergraph_background.png)
 
 ### Installing
 Install the package in your Python environment with the following command.

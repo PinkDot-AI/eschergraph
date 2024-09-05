@@ -15,17 +15,17 @@
 #     {
 #       "document": "hello.pdf",
 #       "graph_type": "Node",
-#       "parent_node": "",
+#       "parent_nodes": "",
 #     },
 #     {
 #       "document": "test.pdf",
 #       "graph_type": "Edge",
-#       "parent_node": "",
+#       "parent_nodes": "",
 #     },
 #     {
 #       "document": "test.pdf",
 #       "graph_type": "Edge",
-#       "parent_node": "",
+#       "parent_nodes": "",
 #     },
 #   ]
 #   vector_db.insert_documents(

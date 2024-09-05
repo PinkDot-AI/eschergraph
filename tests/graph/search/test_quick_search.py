@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 from unittest.mock import MagicMock
 from unittest.mock import patch
+from uuid import uuid4
 
 import pytest
 
@@ -40,8 +41,8 @@ def test_quick_search(graph_unit: Graph) -> None:
 
   # Test case 3: Attributes found and answer generated
   attributes = [
-    AttributeSearch(text="Attribute 1", metadata=None, parent_node=""),
-    AttributeSearch(text="Attribute 2", metadata=None, parent_node=""),
+    AttributeSearch(text="Attribute 1", metadata=None, parent_nodes=""),
+    AttributeSearch(text="Attribute 2", metadata=None, parent_nodes=""),
   ]
   with patch(
     "eschergraph.graph.search.quick_search._get_attributes", return_value=attributes
@@ -90,8 +91,8 @@ def test_get_attributes(graph_unit: Graph) -> None:
 
   # Mock rerank_and_filter_attributes to return filtered attributes
   filtered_attributes = [
-    AttributeSearch(text="attribute 1", metadata=None, parent_node=""),
-    AttributeSearch(text="attribute 2", metadata=None, parent_node=""),
+    AttributeSearch(text="attribute 1", metadata=None, parent_nodes=""),
+    AttributeSearch(text="attribute 2", metadata=None, parent_nodes=""),
   ]
   with patch(
     "eschergraph.graph.search.quick_search.rerank_and_filter_attributes",
@@ -114,14 +115,23 @@ def test_get_attributes(graph_unit: Graph) -> None:
     )
 
 
-def test_rerank_and_filter_attributes() -> None:
+@pytest.mark.usefixtures("graph_unit")
+def test_rerank_and_filter_attributes(graph_unit) -> None:
   # Define the mock data for the test
   query = "Find attributes"
-  attributes_string = ["attribute 1", "attribute 2", "attribute 3"]
   attributes_results: list[dict[str, Any]] = [
-    {"chunk": "attribute 1", "metadata": {"level": 0}},
-    {"chunk": "attribute 2", "metadata": {"level": 0}},
-    {"chunk": "attribute 3", "metadata": {"level": 0}},
+    {
+      "chunk": "attribute 1",
+      "metadata": {"level": 0, "type": "node", "id": str(uuid4())},
+    },
+    {
+      "chunk": "attribute 2",
+      "metadata": {"level": 0, "type": "edge", "id": str(uuid4())},
+    },
+    {
+      "chunk": "attribute 3",
+      "metadata": {"level": 0, "type": "property", "id": str(uuid4())},
+    },
   ]
 
   # Mock reranked results from the rerank function
@@ -131,14 +141,36 @@ def test_rerank_and_filter_attributes() -> None:
     RerankerResult(text="attribute 3", relevance_score=0.1, index=3),
   ]
 
-  # Patch the rerank function to return our mocked results
-  with patch(
-    "eschergraph.graph.search.quick_search.rerank", return_value=reranked_results
+  # Define mock objects to return when repository methods are called
+  node_mock = MagicMock()
+  node_mock.metadata = {"mock_metadata": "node_metadata"}
+  node_mock.name = "Node 1"
+
+  edge_mock = MagicMock()
+  edge_mock.metadata = {"mock_metadata": "edge_metadata"}
+  edge_mock.to = "Node A"
+  edge_mock.frm = "Node B"
+
+  property_mock = MagicMock()
+  property_mock.metadata = {"mock_metadata": "property_metadata"}
+  property_mock.node = MagicMock()
+  property_mock.node.name = "Node P"
+
+  # Patch the rerank function and repository methods to return mocked results
+  with (
+    patch(
+      "eschergraph.graph.search.quick_search.rerank", return_value=reranked_results
+    ),
+    patch.object(graph_unit.repository, "get_node_by_id", return_value=node_mock),
+    patch.object(graph_unit.repository, "get_edge_by_id", return_value=edge_mock),
+    patch.object(
+      graph_unit.repository, "get_property_by_id", return_value=property_mock
+    ),
   ):
     # Call the function with a threshold that should filter out "attribute 3"
     filtered_attributes = rerank_and_filter_attributes(
+      graph=graph_unit,
       query=query,
-      attributes_string=attributes_string,
       attributes_results=attributes_results,
       threshold=0.2,  # This should filter out attribute 3
     )
@@ -151,12 +183,12 @@ def test_rerank_and_filter_attributes() -> None:
     assert filtered_attributes[1].text == "attribute 2"
 
     # Verify that the metadata has been properly added to the result
-    assert filtered_attributes[0].metadata == {
-      "level": 0
-    }  # Add actual metadata enrichment check if necessary
-    assert filtered_attributes[1].metadata == {"level": 0}
+    assert filtered_attributes[0].metadata == {"mock_metadata": "node_metadata"}
+    assert filtered_attributes[1].metadata == {"mock_metadata": "edge_metadata"}
 
-    # Test if filtering based on threshold works (attribute 3 has a score of 0.1, below threshold)
+    # Verify the parent nodes were correctly set
+    assert filtered_attributes[0].parent_nodes == ["Node 1"]
+    assert filtered_attributes[1].parent_nodes == ["Node A", "Node B"]
 
 
 # Test extract_entities_from function

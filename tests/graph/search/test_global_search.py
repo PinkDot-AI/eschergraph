@@ -20,8 +20,8 @@ def test_global_search(graph_unit: Graph) -> None:
       "eschergraph.graph.search.global_search.process_template"
     ) as mock_process_template:
       mock_get_extractions.return_value = [
-        AttributeSearch(text="Attribute 1", metadata=None, parent_node=""),
-        AttributeSearch(text="Attribute 2", metadata=None, parent_node=""),
+        AttributeSearch(text="Attribute 1", metadata=None, parent_nodes=""),
+        AttributeSearch(text="Attribute 2", metadata=None, parent_nodes=""),
       ]
       mock_process_template.return_value = full_prompt
       graph_unit.model.get_plain_response.return_value = "Generated answer"
@@ -47,8 +47,8 @@ def test_get_relevant_extractions(graph_unit: Graph) -> None:
     },  # This should be filtered out as it's not a string
   ]
   reranked_results = [
-    AttributeSearch(text="Reranked Chunk 1", metadata=None, parent_node=""),
-    AttributeSearch(text="Reranked Chunk 2", metadata=None, parent_node=""),
+    AttributeSearch(text="Reranked Chunk 1", metadata=None, parent_nodes=""),
+    AttributeSearch(text="Reranked Chunk 2", metadata=None, parent_nodes=""),
   ]
 
   with patch(
