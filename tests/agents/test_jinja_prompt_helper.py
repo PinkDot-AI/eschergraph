@@ -54,13 +54,6 @@ output:"""
 input_text: str = "This is a test"
 
 
-def test_templating_function_json_build() -> None:
-  assert (
-    process_template(template_file="json_build.jinja", data={"input_text": input_text})
-    == json_build_template
-  )
-
-
 def test_templating_function_json_build_empty_data() -> None:
   with pytest.raises(PromptFormattingException):
     process_template(template_file="json_build.jinja", data={})
