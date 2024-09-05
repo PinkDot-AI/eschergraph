@@ -18,7 +18,7 @@ The steps for the EscherGraph building are:
 7) Sync all nodes, edges and properties to a vector database, by default [ChromaDB](https://www.trychroma.com/)
 
 
-![EscherGraph building steps](img/Eschergraph_background.png.png)
+![EscherGraph building steps](img/Eschergraph_background.png)
 
 ### Node Matcher
 The node matcher is used to match and merge nodes that refer to the same entity.
