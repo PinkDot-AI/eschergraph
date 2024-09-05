@@ -14,8 +14,6 @@ def prepare_sync_data(
   repository: Repository,
 ) -> tuple[
   list[tuple[UUID, str, dict[str, str | int]]],
-  list[tuple[UUID, str, dict[str, str | int]]],
-  list[UUID],
   list[UUID],
 ]:
   """Prepares data for synchronization with the vector database.
@@ -34,14 +32,7 @@ def prepare_sync_data(
     objects_logs[log.id].append(log)
 
   ids_to_create, ids_to_delete = _get_actions_for_objects(objects_logs)
-  delete_node_name_ids: list[UUID] = []
   create_main: list[tuple[UUID, str, dict[str, str | int]]] = []
-  create_node_name: list[tuple[UUID, str, dict[str, str | int]]] = []
-
-  for id in ids_to_delete:
-    log_del: ChangeLog = objects_logs[id][0]
-    if log_del.type == Node and log_del.level == 0:
-      delete_node_name_ids.append(id)
 
   for id in ids_to_create:
     cur_log: ChangeLog = objects_logs[id][0]
@@ -57,11 +48,8 @@ def prepare_sync_data(
         "entity_frm": node.name,
         "entity_to": "",
       }
-      create_main.append((id, node.description, md_node))
-
-      if cur_log.level == 0:
-        md_node["type"] = "node_name"
-        create_node_name.append((id, node.name, md_node))
+      node_string = node.name + ", " + node.description
+      create_main.append((id, node_string, md_node))
 
     elif cur_log.type == Edge:
       edge: Edge | None = repository.get_edge_by_id(id)
@@ -85,9 +73,10 @@ def prepare_sync_data(
         "entity_frm": property.node.name,
         "entity_to": "",
       }
-      create_main.append((id, property.description, md_prop))
+      property_string = property.node.name + ", " + property.description
+      create_main.append((id, property_string, md_prop))
 
-  return create_main, create_node_name, ids_to_delete, delete_node_name_ids
+  return create_main, ids_to_delete
 
 
 def _get_actions_for_objects(

@@ -24,7 +24,7 @@ def global_search(graph: Graph, query: str) -> str:
   """
   extractions: list[AttributeSearch] = _get_relevant_extractions(graph, query)
 
-  ans_template = "search/question_with_context.jinja"
+  ans_template = "search/global_search_context.jinja"
   context = "\n".join([a.text for a in extractions])
   full_prompt = process_template(ans_template, {"CONTEXT": context, "QUERY": query})
   response: str | None = graph.model.get_plain_response(full_prompt)
@@ -53,11 +53,8 @@ def _get_relevant_extractions(graph: Graph, prompt: str) -> list[AttributeSearch
       collection_name="main_collection",
     )
   )
-  relevent_extractions: list[str] = [
-    a["chunk"] for a in attributes_results if isinstance(a["chunk"], str)
-  ]
 
   results: list[AttributeSearch] = rerank_and_filter_attributes(
-    prompt, relevent_extractions, attributes_results, threshold=0
+    graph=graph, query=prompt, attributes_results=attributes_results, threshold=0
   )
   return results

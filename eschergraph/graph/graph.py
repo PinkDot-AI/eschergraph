@@ -166,9 +166,7 @@ class Graph:
   def sync_vectordb(self) -> None:
     """Synchronizes the vector database with the latest changes in the repository."""
     # Prepare data for synchronization
-    create_main, create_node_name, ids_to_delete, delete_node_name_ids = (
-      prepare_sync_data(repository=self.repository)
-    )
+    create_main, ids_to_delete = prepare_sync_data(repository=self.repository)
 
     # Collection names
     collection_main = "main_collection"
@@ -185,7 +183,6 @@ class Graph:
 
     # Delete records in both collections
     delete_records(ids_to_delete, collection_main)
-    delete_records(delete_node_name_ids, collection_nodes)
 
     # Function to insert new or updated entries into a collection
     def insert_records(
@@ -202,7 +199,6 @@ class Graph:
 
     # Insert into main and node collections
     insert_records(create_main, collection_main)
-    insert_records(create_node_name, collection_nodes)
 
   def search(self, query: str) -> str:
     """Executes a search query using a vector database and a specified model.
@@ -241,7 +237,7 @@ class Graph:
     """
     return len(self.repository.get_all_at_level(0)) > 0
 
-  def build(self, files: str | list[str], always_approve: bool = False) -> Graph:
+  def build(self, files: str | list[str]) -> Graph:
     """Build a graph from the given files.
 
     Args:
@@ -258,10 +254,6 @@ class Graph:
     chunks, document_data, total_tokens = BuildingTools.process_files(files)
 
     BuildingTools.display_build_info(chunks, total_tokens, model=self.model)
-
-    if not always_approve and not BuildingTools.get_user_approval():
-      print("Building cancelled.")
-      return self
 
     # Build graph
     builder = BuildPipeline(model=self.model, reranker=self.reranker)

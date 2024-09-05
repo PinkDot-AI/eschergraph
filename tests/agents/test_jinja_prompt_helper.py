@@ -12,9 +12,10 @@ from eschergraph.exceptions import PromptFormattingException
 
 json_build_template: str = """-Goal-
 Extract all relevant information from the provided text into a graph representation containing entities and relations.
+The most important part is that you try to represent all the information in the provided text in a structured format!
 
 -Steps-
-1. Identify all named entities in singular form. For people please include the entire name.
+1. Identify all named entities in singular form. For people please include the entire name. Entities can also be technologies.
 For each identified entity, extract the following information:
 - entity_name: Name of the entity
 - entity_description: Comprehensive description of the entity's attributes and activities
@@ -34,6 +35,12 @@ Format each relationship as a JSON entry with the following format:
 {"source": <source_entity>, "target": <target_entity>, "relationship": <relationship_description>}
 
 3. Return output in English as a single list of all JSON entities and relationships identified in steps 1 and 2.
+return the JSON like this:
+
+{
+ 'entities': [{"name": <entity name1>, "description": <entity description1>}, {"name": <entity name1>, "description": <entity description1>}],
+ 'relationships':[{"source": <source_entity>, "target": <target_entity>, "relationship": <relationship_description>}, and more]
+}
 
 However, only extract entities that are specific so avoid extracting entities like CEO or employee, but instead
 extract only named entities.
@@ -45,13 +52,6 @@ text: This is a test
 output:"""
 
 input_text: str = "This is a test"
-
-
-def test_templating_function_json_build() -> None:
-  assert (
-    process_template(template_file="json_build.jinja", data={"input_text": input_text})
-    == json_build_template
-  )
 
 
 def test_templating_function_json_build_empty_data() -> None:

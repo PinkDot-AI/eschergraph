@@ -46,26 +46,18 @@ def test_prep_sync_vector_db(mock_repository: Mock) -> None:
   mock_repository.get_change_log.return_value = change_logs
 
   # Inject the mock repository into the function
-  create_main, create_node_name, ids_to_delete, delete_node_name_ids = (
-    prepare_sync_data(mock_repository)
-  )
+  create_main, ids_to_delete = prepare_sync_data(mock_repository)
 
   ids_to_create, docs_to_create, metadata_to_create = zip(*create_main)
-  ids_to_create_node, node_to_create, metadata_to_create_node = zip(*create_node_name)
 
   assert set(ids_to_create) == {node1.id, node2.id, edge1.id, prop1.id}
   assert set(ids_to_delete) == {node2.id, prop1.id}
   assert set(docs_to_create) == {
-    node1.description,
-    node2.description,
+    node1.name + ", " + node1.description,
+    node2.name + ", " + node2.description,
     edge1.description,
-    prop1.description,
+    prop1.node.name + ", " + prop1.description,
   }
-
-  assert set(node_to_create) == {node1.name, node2.name}
-  assert set(delete_node_name_ids) == {node2.id}
-  assert set(ids_to_create_node) == {node1.id, node2.id}
-
   # Assert the correct metadata
   for md in metadata_to_create:
     if md["type"] == "node":

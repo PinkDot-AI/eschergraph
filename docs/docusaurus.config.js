@@ -42,12 +42,10 @@ const config = {
         docs: {
           sidebarPath: './sidebars.js',
           // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
         },
         blog: {
           showReadingTime: true,
           // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
         },
         theme: {
           customCss: './src/css/custom.css',
@@ -61,6 +59,11 @@ const config = {
     ({
       // Replace with your project's social card
       image: 'img/pinkdot.png',
+      metadata: [
+        {name: 'keywords', content: 'EscherGraph, GraphRAG Knowledge Graphs Retrieval-augmented-generation'},
+        {name: 'twitter:card', content: 'summary_large_image'},
+      ],
+      
       navbar: {
         title: 'EscherGraph',
         logo: {
