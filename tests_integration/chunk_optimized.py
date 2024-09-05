@@ -67,7 +67,6 @@ def chunk_optimizer():
       print(e)
 
 
-#
 TEST_FILE_2 = "test_files/test_file_2.pdf"
 
 
@@ -84,9 +83,6 @@ def search_check():
   query = "Who is Mahmood Sher-Jan?"
   r = graph.search(query)
   print(r)
-
-
-search_check()
 
 
 def test_search_graph() -> None:

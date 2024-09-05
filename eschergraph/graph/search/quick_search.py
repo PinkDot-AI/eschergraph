@@ -8,12 +8,8 @@ from attrs import define
 from dotenv import load_dotenv
 
 from eschergraph.agents.jinja_helper import process_template
-from eschergraph.agents.llm import ModelProvider
 from eschergraph.agents.providers.jina import JinaReranker
 from eschergraph.agents.reranker import RerankerResult
-from eschergraph.exceptions import ExternalProviderException
-from eschergraph.graph.edge import Edge
-from eschergraph.graph.node import Node
 from eschergraph.graph.persistence.metadata import Metadata
 
 if TYPE_CHECKING:
@@ -49,6 +45,9 @@ def quick_search(
   if query.strip() == "":
     return "please ask a question"
   attributes: list[AttributeSearch] = _get_attributes(graph, query)
+  for a in attributes:
+    print(a)
+    print()
   chunks_string: str = ""
   if len(attributes) == 0:
     chunks_string = "Nothing found in the graph regarding this question!"
@@ -122,87 +121,102 @@ def rerank_and_filter_attributes(
   graph: Graph,
   query: str,
   attributes_results: list[dict[str, UUID | int | str | float | dict[str, Any]]],
-  threshold: float = 0.0,
+  threshold: float = 0.2,
 ) -> list[AttributeSearch]:
   """Filters and reformats a list of reranked attributes based on relevance score.
 
   Args:
-      graph (Graph): the graph holding the repository
-      query (str): the regarding question in the search
+      graph (Graph): The graph holding the repository.
+      query (str): The regarding question in the search.
       attributes_results (list[dict[str, UUID | int | str | float | dict[str, Any]]]):
           A list of dictionaries containing the original search results with associated metadata.
-      threshold (int): is the reranker threshhold
+      threshold (float): The reranker threshold.
 
   Returns:
       list[AttributeSearch]: A list of AttributeSearch objects that have been filtered by relevance
       score and enriched with the corresponding metadata and parent nodes.
   """
-  # Preprocess attributes_results into a dictionary for quick lookups
-  attributes_string: list[str] = [
+  attributes_string = [
     a["chunk"] for a in attributes_results if isinstance(a["chunk"], str)
   ]
-  reranked_attributes: list[RerankerResult] = rerank(
-    query, attributes_string, top_n=len(attributes_string)
-  )
-  results_dict: dict[str, dict[str, Any]] = {
-    a["chunk"]: a["metadata"]
-    for a in attributes_results
-    if isinstance(a["chunk"], str) and isinstance(a["metadata"], dict)
-  }
+  results_dict = {}
+  for a in attributes_results:
+    if isinstance(a["chunk"], str) and isinstance(a["metadata"], dict):
+      metadata = a["metadata"]
+      metadata["id"] = a["id"]
+      results_dict[a["chunk"]] = metadata
 
-  attributes_filtered: list[AttributeSearch] = []
+  # rerank
+  reranked_attributes = rerank(query, attributes_string, top_n=len(attributes_string))
+
+  return filter_attributes(graph, reranked_attributes, results_dict, threshold)
+
+
+def filter_attributes(
+  graph: Graph,
+  reranked_attributes: list[RerankerResult],
+  results_dict: dict[str, dict[str, Any]],
+  threshold: float,
+) -> list[AttributeSearch]:
+  """Filters reranked attributes based on relevance score and retrieves associated metadata.
+
+  Args:
+      graph (Graph): The graph holding the repository.
+      reranked_attributes (list[RerankerResult]): A list of reranked attributes.
+      results_dict (dict[str, dict[str, Any]]): The preprocessed attribute metadata.
+      threshold (float): The relevance score threshold for filtering.
+
+  Returns:
+      list[AttributeSearch]: A list of filtered and enriched AttributeSearch objects.
+  """
+  filtered_attributes = []
 
   for r in reranked_attributes:
     if r.relevance_score <= threshold:
       break
 
-    # Direct lookup from the dictionary
     metadata = results_dict.get(r.text)
-
     if metadata:
-      # Create the AttributeSearch object with the metadata and parent nodes
-      if metadata["type"] == "node":
-        node: Node = graph.repository.get_node_by_id(UUID(metadata["id"]))
-        metadata: set[Metadata] = node.metadata
-        parrent_nodes: list[str] = [node.name]
-      elif metadata["type"] == "edge":
-        edge: Edge = graph.repository.get_edge_by_id(UUID(metadata["id"]))
-        metadata: set[Metadata] = edge.metadata
-        parrent_nodes: list[str] = [edge.to, edge.frm]
-      elif metadata["type"] == "property":
-        prop = graph.repository.get_property_by_id(UUID(metadata["id"]))
-        metadata: set[Metadata] = prop.metadata
-        parrent_nodes: list[str] = [prop.node.name]
+      attribute = create_attribute_search(graph, r.text, metadata)
+      if attribute:
+        filtered_attributes.append(attribute)
 
-      obj = AttributeSearch(
-        text=r.text,
-        metadata=metadata,
-        parent_nodes=parrent_nodes,
-      )
-
-      attributes_filtered.append(obj)
-
-  return attributes_filtered
+  return filtered_attributes
 
 
-def extract_entities_from(query: str, llm: ModelProvider) -> list[str]:
-  """Extract entities from query.
+def create_attribute_search(
+  graph: Graph, text: str, metadata: dict[str, Any]
+) -> AttributeSearch | None:
+  """Creates an AttributeSearch object based on the metadata and graph nodes or edges.
 
   Args:
-      query (str): Text
-      llm (ModelProvider): A large language ModelProvider class
+      graph (Graph): The graph holding the repository.
+      text (str): The attribute text (chunk).
+      metadata (dict[str, Any]): The associated metadata for the attribute.
+
   Returns:
-      List[str]: list of entities
+      AttributeSearch | None: The constructed AttributeSearch object or None if no valid data.
   """
-  entity_extraction_template = "search/entity_extraction.jinja"
-  prompt = process_template(
-    entity_extraction_template,
-    {"query": query},
-  )
-  res = llm.get_json_response(prompt=prompt)
-  if not res:
-    raise ExternalProviderException("Empty message response while extracting entities")
-  try:
-    return res["entities"]  # type: ignore
-  except:
-    raise ExternalProviderException("jsonify failed at extracting entities from query")
+  metadata_obj, parent_nodes = None, []
+  if metadata["type"] == "node":
+    node = graph.repository.get_node_by_id(UUID(metadata["id"]))
+    if node:
+      metadata_obj = node.metadata
+      parent_nodes = [node.name]
+
+  elif metadata["type"] == "edge":
+    edge = graph.repository.get_edge_by_id(UUID(metadata["id"]))
+    if edge:
+      metadata_obj = edge.metadata
+      parent_nodes = [edge.to.name, edge.frm.name]
+
+  elif metadata["type"] == "property":
+    prop = graph.repository.get_property_by_id(UUID(metadata["id"]))
+    if prop:
+      metadata_obj = prop.metadata
+      parent_nodes = [prop.node.name]
+
+  if metadata_obj:
+    return AttributeSearch(text=text, metadata=metadata_obj, parent_nodes=parent_nodes)
+
+  return None
