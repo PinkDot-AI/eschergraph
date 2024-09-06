@@ -18,7 +18,7 @@ from eschergraph.tools.reader import Chunk
 from eschergraph.tools.reader import Reader
 from eschergraph.visualization import Visualizer
 
-TEST_FILE: str = "./test_files/test_file.pdf"
+TEST_FILE: str = "./test_files/Attention Is All You Need.pdf"
 
 # Load all the credentials
 load_dotenv()

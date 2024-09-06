@@ -186,7 +186,7 @@ class BuildPipeline:
           edge_ext["target"].lower(), document_id=log.metadata.document_id
         )
         if not frm or not to:
-          print("source or target node does not exist in nodes of this edge:", edge_ext)
+          print("Source or target node does not exist in nodes of this edge:", edge_ext)
           continue
         if frm == to:
           print(

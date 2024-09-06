@@ -157,3 +157,39 @@ def test_adding_nodes_connected_to_node_added(saved_graph_dir: Path) -> None:
   assert node_to.id in repository.nodes
   assert not node_extra.id in repository.nodes
   assert repository.nodes[node_to.id]["edges"] == {edge_in_scope.id}
+
+
+def test_adding_nodes_through_connected_edges(saved_graph_dir: Path) -> None:
+  repository: SimpleRepository = SimpleRepository(
+    save_location=saved_graph_dir.as_posix()
+  )
+  node1: Node = create_basic_node(repository=repository)
+  node2: Node = create_basic_node(repository=repository)
+  node3: Node = create_basic_node(repository=repository)
+
+  edge1: Edge = create_edge(frm=node1, to=node2)
+  edge2: Edge = create_edge(frm=node2, to=node3)
+
+  repository.add(node1)
+
+  # Check if node 2 is only added with its edge to node1
+  node2_per: Node | None = repository.get_node_by_id(id=node2.id)
+
+  if not node2_per:
+    pytest.fail()
+
+  assert edge1.id in repository.edges
+  assert node2_per.edges == {edge1}
+
+  repository.add(node2)
+
+  # Check if all node2's edges are now added
+  node2_full: Node | None = repository.get_node_by_id(id=node2.id)
+  node3_per: Node | None = repository.get_node_by_id(id=node3.id)
+
+  if not node2_full or not node3_per:
+    pytest.fail()
+
+  assert node2_full.edges == {edge1, edge2}
+  assert node3.edges == {edge2}
+  assert edge2.id in repository.edges
