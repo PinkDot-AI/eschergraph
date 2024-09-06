@@ -349,15 +349,6 @@ class SimpleRepository(Repository):
         else:
           node_model[attr] = Node.__dict__[attr].fget(node)  # type: ignore
 
-    # Adding the nodes (without edges) that are connected to this node
-    for edge in node.edges:
-      if not edge.frm.id in self.nodes:
-        self._add_new_node(node=edge.frm, add_edges=False)
-      elif not edge.to.id in self.nodes:
-        self._add_new_node(node=edge.to, add_edges=False)
-
-      self._add_edge(edge)
-
     # Adding the child nodes (without edges)
     for child in node.child_nodes:
       if not child.id in self.nodes:
@@ -383,7 +374,13 @@ class SimpleRepository(Repository):
     node_model: NodeModel = self._new_node_to_node_model(node)
     if not add_edges:
       node_model["edges"] = set()
+
     self.nodes[node.id] = node_model
+
+    # Add the edges
+    if add_edges:
+      for edge in node.edges:
+        self._add_edge(edge)
 
     # Add the properties
     for prop in node.properties:
@@ -395,11 +392,6 @@ class SimpleRepository(Repository):
         self.doc_node_name_index[mtd.document_id] = {}
 
       self.doc_node_name_index[mtd.document_id][node.name] = node.id
-
-    # Log the addition of a new node
-    self.change_log.append(
-      ChangeLog(id=node.id, action=Action.CREATE, type=Node, level=node.level)
-    )
 
     # Log the addition of a new node
     self.change_log.append(
@@ -479,11 +471,21 @@ class SimpleRepository(Repository):
     }
 
   def _add_edge(self, edge: Edge) -> None:
-    # Check if both referenced nodes are already persisted
-    if not edge.frm.id in self.nodes or not edge.to.id in self.nodes:
+    # Throw an error if neither of the nodes exist
+    if not edge.frm.id in self.nodes and not edge.to.id in self.nodes:
       raise PersistingEdgeException(
-        "Both referenced nodes need to exist when an edge is persisted directly"
+        "Adding an edge for which neither of the nodes is already persisted"
       )
+
+    # Add the other node if one of the nodes does not exist
+    node_to_add: Optional[Node] = None
+    if not edge.frm.id in self.nodes:
+      node_to_add = edge.frm
+    elif not edge.to.id in self.nodes:
+      node_to_add = edge.to
+
+    if node_to_add:
+      self._add_new_node(node=node_to_add, add_edges=False)
 
     # Check if the edge already exists
     if not edge.id in self.edges:
