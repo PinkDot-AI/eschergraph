@@ -23,7 +23,6 @@ def global_search(graph: Graph, query: str) -> str:
     str: The processed response from the graph model based on the search results..
   """
   extractions: list[AttributeSearch] = _get_relevant_extractions(graph, query)
-
   ans_template = "search/global_search_context.jinja"
   context = "\n".join([a.text for a in extractions])
   full_prompt = process_template(ans_template, {"CONTEXT": context, "QUERY": query})
