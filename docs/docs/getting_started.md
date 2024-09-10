@@ -102,11 +102,11 @@ Local search considers all, nodes, edges, and properties to select the most rele
 ```python
 global_question = 'What are the conclusions from the paper?'
 
-answer = graph.global_search(question)
+answer = graph.global_search(global_question)
 print(answer)
 ```
 A global search considers the higher levels of the graph, and is great for answering general topic questions about the files in the graph.
-For example, it can be used to draw conclusions and interpret a sentiment in a text.
+For example, it can be used to draw conclusions and interpret sentiment in a text.
 
 ## Visualize
 ### Dashboard
