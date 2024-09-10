@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "eschergraph"
-version = "0.2.4"
+version = "0.2.5"
 description = "The library that uses AI agents to enable building and searching in generalized knowledge graphs."
 authors = ["PinkDot AI"]
 license = "MIT"
