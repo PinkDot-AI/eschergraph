@@ -43,7 +43,7 @@ def prepare_sync_data(
         continue
       # add node description
       md_node: dict[str, str | int] = {
-        "level": log.level,
+        "level": cur_log.level,
         "type": "node",
         "entity_frm": node.name,
         "entity_to": "",
@@ -56,7 +56,7 @@ def prepare_sync_data(
       if not edge:
         continue
       md_edge: dict[str, str | int] = {
-        "level": log.level,
+        "level": cur_log.level,
         "type": "edge",
         "entity_frm": edge.frm.name,
         "entity_to": edge.to.name,
@@ -68,7 +68,7 @@ def prepare_sync_data(
       if not property:
         continue
       md_prop: dict[str, str | int] = {
-        "level": log.level,
+        "level": cur_log.level,
         "type": "property",
         "entity_frm": property.node.name,
         "entity_to": "",

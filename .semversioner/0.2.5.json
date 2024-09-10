@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "description": "Fixed a bug where context was sometimes missing for search and global search",
+      "type": "patch"
+    }
+  ],
+  "created_at": "2024-09-10T15:24:54+00:00",
+  "version": "0.2.5"
+}

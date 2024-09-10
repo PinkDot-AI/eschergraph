@@ -183,7 +183,7 @@ def filter_attributes(
 
 def create_attribute_search(
   graph: Graph, text: str, metadata: dict[str, Any]
-) -> AttributeSearch | None:
+) -> AttributeSearch:
   """Creates an AttributeSearch object based on the metadata and graph nodes or edges.
 
   Args:
@@ -213,7 +213,4 @@ def create_attribute_search(
       metadata_obj = prop.metadata
       parent_nodes = [prop.node.name]
 
-  if metadata_obj:
-    return AttributeSearch(text=text, metadata=metadata_obj, parent_nodes=parent_nodes)
-
-  return None
+  return AttributeSearch(text=text, metadata=metadata_obj, parent_nodes=parent_nodes)

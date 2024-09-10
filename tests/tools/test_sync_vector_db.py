@@ -76,6 +76,38 @@ def test_prep_sync_vector_db(mock_repository: Mock) -> None:
       pytest.fail()
 
 
+def test_prep_sync_vector_db_create_correct_level(mock_repository: Mock) -> None:
+  node: Node = create_basic_node(repository=mock_repository)
+  edge: Edge = create_edge(repository=mock_repository)
+  prop: Property = create_property(repository=mock_repository)
+
+  # Set up the return values for the mock repo
+  mock_repository.get_node_by_id.side_effect = [node]
+  mock_repository.get_edge_by_id.side_effect = [edge]
+  mock_repository.get_property_by_id.side_effect = [prop]
+
+  change_logs: list[ChangeLog] = [
+    ChangeLog(id=node.id, action=Action.CREATE, type=Node, level=0),
+    ChangeLog(id=edge.id, action=Action.CREATE, type=Edge, level=1),
+    ChangeLog(id=prop.id, action=Action.DELETE, type=Property, level=12),
+  ]
+  mock_repository.get_change_log.return_value = change_logs
+
+  # Inject the mock repository into the function
+  create_main, _ = prepare_sync_data(mock_repository)
+  _, _, metadata_to_create = zip(*create_main)
+
+  for md in metadata_to_create:
+    if md["type"] == "node":
+      assert md["level"] == 0
+    elif md["type"] == "edge":
+      assert md["level"] == 1
+    elif md["type"] == "property":
+      assert md["level"] == 12
+    else:
+      pytest.fail()
+
+
 def test_prep_sync_vector_db_no_actions_needed() -> None:
   node_id: UUID = uuid4()
   edge_id: UUID = uuid4()
