@@ -170,11 +170,9 @@ class Graph:
 
     # Collection names
     collection_main = "main_collection"
-    collection_nodes = "node_name_collection"
 
     # Ensure the collections exist
     self.vector_db.get_or_create_collection(collection_main)
-    self.vector_db.get_or_create_collection(collection_nodes)
 
     # Function to delete records if any
     def delete_records(ids: list[UUID], collection: str) -> None:

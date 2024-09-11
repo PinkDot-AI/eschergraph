@@ -15,6 +15,9 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from eschergraph.exceptions import FileTypeNotProcessableException
 from eschergraph.tools.fast_pdf_parser import FastPdfParser
 from eschergraph.tools.fast_pdf_parser import PdfParsedSegment
+from eschergraph.tools.pdf_document_layout_analysis.pdf_parser_large.pdf_parser_large import (
+  pdf_parser_large,
+)
 
 
 @define
@@ -60,6 +63,8 @@ class Reader:
       self._handle_plain_text()
     elif self.file_location.endswith(".pdf"):
       # Handle pdf file
+      if self.multimodal:
+        response_json = self._get_document_analysis_large()
       response_json = self._get_document_analysis()
       if response_json:
         self._handle_json_response(response_json)
@@ -80,6 +85,9 @@ class Reader:
     # Send the file to the specified URL and get the response
     return FastPdfParser.parse(file_path=self.file_location)
 
+  def _get_document_analysis_large(self) -> list[PdfParsedSegment]:
+    return pdf_parser_large(document_path=self.file_location)
+
   def _handle_json_response(self, response_json: Any) -> None:
     current_chunk: list[str] = []
     current_token_count: int = 0
@@ -88,7 +96,8 @@ class Reader:
     for i, item in enumerate(response_json):
       if item["type"] in ["TABLE", "PICTURE", "CAPTION"] and self.multimodal:
         # TODO: implement multimodal handling
-        pass
+        print("----")
+        print(item)
 
       elif item["type"] in ["TEXT", "SECTION_HEADER", "list_ITEM", "FORMULA"]:
         text: str = item["text"] + "\n"

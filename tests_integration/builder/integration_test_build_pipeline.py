@@ -27,11 +27,11 @@ def integration_test_building() -> None:
   # print('GLOBAL ANSWER')
   # print(r)
   # print()
-  query = "What did Rahel Dette say in a qoute?"
-
-  r = graph.search(query)
+  # query = "What did Rahel Dette say in a qoute?"
+  print(graph.repository.get_all_at_level(0))
+  # r = graph.search(query)
   print("QUICK ANSWER")
-  print(r)
+  # print(r)
   print()
 
 
