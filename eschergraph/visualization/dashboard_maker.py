@@ -8,7 +8,7 @@ from tabulate import tabulate
 
 if TYPE_CHECKING:
   from eschergraph.graph.node import Node
-  from eschergraph.persistence.document import DocumentData
+  from eschergraph.persistence.document import Document
   from eschergraph.graph import Graph
 
 
@@ -17,7 +17,7 @@ class DashboardData(TypedDict):
 
   llm_model_type: str
   reranker_model_type: str
-  documents: list[DocumentData]
+  documents: list[Document]
   lower_nodes: list[Node]
   communities: list[Node]
   top_5_nodes: list[Node]
@@ -62,7 +62,7 @@ class DashboardMaker:
     }
 
     # Fetch documents using the collected document IDs
-    documents = graph.repository.get_documents_by_id(list(document_ids))
+    documents: list[Document] = graph.repository.get_all_documents()
 
     # Return the gathered data
     return DashboardData(
@@ -87,7 +87,7 @@ class DashboardMaker:
     """
     llm_model_type: str = data["llm_model_type"]
     reranker_type: str = data["reranker_model_type"]
-    documents: list[DocumentData] = data["documents"]
+    documents: list[Document] = data["documents"]
     top_5_nodes: list[Node] = data["top_5_nodes"]
     top_3_communities: list[Node] = data["top_3_communities"]
     total_num_nodes: int = data["total_num_nodes"]

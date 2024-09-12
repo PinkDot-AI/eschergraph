@@ -6,7 +6,7 @@ from attrs import define
 
 
 @define
-class DocumentData:
+class Document:
   """The document data object."""
 
   id: UUID

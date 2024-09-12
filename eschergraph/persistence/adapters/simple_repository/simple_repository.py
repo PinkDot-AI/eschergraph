@@ -48,7 +48,7 @@ from eschergraph.persistence.adapters.simple_repository.utils import (
 )
 from eschergraph.persistence.change_log import Action
 from eschergraph.persistence.change_log import ChangeLog
-from eschergraph.persistence.document import DocumentData
+from eschergraph.persistence.document import Document
 from eschergraph.persistence.exceptions import DirectoryDoesNotExistException
 from eschergraph.persistence.exceptions import FilesMissingException
 from eschergraph.persistence.exceptions import PersistenceException
@@ -72,7 +72,7 @@ class SimpleRepository(Repository):
   properties: dict[UUID, PropertyModel] = field(init=False)
   doc_node_name_index: dict[UUID, dict[str, UUID]] = field(init=False)
   change_log: list[ChangeLog] = field(init=False)
-  documents: dict[UUID, DocumentData] = field(init=False)
+  documents: dict[UUID, Document] = field(init=False)
   original_build_logs: dict[UUID, list[BuildLog]] = field(init=False)
 
   def __init__(
@@ -603,14 +603,14 @@ class SimpleRepository(Repository):
     """
     self.change_log = []
 
-  def add_document(self, document_data: DocumentData) -> None:
+  def add_document(self, document_data: Document) -> None:
     """Adds a document to the system.
 
     If a document with the same ID already exists, then the existing
     data will be overwritten with the specified object.
 
     Args:
-      document_data (DocumentData): The document data that needs to be added.
+      document_data (Document): The document data that needs to be added.
     """
     self.documents[document_data.id] = document_data
 
@@ -618,23 +618,24 @@ class SimpleRepository(Repository):
     if not (doc_id := document_data.id) in self.doc_node_name_index:
       self.doc_node_name_index[doc_id] = {}
 
-  def get_documents_by_id(self, ids: list[UUID]) -> list[DocumentData]:
+  def get_document_by_id(self, id: UUID) -> Optional[Document]:
     """Retrieves documents based on a list of document UUIDs.
 
     Args:
-      ids (list[UUID]): A list of UUIDs representing the documents to be fetched.
+      id (UUID): The UUID for the document to be fetched.
 
     Returns:
-      list[DocumentData]: A list of DocumentData instances for the requested documents.
+      Optional[Document]: Returns the Document or none if it does not exist.
     """
-    doc_result: list[DocumentData] = []
-    for doc_id in ids:
-      document: DocumentData | None = self.documents.get(doc_id)
+    return self.documents.get(id)
 
-      if document:
-        doc_result.append(document)
+  def get_all_documents(self) -> list[Document]:
+    """Get all documents that exist in a graph.
 
-    return doc_result
+    Returns:
+      list[Document]: A list containing all the documents.
+    """
+    return list(self.documents.values())
 
   def remove_node_by_id(self, id: UUID) -> None:
     """Remove a node by id.

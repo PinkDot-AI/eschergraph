@@ -15,7 +15,7 @@ if TYPE_CHECKING:
   from eschergraph.graph import Edge
   from eschergraph.graph import Property
   from eschergraph.persistence.change_log import ChangeLog
-  from eschergraph.persistence.document import DocumentData
+  from eschergraph.persistence.document import Document
 
 
 class Repository(ABC):
@@ -163,27 +163,6 @@ class Repository(ABC):
     raise NotImplementedError
 
   @abstractmethod
-  def add_document(self, document_data: DocumentData) -> None:
-    """Adds a document to the system.
-
-    Args:
-      document_data (DocumentData): The document data that needs to be added.
-    """
-    raise NotImplementedError
-
-  @abstractmethod
-  def get_documents_by_id(self, ids: list[UUID]) -> list[DocumentData]:
-    """Retrieves documents based on a list of document UUIDs.
-
-    Args:
-      ids (list[UUID]): A list of UUIDs representing the documents to be fetched.
-
-    Returns:
-      list[DocumentData]: A list of DocumentData instances for the requested documents.
-    """
-    raise NotImplementedError
-
-  @abstractmethod
   def remove_node_by_id(self, id: UUID) -> None:
     """Remove a node by id.
 
@@ -201,5 +180,37 @@ class Repository(ABC):
 
     Args:
       id (UUID): The document's id.
+    """
+    raise NotImplementedError
+
+  @abstractmethod
+  def add_document(self, document_data: Document) -> None:
+    """Adds a document to the system.
+
+    A document that already exists will be overwritten.
+
+    Args:
+      document_data (Document): The document data that needs to be added.
+    """
+    raise NotImplementedError
+
+  @abstractmethod
+  def get_document_by_id(self, id: UUID) -> Optional[Document]:
+    """Retrieves documents based on a list of document UUIDs.
+
+    Args:
+      id (UUID): The UUID for the document to be fetched.
+
+    Returns:
+      Optional[Document]: Returns the Document or none if it does not exist.
+    """
+    raise NotImplementedError
+
+  @abstractmethod
+  def get_all_documents(self) -> list[Document]:
+    """Get all documents that exist in a graph.
+
+    Returns:
+      list[Document]: A list containing all the documents.
     """
     raise NotImplementedError

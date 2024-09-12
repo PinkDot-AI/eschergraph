@@ -13,7 +13,7 @@ from eschergraph.persistence import Metadata
 from eschergraph.persistence.adapters.simple_repository import SimpleRepository
 from eschergraph.persistence.change_log import Action
 from eschergraph.persistence.change_log import ChangeLog
-from eschergraph.persistence.document import DocumentData
+from eschergraph.persistence.document import Document
 from eschergraph.persistence.exceptions import DirectoryDoesNotExistException
 from eschergraph.persistence.exceptions import FilesMissingException
 from tests.graph.help import create_basic_node
@@ -230,7 +230,7 @@ def test_change_log_deleting_document(saved_graph_dir: Path) -> None:
 
   # Add and create the document object
   metadata: Metadata = next(iter(nodes[0].metadata))
-  document: DocumentData = DocumentData(
+  document: Document = Document(
     id=metadata.document_id, name="test.pdf", chunk_num=100, token_num=100
   )
   repository.add_document(document)

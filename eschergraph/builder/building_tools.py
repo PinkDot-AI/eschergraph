@@ -8,7 +8,7 @@ from eschergraph.tools.reader import Chunk
 from eschergraph.tools.reader import Reader
 
 if TYPE_CHECKING:
-  from eschergraph.persistence.document import DocumentData
+  from eschergraph.persistence.document import Document
 
 
 class BuildingTools:
@@ -17,22 +17,22 @@ class BuildingTools:
   @staticmethod
   def process_files(
     files: str | list[str],
-  ) -> tuple[list[Chunk], list[DocumentData], int]:
+  ) -> tuple[list[Chunk], list[Document], int]:
     """Process the given files and extract chunks, document data, and total tokens.
 
     Args:
         files (str | list[str]): A single file path or a list of file paths to process.
 
     Returns:
-        tuple[list[Chunk], list[DocumentData], int]: A tuple containing:
+        tuple[list[Chunk], list[Document], int]: A tuple containing:
             - A list of Chunk objects
-            - A list of DocumentData objects
+            - A list of Document objects
             - The total number of tokens processed
     """
-    from eschergraph.persistence.document import DocumentData
+    from eschergraph.persistence.document import Document
 
     chunks: list[Chunk] = []
-    document_data: list[DocumentData] = []
+    document_data: list[Document] = []
     total_tokens: int = 0
 
     file_list = [files] if isinstance(files, str) else files
@@ -42,7 +42,7 @@ class BuildingTools:
       reader.parse()
       chunks.extend(reader.chunks)
 
-      doc_data = DocumentData(
+      doc_data = Document(
         id=reader.doc_id,
         name=reader.filename,
         chunk_num=len(reader.chunks),

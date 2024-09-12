@@ -12,7 +12,7 @@ from eschergraph.graph import Node
 from eschergraph.graph import Property
 from eschergraph.persistence import Metadata
 from eschergraph.persistence.adapters.simple_repository import SimpleRepository
-from eschergraph.persistence.document import DocumentData
+from eschergraph.persistence.document import Document
 from tests.graph.help import create_edge
 from tests.graph.help import create_simple_extracted_graph
 
@@ -117,10 +117,10 @@ def test_delete_document_fully(saved_graph_dir: Path) -> None:
 
   # Add both documents
   repository.add_document(
-    DocumentData(id=document_id1, name="doc1", chunk_num=100, token_num=100)
+    Document(id=document_id1, name="doc1", chunk_num=100, token_num=100)
   )
   repository.add_document(
-    DocumentData(id=document_id2, name="doc2", chunk_num=100, token_num=100)
+    Document(id=document_id2, name="doc2", chunk_num=100, token_num=100)
   )
 
   repository.remove_document_by_id(document_id1)
@@ -159,10 +159,10 @@ def test_delete_document_partially(saved_graph_dir: Path) -> None:
 
   # Add both documents
   repository.add_document(
-    DocumentData(id=document_id1, name="doc1", chunk_num=100, token_num=100)
+    Document(id=document_id1, name="doc1", chunk_num=100, token_num=100)
   )
   repository.add_document(
-    DocumentData(id=document_id2, name="doc2", chunk_num=100, token_num=100)
+    Document(id=document_id2, name="doc2", chunk_num=100, token_num=100)
   )
 
   # Select a node that will come from both documents
