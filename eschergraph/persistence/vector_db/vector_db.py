@@ -2,13 +2,17 @@ from __future__ import annotations
 
 from abc import ABC
 from abc import abstractmethod
-from typing import Any
 from typing import Optional
 from uuid import UUID
 
+from eschergraph.persistence.vector_db.vector_search_result import VectorSearchResult
+
 
 class VectorDB(ABC):
-  """This is the abstract base class for all vector DB implementations."""
+  """This is the abstract base class for all vector DB implementations.
+
+  It is important to note that an embedding model is included in the abstract vector database class.
+  """
 
   required_credentials: list[str]
 
@@ -51,61 +55,31 @@ class VectorDB(ABC):
     query: str,
     top_n: int,
     collection_name: str,
-    metadata: Optional[dict[str, Any]] = None,
-  ) -> dict[str, str]:
-    """Search for the top_n documents that are most similar to the given embedding.
+    metadata: Optional[dict[str, str | int]] = None,
+  ) -> list[VectorSearchResult]:
+    """Search for the top_n documents that are most similar to the given query.
 
     Args:
-      query (str): the query to search for
-      query (str): the query to search for
-      top_n (int): Number of top documents to retrieve.
+      query (str): The query to search for.
+      top_n (int): Number of top search results to retrieve.
       collection_name (str): The name of the collection.
-      metadata (Optional[dict[str, Any]]): Metadata to filter the search results.
+      metadata (Optional[dict[str, str | int]]): Metadata to filter the search results.
 
     Returns:
-      Dictionary with results that match the query.
+      A list of vector search results.
     """
     raise NotImplementedError
 
   @abstractmethod
-  def format_search_results(
-    self,
-    result: dict[str, str],
-  ) -> list[dict[str, UUID | int | str | float | dict[str, Any]]]:
-    """Format search results into a standard.
-
-    Args:
-        result: The result of a search
-
-    Returns:
-        Dict[str, int | str | float | dict]: A list of dictionaries containing a standardized format
-    """
-    raise NotImplementedError
-
-  @abstractmethod
-  def delete_with_id(
+  def delete_by_ids(
     self,
     ids: list[UUID],
     collection_name: str,
   ) -> None:
-    """Delete an item in the vectordb by its id.
+    """Delete records from collection by their ids.
 
     Args:
-      ids (str): list of ids that need to be removed
+      ids (list[str]): list of ids that need to be removed
       collection_name (str): The name of the collection.
     """
     raise NotImplementedError
-
-  @abstractmethod
-  def delete_with_metadata(
-    self,
-    metadata: dict[str, Any],
-    collection_name: str,
-  ) -> None:
-    """Delete an item in the vectordb by metadata filters.
-
-    Args:
-      metadata (dict[str, str]): Metadata to filter the search results.
-      collection_name (str): The name of the collection.
-    """
-    pass

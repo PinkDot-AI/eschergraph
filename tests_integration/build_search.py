@@ -31,7 +31,11 @@ def build_graph() -> None:
   repository: Repository = SimpleRepository(
     name=graph_name, save_location=temp_path.as_posix()
   )
-  chroma: VectorDB = ChromaDB(save_name=graph_name, persistent=False)
+  chroma: VectorDB = ChromaDB(
+    save_name=graph_name,
+    persistent=False,
+    embedding_model=OpenAIProvider(model=OpenAIModel.TEXT_EMBEDDING_LARGE),
+  )
   graph: Graph = Graph(
     name=graph_name,
     repository=repository,

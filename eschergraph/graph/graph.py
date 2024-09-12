@@ -3,7 +3,6 @@ from __future__ import annotations
 import os
 from typing import Optional
 from typing import TYPE_CHECKING
-from uuid import UUID
 
 from eschergraph.agents.llm import ModelProvider
 from eschergraph.agents.providers.jina import JinaReranker
@@ -18,6 +17,7 @@ from eschergraph.graph.node import Node
 from eschergraph.graph.search.global_search import global_search
 from eschergraph.graph.search.quick_search import quick_search
 from eschergraph.graph.utils import duplicate_document_check
+from eschergraph.graph.utils import search_check
 from eschergraph.persistence import Metadata
 from eschergraph.persistence import Repository
 from eschergraph.persistence.factory import get_default_repository
@@ -169,37 +169,22 @@ class Graph:
     # Prepare data for synchronization
     create_main, ids_to_delete = prepare_sync_data(repository=self.repository)
 
-    # Collection names
-    collection_main = "main_collection"
-    collection_nodes = "node_name_collection"
+    main_collection: str = "main_collection"
 
-    # Ensure the collections exist
-    self.vector_db.get_or_create_collection(collection_main)
-    self.vector_db.get_or_create_collection(collection_nodes)
+    # Ensure the collection exists
+    self.vector_db.get_or_create_collection(main_collection)
 
-    # Function to delete records if any
-    def delete_records(ids: list[UUID], collection: str) -> None:
-      if ids:
-        self.vector_db.delete_with_id(ids, collection)
+    if ids_to_delete:
+      self.vector_db.delete_by_ids(ids_to_delete, main_collection)
 
-    # Delete records in both collections
-    delete_records(ids_to_delete, collection_main)
-
-    # Function to insert new or updated entries into a collection
-    def insert_records(
-      data: list[tuple[UUID, str, dict[str, str | int]]], collection: str
-    ) -> None:
-      if data:
-        ids, docs, metadata = zip(*data)
-        self.vector_db.insert(
-          documents=list(docs),
-          ids=list(ids),
-          metadata=list(metadata),
-          collection_name=collection,
-        )
-
-    # Insert into main and node collections
-    insert_records(create_main, collection_main)
+    if create_main:
+      ids, docs, metadatas = zip(*create_main)
+      self.vector_db.insert(
+        documents=list(docs),
+        ids=list(ids),
+        metadata=list(metadatas),
+        collection_name=main_collection,
+      )
 
   def search(self, query: str) -> str:
     """Executes a search query using a vector database and a specified model.
@@ -210,7 +195,7 @@ class Graph:
     Returns:
       The result of the search, typically a string that represents the most relevant information or document found by the search.
     """
-    if not self._search_check():
+    if not search_check(self.repository):
       raise IllogicalActionException("You cannot search a graph before building it")
     return quick_search(graph=self, query=query)
 
@@ -223,20 +208,9 @@ class Graph:
     Returns:
         str: The result of the search, is a string
     """
-    if not self._search_check():
+    if not search_check(self.repository):
       raise IllogicalActionException("You cannot search a graph before building it")
     return global_search(graph=self, query=query)
-
-  def _search_check(self) -> bool:
-    """Check if there are any elements at level 0 in the graph repository.
-
-    Args:
-      graph (Graph): The graph object to check.
-
-    Returns:
-      bool: True if there are elements at level 0, otherwise False.
-    """
-    return len(self.repository.get_all_at_level(0)) > 0
 
   def build(self, files: str | list[str]) -> Graph:
     """Build a graph from the given files.

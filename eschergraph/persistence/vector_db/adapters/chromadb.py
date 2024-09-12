@@ -6,11 +6,12 @@ from typing import Optional
 from uuid import UUID
 
 import chromadb
+from chromadb import QueryResult
 
-from eschergraph.agents.embedding import Embedding
-from eschergraph.agents.embedding import get_embedding_model
+from eschergraph.agents import Embedding
 from eschergraph.exceptions import ExternalProviderException
 from eschergraph.persistence.vector_db.vector_db import VectorDB
+from eschergraph.persistence.vector_db.vector_search_result import VectorSearchResult
 
 
 class ChromaDB(VectorDB):
@@ -21,6 +22,7 @@ class ChromaDB(VectorDB):
   def __init__(
     self,
     save_name: str,
+    embedding_model: Embedding,
     storage_dir: str = "eschergraph_storage",
     persistent: bool = True,
   ) -> None:
@@ -28,6 +30,7 @@ class ChromaDB(VectorDB):
 
     Args:
       save_name (str): The save name for the persisted vector db.
+      embedding_model (Embedding): The embedding model to use.
       storage_dir (str): The directory to store the persistent client data in.
       persistent (bool): Whether the vector database should be persistent.
     """
@@ -40,14 +43,15 @@ class ChromaDB(VectorDB):
       self.client = chromadb.PersistentClient(path=persistence_path)
     if not persistent:
       self.client = chromadb.EphemeralClient()
-    self.embedding_model: Embedding = get_embedding_model()
+
+    self.embedding_model: Embedding = embedding_model
 
   def connect(self) -> None:
     """Connect to ChromaDB. Currently not used."""
     ...
 
   def get_or_create_collection(self, collection_name: str) -> None:
-    """Create a new collection in ChromaDB.
+    """Get or create a collection in ChromaDB.
 
     Args:
       collection_name (str): The name of the collection to be created.
@@ -70,6 +74,7 @@ class ChromaDB(VectorDB):
       collection_name (str): Name of the collection to add documents to.
     """
     collection = self.client.get_collection(name=collection_name)
+
     # TODO: add more error handling / communication to operating classes
     documents = ["null" if d.strip() == "" else d for d in documents]
 
@@ -107,55 +112,29 @@ class ChromaDB(VectorDB):
     """
     embedding = self.embedding_model.get_embedding([query])
     collection = self.client.get_collection(name=collection_name)
-    results: dict[str, str] = collection.query(
+    results: QueryResult = collection.query(
       query_embeddings=embedding,
       n_results=top_n,
       where=metadata,
       include=["documents", "metadatas", "distances"],
     )
-
-    return results
-
-  def format_search_results(
-    self,
-    result: dict[str, str],
-  ) -> list[dict[str, UUID | int | str | float | dict[str, Any]]]:
-    """Format search results into a standard.
-
-    Args:
-        result: The result of a search
-
-    Returns:
-        Dict[str, int | str | float | dict]: A list of dictionaries containing a standardized format
-    """
     return [
-      {
-        "id": result["ids"][0][i],
-        "chunk": result["documents"][0][i],
-        "distance": result["distances"][0][i],
-        "metadata": result["metadatas"][0][i],
-      }
-      for i in range(len(result["ids"][0]))
+      VectorSearchResult(
+        id=results["ids"][0][i],
+        chunk=results["documents"][0][i],
+        type=results["metadatas"][0][i]["type"],
+        distance=results["distances"][0][i],
+      )
+      for i in range(len(results))
     ]
 
-  def delete_with_id(self, ids: list[UUID], collection_name: str) -> None:
-    """Deletes records from a specified collection using their unique IDs.
+  def delete_by_ids(self, ids: list[UUID], collection_name: str) -> None:
+    """Delete records from collection by their ids.
 
     Args:
-        ids (list[str]): A list of unique identifiers corresponding to the records to be deleted.
-        collection_name (str): The name of the collection from which the records will be deleted.
+      ids (list[str]): list of ids that need to be removed
+      collection_name (str): The name of the collection.
     """
     collection = self.client.get_collection(name=collection_name)
     ids: list[str] = [str(id) for id in ids]
     collection.delete(ids=ids)
-
-  def delete_with_metadata(
-    self, metadata: dict[str, Any], collection_name: str
-  ) -> None:
-    """Delete an item in the vectordb by metadata filters.
-
-    Args:
-      metadata (dict[str, str]): Metadata to filter the search results.
-      collection_name (str): The name of the collection.
-    """
-    raise NotImplementedError

@@ -12,7 +12,9 @@ import pytest
 from eschergraph.exceptions import DocumentAlreadyExistsException
 from eschergraph.exceptions import FileException
 from eschergraph.graph.utils import duplicate_document_check
+from eschergraph.graph.utils import search_check
 from eschergraph.persistence.document import Document
+from tests.graph.help import create_basic_node
 
 
 # Temporarily change the working directory to setup test files
@@ -124,3 +126,20 @@ def test_duplicate_document_check_file_already_exists(
 
     assert len(call_args) == 2
     assert call_args == ["test_file.pdf", "test_doc.xlsx"]
+
+
+def test_search_check_empty_graph(mock_repository: Mock) -> None:
+  mock_repository.get_all_at_level.return_value = []
+
+  assert not search_check(mock_repository)
+  mock_repository.get_all_at_level.assert_called_once()
+
+
+def test_search_check_nodes_at_level_0(mock_repository: Mock) -> None:
+  mock_repository.get_all_at_level.return_value = [
+    create_basic_node(mock_repository),
+    create_basic_node(mock_repository),
+  ]
+
+  assert search_check(mock_repository)
+  mock_repository.get_all_at_level.assert_called_once()

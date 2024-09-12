@@ -36,3 +36,15 @@ def duplicate_document_check(file_list: list[str], repository: Repository) -> No
       raise DocumentAlreadyExistsException(
         f"A file with this name already exists in the graph: {filename}"
       )
+
+
+def search_check(repository: Repository) -> bool:
+  """Check if there are any elements at level 0 in the graph repository.
+
+  Args:
+    repository (Repository): The repository that stores the graph.
+
+  Returns:
+    bool: True if there are elements at level 0, otherwise False.
+  """
+  return len(repository.get_all_at_level(0)) > 0
