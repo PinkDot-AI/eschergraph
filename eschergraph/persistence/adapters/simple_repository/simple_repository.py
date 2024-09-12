@@ -629,6 +629,21 @@ class SimpleRepository(Repository):
     """
     return self.documents.get(id)
 
+  def get_document_by_name(self, name: str) -> Document | None:
+    """Get a document by name.
+
+    Args:
+      name: str
+
+    Returns:
+      Optional[Document]: The document if a document with this name exists, and otherwise None.
+    """
+    for document in self.documents.values():
+      if document.name == name:
+        return document
+
+    return
+
   def get_all_documents(self) -> list[Document]:
     """Get all documents that exist in a graph.
 

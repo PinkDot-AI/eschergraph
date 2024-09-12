@@ -92,6 +92,28 @@ def test_get_all_documents(saved_graph_dir: Path) -> None:
   }
 
 
+def get_document_by_name(saved_graph_dir: Path) -> None:
+  repository: SimpleRepository = SimpleRepository(
+    save_location=saved_graph_dir.as_posix()
+  )
+  doc: Document = Document(id=uuid4(), name="doc.pdf", chunk_num=100, token_num=1000)
+
+  repository.add_document(doc)
+
+  assert repository.get_document_by_name("doc.pdf") == doc
+
+
+def get_document_by_name_no_match(saved_graph_dir: Path) -> None:
+  repository: SimpleRepository = SimpleRepository(
+    save_location=saved_graph_dir.as_posix()
+  )
+  doc: Document = Document(id=uuid4(), name="doc.pdf", chunk_num=100, token_num=1000)
+
+  repository.add_document(doc)
+
+  assert not repository.get_document_by_name("doc1.pdf")
+
+
 def test_document_remove(saved_graph_dir: Path) -> None:
   repository: SimpleRepository = SimpleRepository(
     save_location=saved_graph_dir.as_posix()

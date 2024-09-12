@@ -214,3 +214,15 @@ class Repository(ABC):
       list[Document]: A list containing all the documents.
     """
     raise NotImplementedError
+
+  @abstractmethod
+  def get_document_by_name(self, name: str) -> Optional[Document]:
+    """Get a document by name.
+
+    Args:
+      name: str
+
+    Returns:
+      Optional[Document]: The document if a document with this name exists, and otherwise None.
+    """
+    raise NotImplementedError
