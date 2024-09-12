@@ -41,12 +41,14 @@ def prepare_sync_data(
       node: Node | None = repository.get_node_by_id(id)
       if not node:
         continue
-      # add node description
+
+      # We add the document_id to all the object
       md_node: dict[str, str | int] = {
         "level": cur_log.level,
         "type": "node",
         "entity_frm": node.name,
         "entity_to": "",
+        "document_id": _get_node_document_id(node),
       }
       node_string = node.name + ", " + node.description
       create_main.append((id, node_string, md_node))
@@ -60,6 +62,7 @@ def prepare_sync_data(
         "type": "edge",
         "entity_frm": edge.frm.name,
         "entity_to": edge.to.name,
+        "document_id": _get_node_document_id(edge.frm),
       }
       create_main.append((id, edge.description, md_edge))
 
@@ -72,6 +75,7 @@ def prepare_sync_data(
         "type": "property",
         "entity_frm": property.node.name,
         "entity_to": "",
+        "document_id": _get_node_document_id(property.node),
       }
       property_string = property.node.name + ", " + property.description
       create_main.append((id, property_string, md_prop))
@@ -93,3 +97,27 @@ def _get_actions_for_objects(
       ids_to_create.append(id)
 
   return ids_to_create, ids_to_delete
+
+
+def _get_node_document_id(node: Node) -> str:
+  """Returns the UUID of the node's document_id in string format.
+
+  Currently, all graph objects do still exclusively belong to a single
+  document as we have not added inter-document merging or
+  edge finding. As soon as this is added, this logic will change.
+
+  Args:
+    node (Node): The node to get the document_id for.
+
+  Returns:
+    The UUID as a string.
+  """
+  cur_level: int = node.level
+  cur_node: Node = node
+
+  # Get the metadata on a level 0 child node
+  while cur_level > 0:
+    cur_node = cur_node.child_nodes[0]
+    cur_level -= 1
+
+  return str(next(iter(cur_node.metadata)).document_id)

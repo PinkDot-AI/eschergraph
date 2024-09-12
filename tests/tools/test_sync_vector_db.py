@@ -12,6 +12,7 @@ from eschergraph.graph import Property
 from eschergraph.persistence.change_log import Action
 from eschergraph.persistence.change_log import ChangeLog
 from eschergraph.tools.prepare_sync_data import _get_actions_for_objects
+from eschergraph.tools.prepare_sync_data import _get_node_document_id
 from eschergraph.tools.prepare_sync_data import prepare_sync_data
 from tests.graph.help import create_basic_node
 from tests.graph.help import create_edge
@@ -108,6 +109,33 @@ def test_prep_sync_vector_db_create_correct_level(mock_repository: Mock) -> None
       pytest.fail()
 
 
+def test_prep_sync_vector_correct_document_id(mock_repository: Mock) -> None:
+  node: Node = create_basic_node(repository=mock_repository)
+  edge: Edge = create_edge(repository=mock_repository, frm=node)
+  prop: Property = create_property(repository=mock_repository, node=node)
+
+  document_id: UUID = next(iter(node.metadata)).document_id
+
+  # Set up the return values for the mock repo
+  mock_repository.get_node_by_id.side_effect = [node]
+  mock_repository.get_edge_by_id.side_effect = [edge]
+  mock_repository.get_property_by_id.side_effect = [prop]
+
+  change_logs: list[ChangeLog] = [
+    ChangeLog(id=node.id, action=Action.CREATE, type=Node, level=4),
+    ChangeLog(id=edge.id, action=Action.CREATE, type=Edge, level=4),
+    ChangeLog(id=prop.id, action=Action.CREATE, type=Property, level=4),
+  ]
+  mock_repository.get_change_log.return_value = change_logs
+
+  # Inject the mock repository into the function
+  create_main, _ = prepare_sync_data(mock_repository)
+  _, _, metadata_to_create = zip(*create_main)
+
+  for md in metadata_to_create:
+    assert md["document_id"] == str(document_id)
+
+
 def test_prep_sync_vector_db_no_actions_needed() -> None:
   node_id: UUID = uuid4()
   edge_id: UUID = uuid4()
@@ -154,3 +182,32 @@ def test_prep_sync_vector_db_mixed_actions() -> None:
 
   assert set(ids_to_create) == {property_id, node_id}
   assert set(ids_to_delete) == {edge_id, node_id}
+
+
+def test_get_node_document_id_level_0() -> None:
+  node: Node = create_basic_node()
+  document_id: UUID = next(iter(node.metadata)).document_id
+
+  assert _get_node_document_id(node) == str(document_id)
+
+
+def test_get_node_document_id_level_4() -> None:
+  n0: Node = create_basic_node()
+  n1: Node = create_basic_node()
+  n2: Node = create_basic_node()
+  n3: Node = create_basic_node()
+  n4: Node = create_basic_node()
+
+  # Setup the child-parent hierarchy
+  n1.child_nodes = [n0]
+  n1.level = 1
+  n2.child_nodes = [n1]
+  n2.level = 2
+  n3.child_nodes = [n2]
+  n3.level = 3
+  n4.child_nodes = [n3]
+  n4.level = 4
+
+  document_id: UUID = next(iter(n0.metadata)).document_id
+
+  assert _get_node_document_id(n4) == str(document_id)

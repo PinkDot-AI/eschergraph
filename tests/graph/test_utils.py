@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 from contextlib import contextmanager
 from pathlib import Path
+from typing import Generator
 from unittest.mock import Mock
 from uuid import uuid4
 
@@ -16,7 +17,7 @@ from eschergraph.persistence.document import Document
 
 # Temporarily change the working directory to setup test files
 @contextmanager
-def change_dir(destination: str):
+def change_dir(destination: str) -> Generator[None, None, None]:
   original_dir: str = os.getcwd()
   try:
     os.chdir(destination)
