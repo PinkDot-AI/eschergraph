@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import itertools
 import os
 import pickle
 from typing import cast
@@ -11,7 +10,6 @@ from uuid import UUID
 from attrs import asdict
 from attrs import define
 from attrs import field
-from attrs import fields_dict
 
 from eschergraph.builder.build_log import BuildLog
 from eschergraph.config import DEFAULT_GRAPH_NAME
@@ -31,6 +29,22 @@ from eschergraph.persistence.adapters.simple_repository.models import (
 from eschergraph.persistence.adapters.simple_repository.models import NodeModel
 from eschergraph.persistence.adapters.simple_repository.models import (
   PropertyModel,
+)
+from eschergraph.persistence.adapters.simple_repository.utils import (
+  new_edge_to_edge_model,
+)
+from eschergraph.persistence.adapters.simple_repository.utils import (
+  new_node_to_node_model,
+)
+from eschergraph.persistence.adapters.simple_repository.utils import (
+  new_property_to_property_model,
+)
+from eschergraph.persistence.adapters.simple_repository.utils import save_filenames
+from eschergraph.persistence.adapters.simple_repository.utils import (
+  select_attributes_to_add,
+)
+from eschergraph.persistence.adapters.simple_repository.utils import (
+  select_attributes_to_load,
 )
 from eschergraph.persistence.change_log import Action
 from eschergraph.persistence.change_log import ChangeLog
@@ -91,7 +105,7 @@ class SimpleRepository(Repository):
         f"The specified save location: {save_location} does not exist"
       )
 
-    filenames: dict[str, str] = self._filenames(save_location, name)
+    filenames: dict[str, str] = save_filenames(save_location, name)
     new_graph: bool = True
     all_files: bool = True
 
@@ -120,18 +134,6 @@ class SimpleRepository(Repository):
       with open(value, "rb") as file:
         setattr(self, key, pickle.load(file))
 
-  @staticmethod
-  def _filenames(save_location: str, name: str) -> dict[str, str]:
-    base_filename: str = save_location + "/" + name
-    return {
-      "nodes": base_filename + "-nodes.pkl",
-      "edges": base_filename + "-edges.pkl",
-      "properties": base_filename + "-properties.pkl",
-      "doc_node_name_index": base_filename + "-nnindex.pkl",
-      "documents": base_filename + "-documents.pkl",
-      "original_build_logs": base_filename + "-ogbuidlogs.pkl",
-    }
-
   def load(self, object: EscherBase, loadstate: LoadState = LoadState.CORE) -> None:
     """Load the EscherBase object attributes to a certain loadstate.
 
@@ -154,9 +156,7 @@ class SimpleRepository(Repository):
         "A node with this ID does not exist in the persistent storage."
       )
     node_model: NodeModel = self.nodes[node.id]
-    attributes: list[str] = self._select_attributes_to_load(
-      object=node, loadstate=loadstate
-    )
+    attributes: list[str] = select_attributes_to_load(object=node, loadstate=loadstate)
     # Load all the attributes
     for attr in attributes:
       if attr == "metadata":
@@ -201,9 +201,7 @@ class SimpleRepository(Repository):
       )
     edge_model: EdgeModel = self.edges[edge.id]
     # Select the attributes that need to be loaded between the current and the needed one
-    attributes: list[str] = self._select_attributes_to_load(
-      object=edge, loadstate=loadstate
-    )
+    attributes: list[str] = select_attributes_to_load(object=edge, loadstate=loadstate)
     for attr in attributes:
       if attr == "metadata":
         edge._metadata = {Metadata(**mtd) for mtd in edge_model["metadata"]}
@@ -218,7 +216,7 @@ class SimpleRepository(Repository):
       )
 
     property_model: PropertyModel = self.properties[property.id]
-    attributes: list[str] = self._select_attributes_to_load(
+    attributes: list[str] = select_attributes_to_load(
       object=property, loadstate=loadstate
     )
     for attr in attributes:
@@ -226,32 +224,6 @@ class SimpleRepository(Repository):
         property._metadata = {Metadata(**mtd) for mtd in property_model["metadata"]}
       else:
         setattr(property, "_" + attr, property_model[attr])  # type: ignore
-
-  @staticmethod
-  def _select_attributes_to_load(object: EscherBase, loadstate: LoadState) -> list[str]:
-    attributes: list[str] = []
-    for name, attr in fields_dict(object.__class__).items():
-      if "group" not in attr.metadata:
-        continue
-      if (
-        attr.metadata["group"].value > object.loadstate.value
-        and attr.metadata["group"].value <= loadstate.value
-      ):
-        attributes.append(name[1:])
-    return attributes
-
-  @staticmethod
-  def _select_attributes_to_add(object: EscherBase) -> list[str]:
-    attributes: list[str] = []
-    for name, attr in fields_dict(object.__class__).items():
-      if "group" not in attr.metadata:
-        continue
-      # The node id is never changed and loadstate not used
-      elif attr.metadata["group"] == LoadState.REFERENCE:
-        continue
-      elif attr.metadata["group"].value <= object.loadstate.value:
-        attributes.append(name[1:])
-    return attributes
 
   def add(self, object: EscherBase) -> None:
     """Add the node to the persistent storage.
@@ -276,7 +248,7 @@ class SimpleRepository(Repository):
     if not node.id in self.nodes:
       self._add_new_node(node)
     else:
-      attributes_to_check: list[str] = self._select_attributes_to_add(node)
+      attributes_to_check: list[str] = select_attributes_to_add(node)
       self.change_log.append(
         ChangeLog(
           id=node.id,
@@ -371,7 +343,7 @@ class SimpleRepository(Repository):
           raise NodeCreationException(
             f"A node with name: {node.name} already exists at level 0 for this document"
           )
-    node_model: NodeModel = self._new_node_to_node_model(node)
+    node_model: NodeModel = new_node_to_node_model(node)
     if not add_edges:
       node_model["edges"] = set()
 
@@ -409,7 +381,7 @@ class SimpleRepository(Repository):
       if not property.loadstate == LoadState.FULL:
         raise PersistenceException("A newly created property should be fully loaded.")
 
-      new_model: PropertyModel = self._new_property_to_property_model(property)
+      new_model: PropertyModel = new_property_to_property_model(property)
       self.properties[property.id] = new_model
       self.change_log.append(
         ChangeLog(
@@ -422,7 +394,7 @@ class SimpleRepository(Repository):
         self.nodes[property.node.id]["properties"].append(property.id)
     else:
       property_model: PropertyModel = self.properties[property.id]
-      attributes: list[str] = self._select_attributes_to_add(property)
+      attributes: list[str] = select_attributes_to_add(property)
       self.change_log.append(
         ChangeLog(
           id=property.id,
@@ -439,36 +411,6 @@ class SimpleRepository(Repository):
           ]
         else:
           property_model[attr] = Node.__dict__[attr].fget(property)  # type: ignore
-
-  @staticmethod
-  def _new_node_to_node_model(node: Node) -> NodeModel:
-    return {
-      "name": node.name,
-      "description": node.description,
-      "level": node.level,
-      "properties": [p.id for p in node.properties],
-      "edges": {edge.id for edge in node.edges},
-      "community": node.community.node.id if node.community.node else None,
-      "metadata": [cast(MetadataModel, asdict(md)) for md in node.metadata],
-      "child_nodes": {child.id for child in node.child_nodes},
-    }
-
-  @staticmethod
-  def _new_edge_to_edge_model(edge: Edge) -> EdgeModel:
-    return {
-      "frm": edge.frm.id,
-      "to": edge.to.id,
-      "description": edge.description,
-      "metadata": [cast(MetadataModel, asdict(md)) for md in edge.metadata],
-    }
-
-  @staticmethod
-  def _new_property_to_property_model(property: Property) -> PropertyModel:
-    return {
-      "node": property.node.id,
-      "description": property.description,
-      "metadata": [cast(MetadataModel, asdict(md)) for md in property.metadata],
-    }
 
   def _add_edge(self, edge: Edge) -> None:
     # Throw an error if neither of the nodes exist
@@ -489,7 +431,7 @@ class SimpleRepository(Repository):
 
     # Check if the edge already exists
     if not edge.id in self.edges:
-      self.edges[edge.id] = self._new_edge_to_edge_model(edge)
+      self.edges[edge.id] = new_edge_to_edge_model(edge)
       self.change_log.append(
         ChangeLog(id=edge.id, action=Action.CREATE, type=Edge, level=edge.frm.level)
       )
@@ -498,7 +440,7 @@ class SimpleRepository(Repository):
       self.nodes[edge.frm.id]["edges"].add(edge.id)
       self.nodes[edge.to.id]["edges"].add(edge.id)
     else:
-      attributes_to_check: list[str] = self._select_attributes_to_add(edge)
+      attributes_to_check: list[str] = select_attributes_to_add(edge)
       self.change_log.append(
         ChangeLog(
           id=edge.id,
@@ -636,7 +578,7 @@ class SimpleRepository(Repository):
     This is not needed for all sorts of repositories as databases
     manage this internally.
     """
-    filenames: dict[str, str] = self._filenames(self.save_location, self.name)
+    filenames: dict[str, str] = save_filenames(self.save_location, self.name)
     for key, value in filenames.items():
       with open(value, "wb") as file:
         pickle.dump(getattr(self, key), file)
@@ -693,56 +635,6 @@ class SimpleRepository(Repository):
         doc_result.append(document)
 
     return doc_result
-
-  def add_original_build_logs(self, original_build_logs: list[BuildLog]) -> None:
-    """Add the original build logs for storage.
-
-    The original build logs are used for the evaluation that calculates
-    a loss of information score. Original refers to the build logs from before
-    applying the node matcher. Note that the build logs are stored for each document.
-    If the build logs for a document do already exist, then they are overwritten.
-
-    Args:
-      original_build_logs (list[BuildLog]): A list of build logs.
-    """
-    docs_encountered: set[UUID] = set()
-    for log in original_build_logs:
-      if not (document_id := log.metadata.document_id) in docs_encountered:
-        self.original_build_logs[document_id] = [log]
-        docs_encountered.add(document_id)
-      else:
-        self.original_build_logs[document_id].append(log)
-
-  def get_original_build_logs_by_document_id(self, document_id: UUID) -> list[BuildLog]:
-    """Get the original build logs by document_id.
-
-    The original build logs are used for the evaluation that calculates
-    a loss of information score. Original refers to the build logs from before
-    applying the node matcher.
-
-    Args:
-     document_id (UUID): The document to get the original build logs for, specified
-       by its id.
-
-    Returns:
-      original_build_logs (list[BuildLog]): A list of build logs.
-    """
-    if not document_id in self.original_build_logs:
-      return []
-
-    return self.original_build_logs[document_id]
-
-  def get_all_original_building_logs(self) -> list[BuildLog]:
-    """Get all the original build logs.
-
-    The original build logs are used for the evaluation that calculates
-    a loss of information score. Original refers to the build logs from before
-    applying the node matcher.
-
-    Returns:
-      original_build_logs (list[BuildLog]): A list of build logs.
-    """
-    return list(itertools.chain(*self.original_build_logs.values()))
 
   def remove_node_by_id(self, id: UUID) -> None:
     """Remove a node by id.
