@@ -75,6 +75,23 @@ def test_document_change(saved_graph_dir: Path) -> None:
   assert repository.get_document_by_id(document2.id) == document2
 
 
+def test_get_all_documents(saved_graph_dir: Path) -> None:
+  repository: SimpleRepository = SimpleRepository(
+    save_location=saved_graph_dir.as_posix()
+  )
+  document1: Document = Document(id=uuid4(), name="doc1", chunk_num=100, token_num=1000)
+  document2: Document = Document(id=uuid4(), name="doc2", chunk_num=100, token_num=1000)
+  document3: Document = Document(id=uuid4(), name="doc3", chunk_num=100, token_num=1000)
+
+  repository.add_document(document1)
+  repository.add_document(document2)
+  repository.add_document(document3)
+
+  assert {doc.id for doc in repository.get_all_documents()} == {
+    doc.id for doc in [document1, document2, document3]
+  }
+
+
 def test_document_remove(saved_graph_dir: Path) -> None:
   repository: SimpleRepository = SimpleRepository(
     save_location=saved_graph_dir.as_posix()

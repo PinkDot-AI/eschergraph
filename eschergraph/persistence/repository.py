@@ -184,13 +184,13 @@ class Repository(ABC):
     raise NotImplementedError
 
   @abstractmethod
-  def add_document(self, document_data: Document) -> None:
+  def add_document(self, document: Document) -> None:
     """Adds a document to the system.
 
     A document that already exists will be overwritten.
 
     Args:
-      document_data (Document): The document data that needs to be added.
+      document (Document): The document data that needs to be added.
     """
     raise NotImplementedError
 

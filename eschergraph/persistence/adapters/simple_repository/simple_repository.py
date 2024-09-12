@@ -603,19 +603,19 @@ class SimpleRepository(Repository):
     """
     self.change_log = []
 
-  def add_document(self, document_data: Document) -> None:
+  def add_document(self, document: Document) -> None:
     """Adds a document to the system.
 
     If a document with the same ID already exists, then the existing
     data will be overwritten with the specified object.
 
     Args:
-      document_data (Document): The document data that needs to be added.
+      document (Document): The document data that needs to be added.
     """
-    self.documents[document_data.id] = document_data
+    self.documents[document.id] = document
 
     # If the document does not yet exist, add to document node name index
-    if not (doc_id := document_data.id) in self.doc_node_name_index:
+    if not (doc_id := document.id) in self.doc_node_name_index:
       self.doc_node_name_index[doc_id] = {}
 
   def get_document_by_id(self, id: UUID) -> Optional[Document]:
