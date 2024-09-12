@@ -7,8 +7,8 @@ from attrs import define
 from attrs import field
 
 from eschergraph.graph.base import EscherBase
+from eschergraph.graph.getter_setter import loading_getter_setter
 from eschergraph.graph.loading import LoadState
-from eschergraph.graph.utils import loading_getter_setter
 from eschergraph.persistence import Metadata
 
 # Prevent circular import errors

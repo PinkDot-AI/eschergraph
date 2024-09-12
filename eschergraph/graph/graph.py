@@ -17,6 +17,7 @@ from eschergraph.graph.edge import Edge
 from eschergraph.graph.node import Node
 from eschergraph.graph.search.global_search import global_search
 from eschergraph.graph.search.quick_search import quick_search
+from eschergraph.graph.utils import duplicate_document_check
 from eschergraph.persistence import Metadata
 from eschergraph.persistence import Repository
 from eschergraph.persistence.factory import get_default_repository
@@ -251,7 +252,12 @@ class Graph:
     from eschergraph.builder.build_pipeline import BuildPipeline
     from eschergraph.builder.building_tools import BuildingTools
 
-    chunks, document_data, total_tokens = BuildingTools.process_files(files)
+    file_list: list[str] = [files] if isinstance(files, str) else files
+
+    # Check if the documents already exist
+    duplicate_document_check(file_list, self.repository)
+
+    chunks, document_data, total_tokens = BuildingTools.process_files(file_list)
 
     BuildingTools.display_build_info(chunks, total_tokens, model=self.model)
 

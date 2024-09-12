@@ -642,7 +642,7 @@ class SimpleRepository(Repository):
       if document.name == name:
         return document
 
-    return
+    return None
 
   def get_all_documents(self) -> list[Document]:
     """Get all documents that exist in a graph.

@@ -7,11 +7,11 @@ import pytest
 
 from eschergraph.graph.base import EscherBase
 from eschergraph.graph.community import Community
+from eschergraph.graph.getter_setter import _extract_inner_type
+from eschergraph.graph.getter_setter import _extract_property_type
+from eschergraph.graph.getter_setter import _parse_future_annotations
+from eschergraph.graph.getter_setter import loading_getter_setter
 from eschergraph.graph.loading import LoadState
-from eschergraph.graph.utils import _extract_inner_type
-from eschergraph.graph.utils import _extract_property_type
-from eschergraph.graph.utils import _parse_future_annotations
-from eschergraph.graph.utils import loading_getter_setter
 from eschergraph.persistence import Metadata
 
 

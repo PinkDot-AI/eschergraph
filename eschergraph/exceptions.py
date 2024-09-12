@@ -58,3 +58,7 @@ class ExternalDependencyException(BaseEscherGraphException):
 
 class DocumentDoesNotExistException(BaseEscherGraphException):
   """When the specified document does not exist in the graph."""
+
+
+class DocumentAlreadyExistsException(BaseEscherGraphException):
+  """When the graph attempts to build for a document that already exists."""

@@ -16,7 +16,7 @@ class BuildingTools:
 
   @staticmethod
   def process_files(
-    files: str | list[str],
+    files: list[str],
   ) -> tuple[list[Chunk], list[Document], int]:
     """Process the given files and extract chunks, document data, and total tokens.
 
@@ -35,9 +35,7 @@ class BuildingTools:
     document_data: list[Document] = []
     total_tokens: int = 0
 
-    file_list = [files] if isinstance(files, str) else files
-
-    for file in file_list:
+    for file in files:
       reader = Reader(file_location=file)
       reader.parse()
       chunks.extend(reader.chunks)
