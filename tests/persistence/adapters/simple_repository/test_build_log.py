@@ -12,8 +12,8 @@ from eschergraph.builder.build_log import BuildLog
 from eschergraph.builder.build_log import EdgeExt
 from eschergraph.builder.build_log import NodeExt
 from eschergraph.builder.build_log import PropertyExt
-from eschergraph.graph.persistence.adapters.simple_repository import SimpleRepository
-from eschergraph.graph.persistence.metadata import Metadata
+from eschergraph.persistence.adapters.simple_repository import SimpleRepository
+from eschergraph.persistence.metadata import Metadata
 
 faker: Faker = Faker()
 

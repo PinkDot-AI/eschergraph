@@ -23,24 +23,24 @@ from eschergraph.graph.community import Community
 from eschergraph.graph.edge import Edge
 from eschergraph.graph.loading import LoadState
 from eschergraph.graph.node import Node
-from eschergraph.graph.persistence.adapters.simple_repository.models import EdgeModel
-from eschergraph.graph.persistence.adapters.simple_repository.models import (
+from eschergraph.graph.property import Property
+from eschergraph.persistence.adapters.simple_repository.models import EdgeModel
+from eschergraph.persistence.adapters.simple_repository.models import (
   MetadataModel,
 )
-from eschergraph.graph.persistence.adapters.simple_repository.models import NodeModel
-from eschergraph.graph.persistence.adapters.simple_repository.models import (
+from eschergraph.persistence.adapters.simple_repository.models import NodeModel
+from eschergraph.persistence.adapters.simple_repository.models import (
   PropertyModel,
 )
-from eschergraph.graph.persistence.change_log import Action
-from eschergraph.graph.persistence.change_log import ChangeLog
-from eschergraph.graph.persistence.document import DocumentData
-from eschergraph.graph.persistence.exceptions import DirectoryDoesNotExistException
-from eschergraph.graph.persistence.exceptions import FilesMissingException
-from eschergraph.graph.persistence.exceptions import PersistenceException
-from eschergraph.graph.persistence.exceptions import PersistingEdgeException
-from eschergraph.graph.persistence.metadata import Metadata
-from eschergraph.graph.persistence.repository import Repository
-from eschergraph.graph.property import Property
+from eschergraph.persistence.change_log import Action
+from eschergraph.persistence.change_log import ChangeLog
+from eschergraph.persistence.document import DocumentData
+from eschergraph.persistence.exceptions import DirectoryDoesNotExistException
+from eschergraph.persistence.exceptions import FilesMissingException
+from eschergraph.persistence.exceptions import PersistenceException
+from eschergraph.persistence.exceptions import PersistingEdgeException
+from eschergraph.persistence.metadata import Metadata
+from eschergraph.persistence.repository import Repository
 
 if TYPE_CHECKING:
   from eschergraph.graph.base import EscherBase

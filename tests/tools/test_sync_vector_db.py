@@ -9,8 +9,8 @@ import pytest
 from eschergraph.graph import Edge
 from eschergraph.graph import Node
 from eschergraph.graph import Property
-from eschergraph.graph.persistence.change_log import Action
-from eschergraph.graph.persistence.change_log import ChangeLog
+from eschergraph.persistence.change_log import Action
+from eschergraph.persistence.change_log import ChangeLog
 from eschergraph.tools.prepare_sync_data import _get_actions_for_objects
 from eschergraph.tools.prepare_sync_data import prepare_sync_data
 from tests.graph.help import create_basic_node

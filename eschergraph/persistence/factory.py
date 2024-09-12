@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import Optional
 
-from eschergraph.graph.persistence.adapters.simple_repository import SimpleRepository
-from eschergraph.graph.persistence.repository import Repository
+from eschergraph.persistence.adapters.simple_repository import SimpleRepository
+from eschergraph.persistence.repository import Repository
 
 
 def get_default_repository(name: Optional[str] = None) -> Repository:

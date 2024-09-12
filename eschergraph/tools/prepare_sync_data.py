@@ -4,10 +4,10 @@ from uuid import UUID
 
 from eschergraph.graph.edge import Edge
 from eschergraph.graph.node import Node
-from eschergraph.graph.persistence.change_log import Action
-from eschergraph.graph.persistence.change_log import ChangeLog
-from eschergraph.graph.persistence.repository import Repository
 from eschergraph.graph.property import Property
+from eschergraph.persistence.change_log import Action
+from eschergraph.persistence.change_log import ChangeLog
+from eschergraph.persistence.repository import Repository
 
 
 def prepare_sync_data(

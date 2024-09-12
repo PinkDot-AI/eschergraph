@@ -10,9 +10,9 @@ from eschergraph.exceptions import NodeDoesNotExistException
 from eschergraph.graph import Edge
 from eschergraph.graph import Node
 from eschergraph.graph import Property
-from eschergraph.graph.persistence import Metadata
-from eschergraph.graph.persistence.adapters.simple_repository import SimpleRepository
-from eschergraph.graph.persistence.document import DocumentData
+from eschergraph.persistence import Metadata
+from eschergraph.persistence.adapters.simple_repository import SimpleRepository
+from eschergraph.persistence.document import DocumentData
 from tests.graph.help import create_edge
 from tests.graph.help import create_simple_extracted_graph
 

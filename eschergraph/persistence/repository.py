@@ -14,8 +14,8 @@ if TYPE_CHECKING:
   from eschergraph.graph.node import Node
   from eschergraph.graph.edge import Edge
   from eschergraph.graph.property import Property
-  from eschergraph.graph.persistence.change_log import ChangeLog
-  from eschergraph.graph.persistence.document import DocumentData
+  from eschergraph.persistence.change_log import ChangeLog
+  from eschergraph.persistence.document import DocumentData
   from eschergraph.builder.build_log import BuildLog
 
 

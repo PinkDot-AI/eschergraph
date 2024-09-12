@@ -3,7 +3,7 @@ from __future__ import annotations
 from random import randrange
 from uuid import uuid4
 
-from eschergraph.graph.persistence import Metadata
+from eschergraph.persistence import Metadata
 
 
 def create_metadata() -> Metadata:

@@ -14,7 +14,7 @@ from eschergraph.exceptions import NodeCreationException
 from eschergraph.graph import Node
 from eschergraph.graph.community import Community
 from eschergraph.graph.loading import LoadState
-from eschergraph.graph.persistence import Metadata
+from eschergraph.persistence import Metadata
 
 
 def test_initialize(mock_repository: Mock) -> None:

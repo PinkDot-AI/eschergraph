@@ -11,8 +11,8 @@ from pytest import TempPathFactory
 
 from eschergraph.agents.llm import ModelProvider
 from eschergraph.graph import Graph
-from eschergraph.graph.persistence import Repository
-from eschergraph.graph.persistence.vector_db import VectorDB
+from eschergraph.persistence import Repository
+from eschergraph.persistence.vector_db import VectorDB
 
 load_dotenv()
 

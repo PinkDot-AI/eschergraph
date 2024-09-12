@@ -8,7 +8,7 @@ from tabulate import tabulate
 
 if TYPE_CHECKING:
   from eschergraph.graph.node import Node
-  from eschergraph.graph.persistence.document import DocumentData
+  from eschergraph.persistence.document import DocumentData
   from eschergraph.graph import Graph
 
 

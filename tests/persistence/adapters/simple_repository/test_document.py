@@ -6,8 +6,8 @@ from uuid import uuid4
 import pytest
 
 from eschergraph.exceptions import DocumentDoesNotExistException
-from eschergraph.graph.persistence.adapters.simple_repository import SimpleRepository
-from eschergraph.graph.persistence.document import DocumentData
+from eschergraph.persistence.adapters.simple_repository import SimpleRepository
+from eschergraph.persistence.document import DocumentData
 
 
 def test_document_add(saved_graph_dir: Path) -> None:

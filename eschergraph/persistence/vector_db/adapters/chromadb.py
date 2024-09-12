@@ -10,7 +10,7 @@ import chromadb
 from eschergraph.agents.embedding import Embedding
 from eschergraph.agents.embedding import get_embedding_model
 from eschergraph.exceptions import ExternalProviderException
-from eschergraph.graph.persistence.vector_db.vector_db import VectorDB
+from eschergraph.persistence.vector_db.vector_db import VectorDB
 
 
 class ChromaDB(VectorDB):

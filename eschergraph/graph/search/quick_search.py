@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 from eschergraph.agents.jinja_helper import process_template
 from eschergraph.agents.providers.jina import JinaReranker
 from eschergraph.agents.reranker import RerankerResult
-from eschergraph.graph.persistence.metadata import Metadata
+from eschergraph.persistence.metadata import Metadata
 
 if TYPE_CHECKING:
   from eschergraph.graph import Graph

@@ -13,7 +13,7 @@ from eschergraph.builder.build_pipeline import BuildPipeline
 from eschergraph.config import JSON_BUILD
 from eschergraph.config import JSON_PROPERTY
 from eschergraph.graph.graph import Graph
-from eschergraph.graph.persistence.metadata import Metadata
+from eschergraph.persistence.metadata import Metadata
 from eschergraph.tools.reader import Chunk
 from eschergraph.tools.reader import Reader
 

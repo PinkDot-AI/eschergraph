@@ -9,15 +9,15 @@ from eschergraph.exceptions import NodeCreationException
 from eschergraph.graph import Edge
 from eschergraph.graph import Node
 from eschergraph.graph.loading import LoadState
-from eschergraph.graph.persistence.adapters.simple_repository import SimpleRepository
-from eschergraph.graph.persistence.exceptions import PersistenceException
-from eschergraph.graph.persistence.exceptions import PersistingEdgeException
+from eschergraph.persistence.adapters.simple_repository import SimpleRepository
+from eschergraph.persistence.exceptions import PersistenceException
+from eschergraph.persistence.exceptions import PersistingEdgeException
 from tests.graph.help import create_basic_node
 from tests.graph.help import create_edge
-from tests.graph.persistence.adapters.simple_repository.help import (
+from tests.persistence.adapters.simple_repository.help import (
   compare_edge_to_edge_model,
 )
-from tests.graph.persistence.adapters.simple_repository.help import (
+from tests.persistence.adapters.simple_repository.help import (
   compare_node_to_node_model,
 )
 

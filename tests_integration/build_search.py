@@ -9,10 +9,11 @@ from dotenv import load_dotenv
 from eschergraph import Graph
 from eschergraph.agents import OpenAIModel
 from eschergraph.agents import OpenAIProvider
-from eschergraph.graph.persistence import Repository
-from eschergraph.graph.persistence.adapters.simple_repository import SimpleRepository
-from eschergraph.graph.persistence.vector_db import VectorDB
-from eschergraph.graph.persistence.vector_db.adapters.chromadb import ChromaDB
+from eschergraph.persistence import Repository
+from eschergraph.persistence.adapters.simple_repository import SimpleRepository
+from eschergraph.persistence.vector_db import VectorDB
+from eschergraph.persistence.vector_db.adapters.chromadb import ChromaDB
+from eschergraph.visualization import Visualizer
 
 TEST_FILE: str = "./test_files/test_file.pdf"
 
@@ -40,6 +41,16 @@ def build_graph() -> None:
 
   # Build the graph
   graph.build(TEST_FILE)
+
+  Visualizer.visualize_graph(
+    graph, level=0, save_location=temp_path.as_posix() + "/level_0.html"
+  )
+  Visualizer.visualize_graph(
+    graph, level=1, save_location=temp_path.as_posix() + "/level_1.html"
+  )
+
+  answer = graph.search("Who are the architects?")
+  print(answer)
 
   # Wait a few seconds before cleaning up to open the visuals
   time.sleep(10)

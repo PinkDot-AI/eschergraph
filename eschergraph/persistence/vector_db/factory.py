@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from eschergraph.graph.persistence.vector_db.adapters.chromadb import ChromaDB
-from eschergraph.graph.persistence.vector_db.vector_db import VectorDB
+from eschergraph.persistence.vector_db.adapters.chromadb import ChromaDB
+from eschergraph.persistence.vector_db.vector_db import VectorDB
 
 
 def get_vector_db(save_name: str, db_type: str = "chroma_db") -> VectorDB:

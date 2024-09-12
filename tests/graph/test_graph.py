@@ -11,7 +11,7 @@ from eschergraph.agents.llm import ModelProvider
 from eschergraph.agents.reranker import Reranker
 from eschergraph.exceptions import CredentialException
 from eschergraph.graph import Graph
-from eschergraph.graph.persistence.vector_db import VectorDB
+from eschergraph.persistence.vector_db import VectorDB
 
 
 def set_graph_dependencies_creds(

@@ -7,12 +7,12 @@ from attrs import asdict
 from eschergraph.graph import Edge
 from eschergraph.graph import Node
 from eschergraph.graph import Property
-from eschergraph.graph.persistence.adapters.simple_repository.models import EdgeModel
-from eschergraph.graph.persistence.adapters.simple_repository.models import (
+from eschergraph.persistence.adapters.simple_repository.models import EdgeModel
+from eschergraph.persistence.adapters.simple_repository.models import (
   MetadataModel,
 )
-from eschergraph.graph.persistence.adapters.simple_repository.models import NodeModel
-from eschergraph.graph.persistence.adapters.simple_repository.models import (
+from eschergraph.persistence.adapters.simple_repository.models import NodeModel
+from eschergraph.persistence.adapters.simple_repository.models import (
   PropertyModel,
 )
 

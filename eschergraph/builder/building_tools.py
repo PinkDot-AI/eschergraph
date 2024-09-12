@@ -8,7 +8,7 @@ from eschergraph.tools.reader import Chunk
 from eschergraph.tools.reader import Reader
 
 if TYPE_CHECKING:
-  from eschergraph.graph.persistence.document import DocumentData
+  from eschergraph.persistence.document import DocumentData
 
 
 class BuildingTools:
@@ -29,7 +29,7 @@ class BuildingTools:
             - A list of DocumentData objects
             - The total number of tokens processed
     """
-    from eschergraph.graph.persistence.document import DocumentData
+    from eschergraph.persistence.document import DocumentData
 
     chunks: list[Chunk] = []
     document_data: list[DocumentData] = []
@@ -47,7 +47,6 @@ class BuildingTools:
         name=reader.filename,
         chunk_num=len(reader.chunks),
         token_num=reader.total_tokens,
-        loss_of_information=None,
       )
       document_data.append(doc_data)
       total_tokens += reader.total_tokens

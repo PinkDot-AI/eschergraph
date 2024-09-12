@@ -6,12 +6,12 @@ from uuid import UUID
 from eschergraph.graph import Edge
 from eschergraph.graph import Node
 from eschergraph.graph.loading import LoadState
-from eschergraph.graph.persistence.adapters.simple_repository import SimpleRepository
+from eschergraph.persistence.adapters.simple_repository import SimpleRepository
 from tests.graph.help import create_simple_extracted_graph
-from tests.graph.persistence.adapters.simple_repository.help import (
+from tests.persistence.adapters.simple_repository.help import (
   compare_edge_to_edge_model,
 )
-from tests.graph.persistence.adapters.simple_repository.help import (
+from tests.persistence.adapters.simple_repository.help import (
   compare_node_to_node_model,
 )
 

@@ -13,7 +13,7 @@ from eschergraph.builder.build_log import BuildLog
 from eschergraph.builder.build_log import EdgeExt
 from eschergraph.builder.build_log import NodeExt
 from eschergraph.builder.build_log import PropertyExt
-from eschergraph.graph.persistence.metadata import Metadata
+from eschergraph.persistence.metadata import Metadata
 from eschergraph.tools.node_matcher import NodeMatcher
 
 
