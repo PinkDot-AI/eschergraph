@@ -52,6 +52,8 @@ def build_graph() -> None:
   answer = graph.search("Who are the architects?")
   print(answer)
 
+  graph.dashboard()
+
   # Wait a few seconds before cleaning up to open the visuals
   time.sleep(10)
 

@@ -261,7 +261,7 @@ class Graph:
 
     # Add document data objects to the repository
     for doc_data in document_data:
-      self.repository.add_document(document_data=doc_data)
+      self.repository.add_document(document=doc_data)
 
     return self
 
