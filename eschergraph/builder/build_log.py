@@ -5,7 +5,7 @@ from typing import TypedDict
 from attrs import define
 from attrs import field
 
-from eschergraph.graph.persistence import Metadata
+from eschergraph.persistence import Metadata
 
 
 class NodeExt(TypedDict):

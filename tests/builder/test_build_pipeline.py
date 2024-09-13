@@ -15,8 +15,8 @@ from eschergraph.builder.build_log import NodeExt
 from eschergraph.builder.build_log import PropertyExt
 from eschergraph.builder.build_pipeline import BuildPipeline
 from eschergraph.graph.node import Node
-from eschergraph.graph.persistence import Metadata
-from eschergraph.graph.persistence.adapters.simple_repository import SimpleRepository
+from eschergraph.persistence import Metadata
+from eschergraph.persistence.adapters.simple_repository import SimpleRepository
 
 if TYPE_CHECKING:
   from eschergraph.graph import Graph

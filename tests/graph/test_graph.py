@@ -4,6 +4,9 @@ import os
 from typing import Optional
 from unittest.mock import MagicMock
 from unittest.mock import Mock
+from unittest.mock import patch
+from uuid import UUID
+from uuid import uuid4
 
 import pytest
 
@@ -11,7 +14,8 @@ from eschergraph.agents.llm import ModelProvider
 from eschergraph.agents.reranker import Reranker
 from eschergraph.exceptions import CredentialException
 from eschergraph.graph import Graph
-from eschergraph.graph.persistence.vector_db import VectorDB
+from eschergraph.persistence.vector_db import VectorDB
+from tests.graph.help import create_basic_node
 
 
 def set_graph_dependencies_creds(
@@ -107,3 +111,70 @@ def test_api_keys_provided_complete(mock_repository: Mock) -> None:
 
   for key in cred_keys:
     assert key in os.environ
+
+
+# Patched objects need to be patched where they are used!
+def test_graph_search_with_doc_filter(graph_unit: Graph) -> None:
+  graph_unit.repository.get_all_at_level.return_value = [create_basic_node()]
+  filter_filenames: list[str] = ["test1.pdf", "test.xlsx"]
+  query: str = "test search"
+  filter_ids: list[UUID] = [uuid4(), uuid4()]
+  mock_get_doc_ids: MagicMock = MagicMock()
+  mock_get_doc_ids.return_value = filter_ids
+  mock_search: MagicMock = MagicMock()
+  with patch(
+    "eschergraph.graph.graph.get_document_ids_from_filenames", mock_get_doc_ids
+  ):
+    with patch("eschergraph.graph.graph.quick_search", mock_search):
+      graph_unit.search(query, filter_filenames)
+
+  mock_get_doc_ids.assert_called_once_with(
+    filenames=filter_filenames, repository=graph_unit.repository
+  )
+  mock_search.assert_called_once_with(
+    graph=graph_unit, query=query, doc_filter=filter_ids
+  )
+
+
+def test_graph_search_without_doc_filter(graph_unit: Graph) -> None:
+  graph_unit.repository.get_all_at_level.return_value = [create_basic_node()]
+  query: str = "test search"
+  mock_search: MagicMock = MagicMock()
+  with patch("eschergraph.graph.graph.quick_search", mock_search):
+    graph_unit.search(query)
+
+  mock_search.assert_called_once_with(graph=graph_unit, query=query, doc_filter=None)
+
+
+def test_graph_global_search_with_doc_filter(graph_unit: Graph) -> None:
+  graph_unit.repository.get_all_at_level.return_value = [create_basic_node()]
+  filter_filenames: list[str] = ["test1.pdf", "test.xlsx"]
+  query: str = "test search"
+  filter_ids: list[UUID] = [uuid4(), uuid4()]
+  mock_get_doc_ids: MagicMock = MagicMock()
+  mock_get_doc_ids.return_value = filter_ids
+  mock_global_search: MagicMock = MagicMock()
+  with patch(
+    "eschergraph.graph.graph.get_document_ids_from_filenames", mock_get_doc_ids
+  ):
+    with patch("eschergraph.graph.graph.global_search", mock_global_search):
+      graph_unit.global_search(query, filter_filenames)
+
+  mock_get_doc_ids.assert_called_once_with(
+    filenames=filter_filenames, repository=graph_unit.repository
+  )
+  mock_global_search.assert_called_once_with(
+    graph=graph_unit, query=query, doc_filter=filter_ids
+  )
+
+
+def test_graph_global_search_without_doc_filter(graph_unit: Graph) -> None:
+  graph_unit.repository.get_all_at_level.return_value = [create_basic_node()]
+  query: str = "test search"
+  mock_global_search: MagicMock = MagicMock()
+  with patch("eschergraph.graph.graph.global_search", mock_global_search):
+    graph_unit.global_search(query)
+
+  mock_global_search.assert_called_once_with(
+    graph=graph_unit, query=query, doc_filter=None
+  )

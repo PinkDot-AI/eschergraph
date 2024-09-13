@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 from typing import Optional
-from typing import TYPE_CHECKING
 from uuid import UUID
 
 from eschergraph.agents.llm import ModelProvider
@@ -11,24 +10,26 @@ from eschergraph.agents.providers.openai import OpenAIModel
 from eschergraph.agents.providers.openai import OpenAIProvider
 from eschergraph.agents.reranker import Reranker
 from eschergraph.config import DEFAULT_GRAPH_NAME
+from eschergraph.config import MAIN_COLLECTION
 from eschergraph.exceptions import CredentialException
 from eschergraph.exceptions import IllogicalActionException
 from eschergraph.graph.edge import Edge
 from eschergraph.graph.node import Node
-from eschergraph.graph.persistence import Metadata
-from eschergraph.graph.persistence import Repository
-from eschergraph.graph.persistence.factory import get_default_repository
-from eschergraph.graph.persistence.vector_db import get_vector_db
-from eschergraph.graph.persistence.vector_db import VectorDB
 from eschergraph.graph.search.global_search import global_search
 from eschergraph.graph.search.quick_search import quick_search
+from eschergraph.graph.utils import duplicate_document_check
+from eschergraph.graph.utils import get_document_ids_from_filenames
+from eschergraph.graph.utils import search_check
+from eschergraph.persistence import Document
+from eschergraph.persistence import Metadata
+from eschergraph.persistence import Repository
+from eschergraph.persistence.factory import get_default_repository
+from eschergraph.persistence.vector_db import get_vector_db
+from eschergraph.persistence.vector_db import VectorDB
 from eschergraph.tools.prepare_sync_data import prepare_sync_data
 from eschergraph.visualization.dashboard_maker import DashboardData
 from eschergraph.visualization.dashboard_maker import DashboardMaker
 from eschergraph.visualization.visualizer import Visualizer
-
-if TYPE_CHECKING:
-  pass
 
 
 class Graph:
@@ -168,74 +169,65 @@ class Graph:
     # Prepare data for synchronization
     create_main, ids_to_delete = prepare_sync_data(repository=self.repository)
 
-    # Collection names
-    collection_main = "main_collection"
-    collection_nodes = "node_name_collection"
+    main_collection: str = MAIN_COLLECTION
 
-    # Ensure the collections exist
-    self.vector_db.get_or_create_collection(collection_main)
-    self.vector_db.get_or_create_collection(collection_nodes)
+    if ids_to_delete:
+      self.vector_db.delete_by_ids(ids_to_delete, main_collection)
 
-    # Function to delete records if any
-    def delete_records(ids: list[UUID], collection: str) -> None:
-      if ids:
-        self.vector_db.delete_with_id(ids, collection)
+    if create_main:
+      ids, docs, metadatas = zip(*create_main)
+      self.vector_db.insert(
+        documents=list(docs),
+        ids=list(ids),
+        metadata=list(metadatas),
+        collection_name=main_collection,
+      )
 
-    # Delete records in both collections
-    delete_records(ids_to_delete, collection_main)
-
-    # Function to insert new or updated entries into a collection
-    def insert_records(
-      data: list[tuple[UUID, str, dict[str, str | int]]], collection: str
-    ) -> None:
-      if data:
-        ids, docs, metadata = zip(*data)
-        self.vector_db.insert(
-          documents=list(docs),
-          ids=list(ids),
-          metadata=list(metadata),
-          collection_name=collection,
-        )
-
-    # Insert into main and node collections
-    insert_records(create_main, collection_main)
-
-  def search(self, query: str) -> str:
+  def search(self, query: str, filter_filenames: Optional[list[str]] = None) -> str:
     """Executes a search query using a vector database and a specified model.
 
     Args:
       query (str): The search query as a string.
+      filter_filenames(Optional[list[str]]): An optional list of filenames to search in. If not provided,
+        all documents are included.
 
     Returns:
       The result of the search, typically a string that represents the most relevant information or document found by the search.
     """
-    if not self._search_check():
+    if not search_check(self.repository):
       raise IllogicalActionException("You cannot search a graph before building it")
-    return quick_search(graph=self, query=query)
 
-  def global_search(self, query: str) -> str:
+    doc_filter: list[UUID] | None = None
+    if filter_filenames:
+      doc_filter = get_document_ids_from_filenames(
+        filenames=filter_filenames, repository=self.repository
+      )
+
+    return quick_search(graph=self, query=query, doc_filter=doc_filter)
+
+  def global_search(
+    self, query: str, filter_filenames: Optional[list[str]] = None
+  ) -> str:
     """Executes a search query using a vector database and a specified model on the upper layers of the graph.
 
     Args:
-        query (str): The search query as a string.
+      query (str): The search query as a string.
+      filter_filenames(Optional[list[str]]): An optional list of filenames to search in. If not provided,
+        all documents are included.
 
     Returns:
-        str: The result of the search, is a string
+      str: The result of the search, is a string
     """
-    if not self._search_check():
+    if not search_check(self.repository):
       raise IllogicalActionException("You cannot search a graph before building it")
-    return global_search(graph=self, query=query)
 
-  def _search_check(self) -> bool:
-    """Check if there are any elements at level 0 in the graph repository.
+    doc_filter: list[UUID] | None = None
+    if filter_filenames:
+      doc_filter = get_document_ids_from_filenames(
+        filenames=filter_filenames, repository=self.repository
+      )
 
-    Args:
-      graph (Graph): The graph object to check.
-
-    Returns:
-      bool: True if there are elements at level 0, otherwise False.
-    """
-    return len(self.repository.get_all_at_level(0)) > 0
+    return global_search(graph=self, query=query, doc_filter=doc_filter)
 
   def build(self, files: str | list[str]) -> Graph:
     """Build a graph from the given files.
@@ -251,7 +243,12 @@ class Graph:
     from eschergraph.builder.build_pipeline import BuildPipeline
     from eschergraph.builder.building_tools import BuildingTools
 
-    chunks, document_data, total_tokens = BuildingTools.process_files(files)
+    file_list: list[str] = [files] if isinstance(files, str) else files
+
+    # Check if the documents already exist
+    duplicate_document_check(file_list, self.repository)
+
+    chunks, document_data, total_tokens = BuildingTools.process_files(file_list)
 
     BuildingTools.display_build_info(chunks, total_tokens, model=self.model)
 
@@ -261,7 +258,7 @@ class Graph:
 
     # Add document data objects to the repository
     for doc_data in document_data:
-      self.repository.add_document(document_data=doc_data)
+      self.repository.add_document(document=doc_data)
 
     return self
 
@@ -275,3 +272,11 @@ class Graph:
     """Generate a plot of the graph's level 0 and level 1."""
     Visualizer.visualize_graph(self, level=0, save_location=f"{self.name}_level_0.html")
     Visualizer.visualize_graph(self, level=1, save_location=f"{self.name}_level_1.html")
+
+  def get_all_documents(self) -> list[Document]:
+    """Get a list of all documents currently in the graph.
+
+    Returns:
+      list[Document]: A list of documents.
+    """
+    return self.repository.get_all_documents()

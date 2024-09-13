@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "eschergraph"
-version = "0.2.5"
+version = "0.3.0"
 description = "The library that uses AI agents to enable building and searching in generalized knowledge graphs."
 authors = ["PinkDot AI"]
 license = "MIT"
@@ -152,7 +152,7 @@ docstring-code-line-length = 40
 [tool.mypy]
 exclude = [
     'eschergraph/tools/pdf_document_layout_analysis/.*\.py$',
-    'eschergraph/graph/persistence/vector_db/adapters/chromadb.py$',
+    'eschergraph/persistence/vector_db/adapters/chromadb.py$',
     'eschergraph/tools/fast_pdf_parser/parser.py',
     'eschergraph/tools/node_matcher.py$',
     'eschergraph/agents/providers/.*\.py$'

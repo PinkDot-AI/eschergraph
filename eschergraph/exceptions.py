@@ -25,15 +25,15 @@ class DataLoadingException(BaseEscherGraphException):
 
 
 class NodeDoesNotExistException(BaseEscherGraphException):
-  """The specified node has not been found."""
+  """Node has not been found."""
 
 
 class EdgeCreationException(BaseEscherGraphException):
-  """When an edge is created between a node and itself."""
+  """Edge is created between a node and itself."""
 
 
 class NodeCreationException(BaseEscherGraphException):
-  """When something goes wrong creating a node."""
+  """Something went wrong creating a node."""
 
 
 class CredentialException(BaseEscherGraphException):
@@ -41,7 +41,7 @@ class CredentialException(BaseEscherGraphException):
 
 
 class FileTypeNotProcessableException(BaseEscherGraphException):
-  """When a file is not processable due to its type."""
+  """File is not processable due to its type."""
 
 
 class EdgeDoesNotExistException(BaseEscherGraphException):
@@ -49,12 +49,20 @@ class EdgeDoesNotExistException(BaseEscherGraphException):
 
 
 class RepositoryException(BaseEscherGraphException):
-  """When something unexpected happens with the repository."""
+  """Something unexpected happens with the repository."""
 
 
 class ExternalDependencyException(BaseEscherGraphException):
-  """When an external dependency (outside of Python) is missing."""
+  """External dependency (outside of Python) is missing."""
 
 
 class DocumentDoesNotExistException(BaseEscherGraphException):
-  """When the specified document does not exist in the graph."""
+  """The specified document does not exist in the graph."""
+
+
+class DocumentAlreadyExistsException(BaseEscherGraphException):
+  """The graph attempts to build for a document that already exists."""
+
+
+class FileException(BaseEscherGraphException):
+  """Provided filepath is not a file or the file does not exist."""
