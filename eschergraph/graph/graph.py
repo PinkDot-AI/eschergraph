@@ -171,9 +171,6 @@ class Graph:
 
     main_collection: str = "main_collection"
 
-    # Ensure the collection exists
-    self.vector_db.get_or_create_collection(main_collection)
-
     if ids_to_delete:
       self.vector_db.delete_by_ids(ids_to_delete, main_collection)
 

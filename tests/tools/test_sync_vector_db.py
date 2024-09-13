@@ -59,22 +59,6 @@ def test_prep_sync_vector_db(mock_repository: Mock) -> None:
     edge1.description,
     prop1.node.name + ", " + prop1.description,
   }
-  # Assert the correct metadata
-  for md in metadata_to_create:
-    if md["type"] == "node":
-      assert md["entity_frm"] in [node1.name, node2.name]
-      assert md["entity_to"] == ""
-    elif md["type"] == "edge":
-      assert md["entity_frm"] == edge1.frm.name
-      assert md["entity_to"] == edge1.to.name
-    elif md["type"] == "property":
-      assert md["entity_frm"] == prop1.node.name
-      assert md["entity_to"] == ""
-    elif md["type"] == "node_name":
-      assert md["entity_frm"] in [node1.name, node2.name]
-      assert md["entity_to"] == ""
-    else:
-      pytest.fail()
 
 
 def test_prep_sync_vector_db_create_correct_level(mock_repository: Mock) -> None:

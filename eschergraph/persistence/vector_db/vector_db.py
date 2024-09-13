@@ -22,20 +22,11 @@ class VectorDB(ABC):
     raise NotImplementedError
 
   @abstractmethod
-  def get_or_create_collection(self, collection_name: str) -> None:
-    """Create a collection with a given name.
-
-    Args:
-      collection_name (str): Collection's name.
-    """
-    raise NotImplementedError
-
-  @abstractmethod
   def insert(
     self,
     documents: list[str],
     ids: list[UUID],
-    metadata: list[dict[str, str]],
+    metadata: list[dict[str, str | int]],
     collection_name: str,
   ) -> None:
     """Store documents with their embeddings, ids, and metadata.

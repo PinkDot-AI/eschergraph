@@ -50,19 +50,11 @@ class ChromaDB(VectorDB):
     """Connect to ChromaDB. Currently not used."""
     ...
 
-  def get_or_create_collection(self, collection_name: str) -> None:
-    """Get or create a collection in ChromaDB.
-
-    Args:
-      collection_name (str): The name of the collection to be created.
-    """
-    self.collection = self.client.get_or_create_collection(name=collection_name)
-
   def insert(
     self,
     documents: list[str],
     ids: list[UUID],
-    metadata: list[dict[str, str]],
+    metadata: list[dict[str, str | int]],
     collection_name: str,
   ) -> None:
     """Insert documents into a ChromaDB collection.
@@ -73,7 +65,7 @@ class ChromaDB(VectorDB):
       metadata (list[dict]): List of metadata dictionaries for each document.
       collection_name (str): Name of the collection to add documents to.
     """
-    collection = self.client.get_collection(name=collection_name)
+    collection = self.client.get_or_create_collection(name=collection_name)
 
     # TODO: add more error handling / communication to operating classes
     documents = ["null" if d.strip() == "" else d for d in documents]
@@ -98,7 +90,7 @@ class ChromaDB(VectorDB):
     top_n: int,
     collection_name: str,
     metadata: Optional[dict[str, Any]] = None,
-  ) -> dict[str, str]:
+  ) -> list[VectorSearchResult]:
     """Search for documents in a ChromaDB collection.
 
     Args:
@@ -108,24 +100,26 @@ class ChromaDB(VectorDB):
       metadata (Optional[dict[str, Any]]): Optional metadata to filter by.
 
     Returns:
-      dict: Search results containing the documents.
+      list[VectorSearchResult]: A list with the search results.
     """
     embedding = self.embedding_model.get_embedding([query])
-    collection = self.client.get_collection(name=collection_name)
+    # TODO: add a check to see if the collection already exists?
+    collection = self.client.get_or_create_collection(name=collection_name)
     results: QueryResult = collection.query(
       query_embeddings=embedding,
       n_results=top_n,
       where=metadata,
       include=["documents", "metadatas", "distances"],
     )
+
     return [
       VectorSearchResult(
-        id=results["ids"][0][i],
+        id=UUID(results["ids"][0][i]),
         chunk=results["documents"][0][i],
         type=results["metadatas"][0][i]["type"],
         distance=results["distances"][0][i],
       )
-      for i in range(len(results))
+      for i in range(top_n)
     ]
 
   def delete_by_ids(self, ids: list[UUID], collection_name: str) -> None:

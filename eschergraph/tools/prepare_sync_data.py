@@ -46,8 +46,6 @@ def prepare_sync_data(
       md_node: dict[str, str | int] = {
         "level": cur_log.level,
         "type": "node",
-        "entity_frm": node.name,
-        "entity_to": "",
         "document_id": _get_node_document_id(node),
       }
       node_string = node.name + ", " + node.description
@@ -60,8 +58,6 @@ def prepare_sync_data(
       md_edge: dict[str, str | int] = {
         "level": cur_log.level,
         "type": "edge",
-        "entity_frm": edge.frm.name,
-        "entity_to": edge.to.name,
         "document_id": _get_node_document_id(edge.frm),
       }
       create_main.append((id, edge.description, md_edge))
@@ -73,8 +69,6 @@ def prepare_sync_data(
       md_prop: dict[str, str | int] = {
         "level": cur_log.level,
         "type": "property",
-        "entity_frm": property.node.name,
-        "entity_to": "",
         "document_id": _get_node_document_id(property.node),
       }
       property_string = property.node.name + ", " + property.description

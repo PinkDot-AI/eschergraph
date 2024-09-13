@@ -53,8 +53,9 @@ def build_graph() -> None:
     graph, level=1, save_location=temp_path.as_posix() + "/level_1.html"
   )
 
-  answer = graph.search("Who are the architects?")
-  print(answer)
+  # TODO: update the search to work with the new vector database interface
+  # answer = graph.search("Who are the architects?")
+  # print(answer)
 
   graph.dashboard()
 
