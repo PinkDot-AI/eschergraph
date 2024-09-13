@@ -150,9 +150,6 @@ class Reader:
 
     Args:
       analysis_results (AnalysisResult): The analysis results containing tables, figures, and paragraphs.
-
-    Returns:
-        None
     """
     base_name = os.path.basename(self.file_location)
     output_folder = os.path.join("eschergraph_storage", base_name)
