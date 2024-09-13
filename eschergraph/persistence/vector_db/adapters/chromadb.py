@@ -124,7 +124,7 @@ class ChromaDB(VectorDB):
       include=["documents", "metadatas", "distances"],
     )
 
-    # Correction, in case top_n is larger than number in collection
+    # Correction, in case top_n is larger than entries in collection
     num_result: int = len(results["ids"][0])
 
     return [

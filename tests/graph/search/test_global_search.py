@@ -4,8 +4,8 @@ from unittest.mock import patch
 
 from eschergraph.config import MAIN_COLLECTION
 from eschergraph.graph.graph import Graph
-from eschergraph.graph.search.global_search import _get_relevant_extractions
 from eschergraph.graph.search.global_search import AttributeSearch
+from eschergraph.graph.search.global_search import get_relevant_extractions
 from eschergraph.graph.search.global_search import global_search
 
 
@@ -15,7 +15,7 @@ def test_global_search(graph_unit: Graph) -> None:
   full_prompt = "Processed template with context and query"
 
   with patch(
-    "eschergraph.graph.search.global_search._get_relevant_extractions"
+    "eschergraph.graph.search.global_search.get_relevant_extractions"
   ) as mock_get_extractions:
     with patch(
       "eschergraph.graph.search.global_search.process_template"
@@ -37,7 +37,7 @@ def test_global_search(graph_unit: Graph) -> None:
       graph_unit.model.get_plain_response.assert_called_once_with(full_prompt)
 
 
-def test_get_relevant_extractions(graph_unit: Graph) -> None:
+def testget_relevant_extractions(graph_unit: Graph) -> None:
   prompt = "test prompt"
   search_results = [
     {"chunk": "Chunk 1", "metadata": {"level": 1}},
@@ -59,7 +59,7 @@ def test_get_relevant_extractions(graph_unit: Graph) -> None:
     graph_unit.vector_db.search.return_value = search_results
     graph_unit.vector_db.format_search_results.return_value = search_results
 
-    result = _get_relevant_extractions(graph_unit, prompt)
+    result = get_relevant_extractions(graph_unit, prompt)
 
     assert result == reranked_results
     graph_unit.vector_db.search.assert_called_once_with(

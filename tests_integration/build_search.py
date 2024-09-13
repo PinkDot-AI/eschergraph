@@ -56,6 +56,9 @@ def build_graph() -> None:
   answer = graph.search("Who are the architects?")
   print(answer)
 
+  global_answer = graph.global_search("What are the key points?")
+  print(global_answer)
+
   graph.dashboard()
 
   # Wait a few seconds before cleaning up to open the visuals
