@@ -149,7 +149,7 @@ class Reader:
     saving cropped images for both tables and figures.
 
     Args:
-        analysis_results (AnalysisResult): The analysis results containing tables, figures, and paragraphs.
+      analysis_results (AnalysisResult): The analysis results containing tables, figures, and paragraphs.
 
     Returns:
         None
@@ -169,12 +169,13 @@ class Reader:
       markdown_output = f"### Table {table_idx + 1}: {table['caption']}\n\n"
       markdown_output += self.generate_markdown_table(table)
       for region in table["bounding_regions"]:
-        boundingbox = (
-          region["polygon"][0],  # x0 (left)
-          region["polygon"][1],  # y0 (top)
-          region["polygon"][4],  # x1 (right)
-          region["polygon"][5],  # y1 (bottom)
-        )
+        if table["bounding_regions"]:
+          boundingbox = (
+            region["polygon"][0],  # x0 (left)
+            region["polygon"][1],  # y0 (top)
+            region["polygon"][4],  # x1 (right)
+            region["polygon"][5],  # y1 (bottom)
+          )
         cropped_image = crop_image_from_file(
           self.file_location, region["page_number"] - 1, boundingbox
         )

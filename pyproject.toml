@@ -152,9 +152,9 @@ docstring-code-line-length = 40
 
 [tool.mypy]
 exclude = [
-    'eschergraph/tools/pdf_document_layout_analysis/.*\.py$',
+    'eschergraph/builder/reader/pdf_document_layout_analysis/.*\.py$',
     'eschergraph/graph/persistence/vector_db/adapters/chromadb.py$',
-    'eschergraph/tools/fast_pdf_parser/parser.py',
+    'eschergraph/builder/reader/fast_pdf_parser/parser.py',
     'eschergraph/tools/node_matcher.py$',
     'eschergraph/agents/providers/.*\.py$'
 ]
