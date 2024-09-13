@@ -56,7 +56,7 @@ def test_duplicate_document_check_no_duplicates(
     files: list[str] = [
       "test_file.pdf",
       "./docs/folder/test_doc.xlsx",
-      ".\\hello\\test.docx",
+      "./hello/test.docx",
     ]
     duplicate_document_check(file_list=files, repository=mock_repository)
 
