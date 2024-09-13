@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from typing import Any
+from typing import Optional
 from typing import TYPE_CHECKING
+from uuid import UUID
 
 from eschergraph.agents.jinja_helper import process_template
 from eschergraph.agents.reranker import RerankerResult
@@ -17,14 +19,14 @@ RAG_SEARCH = "search/question_with_context.jinja"
 
 # TODO: add explicit source references to the answer
 def quick_search(
-  graph: Graph,
-  query: str,
+  graph: Graph, query: str, doc_filter: Optional[list[UUID]] = None
 ) -> str:
   """Performs a quick search and Retrieval-Augmented Generation (RAG) using the vector database and language model.
 
   Args:
     query (str): The input string to search for relevant attributes in the graph.
     graph (Graph): The graph on which the quick search is performed.
+    doc_filter: (Optional[list[UUID]]) The optional list of document id's to filter for.
 
   Returns:
     str: The answer from the LLM.
@@ -49,18 +51,24 @@ def quick_search(
     return "Something went wrong with generating the answer"
 
 
-def get_attributes_search(graph: Graph, query: str) -> list[AttributeSearch]:
+def get_attributes_search(
+  graph: Graph, query: str, doc_filter: Optional[list[UUID]] = None
+) -> list[AttributeSearch]:
   """Gets and ranks all relevant objects in the graph based on the query.
 
   Args:
     query (str): The input query used to search and rank attributes.
     graph (Graph): The graph on which the quick search is performed.
+    doc_filter: (Optional[list[UUID]]) The optional list of document id's to filter for.
 
   Returns:
     list[AttributeSearch]: A list of AttributeSearch objects representing the ranked attributes relevant to the query.
   """
   # Initialize search metadata for attributes
   search_metadata: dict[str, Any] = {"level": 0}
+
+  if doc_filter:
+    search_metadata["document_id"] = doc_filter
 
   # Perform the final search for attributes
   attributes_results: list[VectorSearchResult] = graph.vector_db.search(

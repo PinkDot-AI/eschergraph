@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 from typing import Optional
-from typing import TYPE_CHECKING
+from uuid import UUID
 
 from eschergraph.agents.llm import ModelProvider
 from eschergraph.agents.providers.jina import JinaReranker
@@ -18,7 +18,9 @@ from eschergraph.graph.node import Node
 from eschergraph.graph.search.global_search import global_search
 from eschergraph.graph.search.quick_search import quick_search
 from eschergraph.graph.utils import duplicate_document_check
+from eschergraph.graph.utils import get_document_ids_from_filenames
 from eschergraph.graph.utils import search_check
+from eschergraph.persistence import Document
 from eschergraph.persistence import Metadata
 from eschergraph.persistence import Repository
 from eschergraph.persistence.factory import get_default_repository
@@ -28,9 +30,6 @@ from eschergraph.tools.prepare_sync_data import prepare_sync_data
 from eschergraph.visualization.dashboard_maker import DashboardData
 from eschergraph.visualization.dashboard_maker import DashboardMaker
 from eschergraph.visualization.visualizer import Visualizer
-
-if TYPE_CHECKING:
-  pass
 
 
 class Graph:
@@ -184,31 +183,51 @@ class Graph:
         collection_name=main_collection,
       )
 
-  def search(self, query: str) -> str:
+  def search(self, query: str, filter_filenames: Optional[list[str]] = None) -> str:
     """Executes a search query using a vector database and a specified model.
 
     Args:
       query (str): The search query as a string.
+      filter_filenames(Optional[list[str]]): An optional list of filenames to search in. If not provided,
+        all documents are included.
 
     Returns:
       The result of the search, typically a string that represents the most relevant information or document found by the search.
     """
     if not search_check(self.repository):
       raise IllogicalActionException("You cannot search a graph before building it")
-    return quick_search(graph=self, query=query)
 
-  def global_search(self, query: str) -> str:
+    doc_filter: list[UUID] | None = None
+    if filter_filenames:
+      doc_filter = get_document_ids_from_filenames(
+        filenames=filter_filenames, repository=self.repository
+      )
+
+    return quick_search(graph=self, query=query, doc_filter=doc_filter)
+
+  def global_search(
+    self, query: str, filter_filenames: Optional[list[str]] = None
+  ) -> str:
     """Executes a search query using a vector database and a specified model on the upper layers of the graph.
 
     Args:
-        query (str): The search query as a string.
+      query (str): The search query as a string.
+      filter_filenames(Optional[list[str]]): An optional list of filenames to search in. If not provided,
+        all documents are included.
 
     Returns:
-        str: The result of the search, is a string
+      str: The result of the search, is a string
     """
     if not search_check(self.repository):
       raise IllogicalActionException("You cannot search a graph before building it")
-    return global_search(graph=self, query=query)
+
+    doc_filter: list[UUID] | None = None
+    if filter_filenames:
+      doc_filter = get_document_ids_from_filenames(
+        filenames=filter_filenames, repository=self.repository
+      )
+
+    return global_search(graph=self, query=query, doc_filter=doc_filter)
 
   def build(self, files: str | list[str]) -> Graph:
     """Build a graph from the given files.
@@ -253,3 +272,11 @@ class Graph:
     """Generate a plot of the graph's level 0 and level 1."""
     Visualizer.visualize_graph(self, level=0, save_location=f"{self.name}_level_0.html")
     Visualizer.visualize_graph(self, level=1, save_location=f"{self.name}_level_1.html")
+
+  def get_all_documents(self) -> list[Document]:
+    """Get a list of all documents currently in the graph.
+
+    Returns:
+      list[Document]: A list of documents.
+    """
+    return self.repository.get_all_documents()

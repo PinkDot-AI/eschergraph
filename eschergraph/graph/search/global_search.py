@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+from typing import Any
+from typing import Optional
 from typing import TYPE_CHECKING
+from uuid import UUID
 
 from eschergraph.agents.jinja_helper import process_template
 from eschergraph.config import GLOBAL_SEARCH_TEMPLATE
@@ -13,7 +16,9 @@ if TYPE_CHECKING:
   from eschergraph.graph import Graph
 
 
-def global_search(graph: Graph, query: str) -> str:
+def global_search(
+  graph: Graph, query: str, doc_filter: Optional[list[UUID]] = None
+) -> str:
   """Search a graph globally through its communities.
 
   Note that the findings for a community should be sorted, this is the default behavior when building a graph.
@@ -21,6 +26,7 @@ def global_search(graph: Graph, query: str) -> str:
   Args:
     graph (Graph): The graph object representing the data structure.
     query (str): The query string used to search within the graph.
+    doc_filter: (Optional[list[UUID]]) The optional list of document id's to filter for.
 
   Returns:
     str: The processed response from the graph model based on the search results..
@@ -38,21 +44,29 @@ def global_search(graph: Graph, query: str) -> str:
   return response
 
 
-def get_relevant_extractions(graph: Graph, prompt: str) -> list[AttributeSearch]:
+def get_relevant_extractions(
+  graph: Graph, prompt: str, doc_filter: Optional[list[UUID]] = None
+) -> list[AttributeSearch]:
   """Extract relevant attributes from the graph based on the search prompt.
 
   Args:
     graph (Graph): The graph object containing the data to search through.
     prompt (str): The query prompt used to perform the attribute search.
+    doc_filter: (Optional[list[UUID]]) The optional list of document id's to filter for.
 
   Returns:
     list[AttributeSearch]: A list of relevant attributes extracted from the graph, after filtering and reranking.
   """
   # Perform the search at level 1
+  search_metadata: dict[str, Any] = {"level": 1}
+
+  if doc_filter:
+    search_metadata["document_id"] = doc_filter
+
   attributes_results: list[VectorSearchResult] = graph.vector_db.search(
     query=prompt,
     top_n=15,
-    metadata={"level": 1},
+    metadata=search_metadata,
     collection_name=MAIN_COLLECTION,
   )
 

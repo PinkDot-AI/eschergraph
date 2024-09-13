@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 from pathlib import Path
+from uuid import UUID
 
 from eschergraph.exceptions import DocumentAlreadyExistsException
+from eschergraph.exceptions import DocumentDoesNotExistException
 from eschergraph.exceptions import FileException
 from eschergraph.persistence import Repository
+from eschergraph.persistence.document import Document
 
 
 def duplicate_document_check(file_list: list[str], repository: Repository) -> None:
@@ -48,3 +51,31 @@ def search_check(repository: Repository) -> bool:
     bool: True if there are elements at level 0, otherwise False.
   """
   return len(repository.get_all_at_level(0)) > 0
+
+
+def get_document_ids_from_filenames(
+  filenames: list[str], repository: Repository
+) -> list[UUID]:
+  """Get a document id from a list of filenames.
+
+  Used to get the document id's for the filter in the search.
+
+  Args:
+    filenames (list[str]): A list of filenames.
+    repository (Repository): The repository that saves the data.
+
+  Returns:
+    list[UUID]: A list of document id's.
+
+  Raises:
+    DocumentDoesNotExistException: If one of the provided filenames does not exist.
+  """
+  doc_ids: list[UUID] = []
+  for name in filenames:
+    doc: Document | None = repository.get_document_by_name(name)
+
+    if not doc:
+      raise DocumentDoesNotExistException(f"Document with name: {name}, does not exist")
+    doc_ids.append(doc.id)
+
+  return doc_ids

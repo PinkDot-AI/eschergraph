@@ -110,12 +110,26 @@ class ChromaDB(VectorDB):
     if not metadata:
       query_metadata = None
     else:
+      # Keep track of the amount of filters to append them with $and at the end
+      num_filters: int = 0
+      operator_metadata: dict[str, Any] = {}
       # Parse the metadata list into a contained in expression
       for key, value in metadata.items():
+        num_filters += 1
         if isinstance(value, list):
-          query_metadata[key] = {"$in": value}
+          operator_metadata[key] = {"$in": value}
         else:
-          query_metadata[key] = value
+          operator_metadata[key] = value
+
+      # Important!!
+      # Currently, only two filters combined with $and are supported
+      # for more clauses (not yet used), we need to nest clauses with $and
+      if num_filters == 2:
+        query_metadata["$and"] = [
+          {field: expr} for field, expr in operator_metadata.items()
+        ]
+      else:
+        query_metadata = operator_metadata
 
     results: QueryResult = collection.query(
       query_embeddings=embedding,
