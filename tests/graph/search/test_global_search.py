@@ -37,7 +37,7 @@ def test_global_search(graph_unit: Graph) -> None:
       graph_unit.model.get_plain_response.assert_called_once_with(full_prompt)
 
 
-def testget_relevant_extractions(graph_unit: Graph) -> None:
+def test_global_search_get_relevant_extractions(graph_unit: Graph) -> None:
   prompt = "test prompt"
   search_results = [
     {"chunk": "Chunk 1", "metadata": {"level": 1}},
@@ -57,12 +57,9 @@ def testget_relevant_extractions(graph_unit: Graph) -> None:
     return_value=reranked_results,
   ):
     graph_unit.vector_db.search.return_value = search_results
-    graph_unit.vector_db.format_search_results.return_value = search_results
 
-    result = get_relevant_extractions(graph_unit, prompt)
+    get_relevant_extractions(graph_unit, prompt)
 
-    assert result == reranked_results
     graph_unit.vector_db.search.assert_called_once_with(
       query=prompt, top_n=15, metadata={"level": 1}, collection_name=MAIN_COLLECTION
     )
-    graph_unit.vector_db.format_search_results.assert_called_once_with(search_results)

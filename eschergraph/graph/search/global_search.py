@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from eschergraph.agents.jinja_helper import process_template
+from eschergraph.config import GLOBAL_SEARCH_TEMPLATE
 from eschergraph.config import MAIN_COLLECTION
 from eschergraph.graph.search.attribute_search import AttributeSearch
 from eschergraph.graph.search.quick_search import rerank_and_filter_attributes
@@ -25,9 +26,11 @@ def global_search(graph: Graph, query: str) -> str:
     str: The processed response from the graph model based on the search results..
   """
   extractions: list[AttributeSearch] = get_relevant_extractions(graph, query)
-  ans_template = "search/global_search_context.jinja"
-  context = "\n".join([a.text for a in extractions])
-  full_prompt = process_template(ans_template, {"CONTEXT": context, "QUERY": query})
+  ans_template: str = GLOBAL_SEARCH_TEMPLATE
+  context: str = "\n".join([a.text for a in extractions])
+  full_prompt: str = process_template(
+    ans_template, {"CONTEXT": context, "QUERY": query}
+  )
   response: str | None = graph.model.get_plain_response(full_prompt)
   if not response:
     return ""
