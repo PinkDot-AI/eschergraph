@@ -139,7 +139,7 @@ def filter_attributes(
     if r.relevance_score <= threshold:
       break
 
-    search_result: VectorSearchResult = chunk_results.get(r.text)
+    search_result: VectorSearchResult | None = chunk_results.get(r.text)
     if search_result:
       attribute = create_attribute_search(graph, r.text, search_result)
       if attribute:

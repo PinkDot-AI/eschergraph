@@ -1,0 +1,18 @@
+{
+  "changes": [
+    {
+      "description": "Add the possibility to search in specific documents",
+      "type": "minor"
+    },
+    {
+      "description": "Add a check to prevent duplicate documents",
+      "type": "patch"
+    },
+    {
+      "description": "Simplified the vector database interface",
+      "type": "patch"
+    }
+  ],
+  "created_at": "2024-09-13T14:04:14+00:00",
+  "version": "0.3.0"
+}

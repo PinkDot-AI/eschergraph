@@ -1,4 +1,0 @@
-{
-  "type": "patch",
-  "description": "Add a check to prevent duplicate documents"
-}
