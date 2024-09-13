@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-import base64
-import io
 import os
 import time
-from typing import Any
 from typing import Optional
 from uuid import UUID
 from uuid import uuid4
@@ -13,20 +10,11 @@ import tiktoken
 from attrs import define
 from attrs import field
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from PIL import Image
 
-from eschergraph.builder.reader.crop_images import crop_image_from_file
-from eschergraph.builder.reader.fast_pdf_parser import FastPdfParser
-from eschergraph.builder.reader.fast_pdf_parser import PdfParsedSegment
-from eschergraph.builder.reader.pdf_parser_large.data_structure import (
-  AnalysisResult,
-)
-from eschergraph.builder.reader.pdf_parser_large.data_structure import (
-  Table,
-)
-from eschergraph.builder.reader.pdf_parser_large.pdf_parser_large import (
-  pdf_parser_large,
-)
+from eschergraph.builder.reader.fast_pdf_parser.models import PdfParsedSegment
+from eschergraph.builder.reader.fast_pdf_parser.parser import FastPdfParser
+from eschergraph.builder.reader.multi_modal.data_structure import Paragraph
+from eschergraph.builder.reader.multi_modal.data_structure import VisualDocumentElement
 from eschergraph.exceptions import FileTypeNotProcessableException
 
 
@@ -39,19 +27,6 @@ class Chunk:
   doc_id: UUID
   page_num: Optional[int]
   doc_name: str
-
-
-@define
-class VisualDocumentElement:
-  """This is the dataclasse for the Visual elemenets in a document. For now Figures and Tables."""
-
-  content: str
-  caption: str | None
-  save_location: str
-  page_num: int | None
-  doc_id: UUID
-  doc_name: str
-  type: str
 
 
 # TODO: add more files types: html, docx, pptx, xlsx.
@@ -88,9 +63,8 @@ class Reader:
     elif self.file_location.endswith(".pdf"):
       # Handle pdf file
       if self.multimodal:
-        results = self._get_document_analysis_large()
-        if results:
-          self._handle_multi_modal(results)
+        # TODO
+        pass
       else:
         response_json = self._get_document_analysis()
         if response_json:
@@ -108,164 +82,34 @@ class Reader:
     )
     return self.chunks
 
-  def _get_document_analysis(self) -> list[PdfParsedSegment]:
+  def _get_document_analysis(self) -> list[Paragraph]:
     # Send the file to the specified URL and get the response
-    return FastPdfParser.parse(file_path=self.file_location)
-
-  def _get_document_analysis_large(self) -> list[PdfParsedSegment]:
-    return pdf_parser_large(document_path=self.file_location)
-
-  def save_image_from_base64(self, base64_string: str, output_path: str) -> None:
-    """Decodes a base64 string and saves the resulting image to the specified path.
-
-    Args:
-        base64_string (str): The base64-encoded image string.
-        output_path (str): The file path where the image will be saved.
-
-    Returns:
-        None
-
-    Raises:
-        Exception: If there's an error during image processing or saving.
-    """
-    try:
-      # Decode the base64 string to bytes
-      image_bytes = base64.b64decode(base64_string)
-
-      # Create a BytesIO object from the image bytes
-      image_buffer = io.BytesIO(image_bytes)
-
-      # Open the image using Pillow
-      with Image.open(image_buffer) as img:
-        # Save the image in its original format with maximum quality
-        img.save(output_path, quality=95, subsampling=0)
-
-    except Exception as e:
-      print(f"Error saving image: {str(e)}")
-
-  def _handle_multi_modal(self, analysis_results: AnalysisResult) -> None:
-    """Processes and saves tables and figures from analysis results, creating markdown for tables and.
-
-    saving cropped images for both tables and figures.
-
-    Args:
-      analysis_results (AnalysisResult): The analysis results containing tables, figures, and paragraphs.
-    """
-    base_name = os.path.basename(self.file_location)
-    output_folder = os.path.join("eschergraph_storage", base_name)
-
-    # Create subfolders for tables and figures
-    tables_folder = os.path.join(output_folder, "tables")
-    figures_folder = os.path.join(output_folder, "figures")
-    os.makedirs(tables_folder, exist_ok=True)
-    os.makedirs(figures_folder, exist_ok=True)
-
-    # Handling tables
-    for table_idx, table in enumerate(analysis_results["tables"]):
-      caption = table["caption"]
-      markdown_output = f"### Table {table_idx + 1}: {table['caption']}\n\n"
-      markdown_output += self.generate_markdown_table(table)
-      for region in table["bounding_regions"]:
-        if table["bounding_regions"]:
-          boundingbox = (
-            region["polygon"][0],  # x0 (left)
-            region["polygon"][1],  # y0 (top)
-            region["polygon"][4],  # x1 (right)
-            region["polygon"][5],  # y1 (bottom)
-          )
-        cropped_image = crop_image_from_file(
-          self.file_location, region["page_number"] - 1, boundingbox
-        )
-        output_file = f"table_{table_idx}.png"
-        cropped_image_filename = os.path.join(tables_folder, output_file)
-        cropped_image.save(cropped_image_filename)
-        v = VisualDocumentElement(
-          content=markdown_output,
-          caption=caption,
-          save_location=cropped_image_filename,
-          doc_id=self.doc_id,
-          doc_name=self.filename,
-          page_num=table["page_num"],
-          type="TABLE",
-        )
-        self.visual_elements.append(v)
-    # Handling figures
-    for figure_idx, figure in enumerate(analysis_results["figures"]):
-      caption = figure["caption"]
-
-      figure_filename = f"figure_{figure_idx + 1}.png"
-      figure_path = os.path.join(figures_folder, figure_filename)
-
-      self.save_image_from_base64(figure["content"], figure_path)
-
-      # Create a VisualDocumentElement for the figure
-      v = VisualDocumentElement(
-        content=markdown_output,
-        caption=caption,
-        save_location=figure_path,
-        doc_id=self.doc_id,
-        doc_name=self.filename,
-        page_num=figure["page_num"],
-        type="FIGURE",
-      )
-      self.visual_elements.append(v)
-
-  def generate_markdown_table(self, table: Table) -> str:
-    """Generates a markdown representation of a table from the given Table data.
-
-    Args:
-        table (Table): The table data containing cells, row and column count.
-
-    Returns:
-        str: A string containing the table formatted as markdown.
-
-    """
-    # Initialize a 2D list (rows x columns) for the table content
-    markdown_table = [
-      ["" for _ in range(table["column_count"])] for _ in range(table["row_count"])
+    fastpdfparser_output: list[PdfParsedSegment] = FastPdfParser.parse(
+      file_path=self.file_location
+    )
+    return [
+      Reader._to_paragraph_structure(pdf_segment=segment, id=idx)
+      for idx, segment in enumerate(fastpdfparser_output)
     ]
 
-    # Populate the 2D list with content from the table cells
-    for cell in table["cells"]:
-      markdown_table[cell["row_index"]][cell["column_index"]] = cell["content"]
-
-    # Convert the 2D list to markdown format
-    markdown_str = ""
-
-    # Add the header row (first row)
-    header_row = markdown_table[0]
-    markdown_str += "| " + " | ".join(header_row) + " |\n"
-
-    # Add the separator (markdown requires a line with dashes between header and content)
-    markdown_str += "| " + " | ".join(["---"] * table["column_count"]) + " |\n"
-
-    # Add the remaining rows
-    for row in markdown_table[1:]:
-      markdown_str += "| " + " | ".join(row) + " |\n"
-
-    return markdown_str
-
-  def _handle_json_response(self, response_json: Any) -> None:
+  def _handle_json_response(self, parsed_paragraphs: list[Paragraph]) -> None:
     current_chunk: list[str] = []
     current_token_count: int = 0
     chunk_id: int = 0
 
-    for i, item in enumerate(response_json):
-      if item["type"] in ["TEXT", "SECTION_HEADER", "list_ITEM", "FORMULA"]:
-        text: str = item["text"] + "\n"
+    for i, paragraph in enumerate(parsed_paragraphs):
+      if paragraph["role"] != "null":
+        text: str = paragraph["content"] + "\n"
         tokens: int = self._count_tokens(text)
         # Calculate the effective token limit
         effective_token_limit: int = self.optimal_tokens
-        if (
-          item["type"] == "list_ITEM"
-          and i + 1 < len(response_json)
-          and response_json[i + 1]["type"] == "list_ITEM"
-        ):
-          effective_token_limit = int(self.optimal_tokens * 1.2)
+
         # Check if adding this item exceeds the effective token limit
         if current_token_count + tokens > effective_token_limit:
           # Process the current chunk and start a new one with the current item
-          self._process_text_chunk(current_chunk, chunk_id, int(item["page_number"]))
+          self._process_text_chunk(
+            current_chunk, chunk_id, int(paragraph["page_number"])
+          )
           chunk_id += 1  # Increment the chunk ID
           current_chunk = [text]
           current_token_count = tokens
@@ -275,25 +119,21 @@ class Reader:
           current_token_count += tokens
         # If it's a SECTION_HEADER and the current chunk size is greater than 80% of optimal_tokens, start a new chunk
         if (
-          item["type"] == "SECTION_HEADER"
+          paragraph["role"] == "sectionHeading"
           and current_token_count > 0.8 * self.optimal_tokens
         ):
           current_chunk.pop(-1)
-          self._process_text_chunk(current_chunk, chunk_id, int(item["page_number"]))
+          self._process_text_chunk(
+            current_chunk, chunk_id, int(paragraph["page_number"])
+          )
           chunk_id += 1  # Increment the chunk ID
           current_chunk = [text]
           current_token_count = tokens
     # Process any remaining text in the last chunk
     if current_chunk:
       self._process_text_chunk(
-        current_chunk, chunk_id, int(response_json[-1]["page_number"])
+        current_chunk, chunk_id, int(parsed_paragraphs[-1]["page_number"])
       )
-
-  @staticmethod
-  def _count_tokens(text: str) -> int:
-    tokenizer = tiktoken.get_encoding("cl100k_base")
-    tokens: list[int] = tokenizer.encode(text)
-    return len(tokens)
 
   def _process_text_chunk(
     self, chunk_list: list[str], chunk_id: int, page_num: int
@@ -324,6 +164,7 @@ class Reader:
     chunks: list[Chunk] = []
     for idx, split in enumerate(all_splits):
       chunk_text: str = split.page_content
+      split.metadata[""]
       if self._chunk_filter(chunk_text):
         chunks.append(
           Chunk(
@@ -361,3 +202,27 @@ class Reader:
     percentage = (non_alpha_count / total_length) if total_length > 0 else 0
     # Return True if the percentage exceeds the threshold
     return percentage > threshold_percentage
+
+  @staticmethod
+  def _count_tokens(text: str) -> int:
+    tokenizer = tiktoken.get_encoding("cl100k_base")
+    tokens: list[int] = tokenizer.encode(text)
+    return len(tokens)
+
+  @staticmethod
+  def _to_paragraph_structure(
+    pdf_segment: PdfParsedSegment,
+    id: int,
+  ) -> Paragraph:
+    role: str | None = "null"
+    if pdf_segment["type"] in ["TEXT", "LIST_ITEM", "FORMULA"]:
+      role = None
+    elif pdf_segment["type"] == "SECTION_HEADER":
+      role = "sectionHeading"
+
+    return Paragraph(
+      id=id,
+      role=role,
+      content=pdf_segment["text"],
+      page_number=pdf_segment["page_number"],
+    )

@@ -12,6 +12,7 @@ from typing import Optional
 from huggingface_hub import hf_hub_download
 
 from eschergraph.builder.reader.fast_pdf_parser.models import PdfParsedSegment
+from eschergraph.builder.reader.multi_modal.data_structure import Paragraph
 from eschergraph.builder.reader.pdf_document_layout_analysis.fast_trainer.model_configuration import (
   MODEL_CONFIGURATION as PARAGRAPH_EXTRACTION_CONFIGURATION,
 )
@@ -84,7 +85,7 @@ class FastPdfParser:
   """The fast pdf parser that uses LightGBM models."""
 
   @staticmethod
-  def parse(file_path: str) -> list[PdfParsedSegment]:
+  def parse(file_path: str) -> list[Paragraph]:
     """Use the fast LightGBM models to parse a PDF into segments.
 
     The models and the approach has been adapted from: https://github.com/huridocs/pdf-document-layout-analysis.
@@ -117,7 +118,6 @@ class FastPdfParser:
       paragraph_extractor_model_path=MODELS_PATH
       + "/paragraph_extraction_lightgbm.model"
     )
-
     return [
       FastPdfParser._to_parsed_segment(segment, pdf_features.pages)  # type: ignore
       for segment in segments

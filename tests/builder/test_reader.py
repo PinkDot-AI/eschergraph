@@ -14,3 +14,11 @@ def test_reader_pdf() -> None:
 
   for chunk in reader.chunks:
     assert isinstance(chunk, Chunk)
+
+
+def test_multi_modal() -> None:
+  reader: Reader = Reader(
+    file_location="test_files/Attention Is All You Need.pdf", multimodal=True
+  )
+
+  reader.parse()

@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import Optional
 from typing import TypedDict
+from uuid import UUID
 
-
-# Define Pydantic models for Table and Figure
+from attrs import define
 
 
 class BoundingRegion(TypedDict):
@@ -29,6 +29,7 @@ class Paragraph(TypedDict):
   id: int
   role: str | None
   content: str
+  page_number: int | None
 
 
 class Table(TypedDict):
@@ -48,7 +49,7 @@ class Figure(TypedDict):
 
   id: str
   caption: str | None
-  content: bytes
+  bounding_regions: list[BoundingRegion]
   page_num: int
 
 
@@ -58,3 +59,15 @@ class AnalysisResult(TypedDict):
   tables: list[Table]
   figures: list[Figure]
   paragraphs: list[Paragraph]
+
+
+@define
+class VisualDocumentElement:
+  """This is the dataclasse for the Visual elemenets in a document. For now Figures and Tables."""
+
+  content: str
+  caption: str | None
+  save_location: str
+  page_num: int | None
+  doc_id: UUID
+  type: str
