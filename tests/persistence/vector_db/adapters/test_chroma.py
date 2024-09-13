@@ -176,7 +176,7 @@ def test_chroma_search_with_metadata_list_and_level(chroma_unit: ChromaDB) -> No
     metadata={"document_id": [str(doc1), str(doc3)], "level": 14},
   )
 
-  assert {r.id for r in results} == {[ids[idx] for idx in level_14_idxs]}
+  assert {r.id for r in results} == {ids[idx] for idx in level_14_idxs}
 
 
 def test_chroma_search_with_metadata_single_document_level(
@@ -190,13 +190,15 @@ def test_chroma_search_with_metadata_single_document_level(
 
   for i in range(5):
     metadatas[i]["document_id"] = str(doc1)
+    metadatas[i]["level"] = 14
 
   for i in range(5, 10):
     metadatas[i]["document_id"] = str(doc2)
 
-  # Set the level to 14
-  metadatas[0]["level"] = 14
+  # Set the level to 14 for 5
   metadatas[5]["level"] = 14
+  metadatas[5]["type"] = "weird"
+  metadatas[0]["type"] = "weird"
 
   test_collection: str = "search_test"
   chroma_unit.insert(
@@ -206,7 +208,7 @@ def test_chroma_search_with_metadata_single_document_level(
     query="test",
     top_n=10,
     collection_name=test_collection,
-    metadata={"document_id": [str(doc1)], "level": 14},
+    metadata={"document_id": [str(doc1)], "level": 14, "type": ["weird"]},
   )
 
   assert {r.id for r in results} == {ids[0]}

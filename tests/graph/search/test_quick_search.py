@@ -3,6 +3,8 @@ from __future__ import annotations
 import random
 from unittest.mock import MagicMock
 from unittest.mock import patch
+from uuid import UUID
+from uuid import uuid4
 
 from eschergraph.agents.jinja_helper import process_template
 from eschergraph.agents.reranker import RerankerResult
@@ -158,4 +160,25 @@ def test_rerank_and_filter_attributes(graph_unit: Graph) -> None:
   )
   mock_filter_attributes.assert_called_once_with(
     graph_unit, rerank_result, {r.chunk: r for r in attributes_results}, 0.2
+  )
+
+
+def test_quick_search_with_doc_filter(graph_unit: Graph) -> None:
+  doc_filter: list[UUID] = [uuid4() for _ in range(10)]
+
+  quick_search(graph_unit, "test_query", doc_filter=doc_filter)
+
+  graph_unit.vector_db.search.assert_called_once_with(
+    query="test_query",
+    top_n=40,
+    metadata={"level": 0, "document_id": [str(id) for id in doc_filter]},
+    collection_name=MAIN_COLLECTION,
+  )
+
+
+def test_quick_search_without_doc_filter(graph_unit: Graph) -> None:
+  quick_search(graph_unit, "test_query")
+
+  graph_unit.vector_db.search.assert_called_once_with(
+    query="test_query", top_n=40, metadata={"level": 0}, collection_name=MAIN_COLLECTION
   )

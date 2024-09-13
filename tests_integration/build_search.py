@@ -11,6 +11,7 @@ from eschergraph.agents import OpenAIModel
 from eschergraph.agents import OpenAIProvider
 from eschergraph.persistence import Repository
 from eschergraph.persistence.adapters.simple_repository import SimpleRepository
+from eschergraph.persistence.document import Document
 from eschergraph.persistence.vector_db import VectorDB
 from eschergraph.persistence.vector_db.adapters.chromadb import ChromaDB
 from eschergraph.visualization import Visualizer
@@ -53,10 +54,18 @@ def build_graph() -> None:
     graph, level=1, save_location=temp_path.as_posix() + "/level_1.html"
   )
 
-  answer = graph.search("Who are the architects?")
+  documents: list[Document] = graph.get_all_documents()
+
+  print("The document currently in the graph: ")
+  print(documents)
+  doc_name: str = documents[0].name
+
+  answer = graph.search("Who are the architects?", filter_filenames=[doc_name])
   print(answer)
 
-  global_answer = graph.global_search("What are the key points?")
+  global_answer = graph.global_search(
+    "What are the key points?", filter_filenames=[doc_name]
+  )
   print(global_answer)
 
   graph.dashboard()

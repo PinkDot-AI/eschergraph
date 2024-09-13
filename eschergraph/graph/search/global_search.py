@@ -31,7 +31,9 @@ def global_search(
   Returns:
     str: The processed response from the graph model based on the search results..
   """
-  extractions: list[AttributeSearch] = get_relevant_extractions(graph, query)
+  extractions: list[AttributeSearch] = get_relevant_extractions(
+    graph, query, doc_filter
+  )
   ans_template: str = GLOBAL_SEARCH_TEMPLATE
   context: str = "\n".join([a.text for a in extractions])
   full_prompt: str = process_template(
@@ -61,7 +63,7 @@ def get_relevant_extractions(
   search_metadata: dict[str, Any] = {"level": 1}
 
   if doc_filter:
-    search_metadata["document_id"] = doc_filter
+    search_metadata["document_id"] = [str(id) for id in doc_filter]
 
   attributes_results: list[VectorSearchResult] = graph.vector_db.search(
     query=prompt,

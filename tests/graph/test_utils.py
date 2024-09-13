@@ -10,8 +10,10 @@ from uuid import uuid4
 import pytest
 
 from eschergraph.exceptions import DocumentAlreadyExistsException
+from eschergraph.exceptions import DocumentDoesNotExistException
 from eschergraph.exceptions import FileException
 from eschergraph.graph.utils import duplicate_document_check
+from eschergraph.graph.utils import get_document_ids_from_filenames
 from eschergraph.graph.utils import search_check
 from eschergraph.persistence.document import Document
 from tests.graph.help import create_basic_node
@@ -143,3 +145,26 @@ def test_search_check_nodes_at_level_0(mock_repository: Mock) -> None:
 
   assert search_check(mock_repository)
   mock_repository.get_all_at_level.assert_called_once()
+
+
+def test_get_document_ids_from_filenames_empty(mock_repository: Mock) -> None:
+  assert not get_document_ids_from_filenames([], mock_repository)
+
+
+def test_get_document_ids_from_filenames(mock_repository: Mock) -> None:
+  doc1: Document = Document(id=uuid4(), name="doc1.pdf", chunk_num=100, token_num=100)
+  doc2: Document = Document(id=uuid4(), name="doc2.xlsx", chunk_num=100, token_num=100)
+  mock_repository.get_document_by_name.side_effect = [doc1, doc2]
+
+  assert [doc1.id, doc2.id] == get_document_ids_from_filenames(
+    ["doc1.pdf", "doc2.xlsx"], mock_repository
+  )
+
+
+def test_get_document_ids_from_filenames_doc_not_found(mock_repository: Mock) -> None:
+  doc1: Document = Document(id=uuid4(), name="doc1.pdf", chunk_num=100, token_num=100)
+  doc2: Document = Document(id=uuid4(), name="doc2.xlsx", chunk_num=100, token_num=100)
+  mock_repository.get_document_by_name.side_effect = [doc1, None]
+
+  with pytest.raises(DocumentDoesNotExistException):
+    get_document_ids_from_filenames(["doc1.pdf", "doc2.xlsx"], mock_repository)

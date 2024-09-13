@@ -34,7 +34,7 @@ def quick_search(
   # Retrieve and rank attributes based on the query
   if query.strip() == "":
     return "please ask a question"
-  attributes: list[AttributeSearch] = get_attributes_search(graph, query)
+  attributes: list[AttributeSearch] = get_attributes_search(graph, query, doc_filter)
   chunks_string: str = ""
   if len(attributes) == 0:
     chunks_string = "Nothing found in the graph regarding this question!"
@@ -68,7 +68,9 @@ def get_attributes_search(
   search_metadata: dict[str, Any] = {"level": 0}
 
   if doc_filter:
-    search_metadata["document_id"] = doc_filter
+    search_metadata["document_id"] = [str(id) for id in doc_filter]
+
+  print(search_metadata)
 
   # Perform the final search for attributes
   attributes_results: list[VectorSearchResult] = graph.vector_db.search(

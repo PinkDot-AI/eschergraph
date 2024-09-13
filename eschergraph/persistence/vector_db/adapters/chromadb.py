@@ -121,10 +121,7 @@ class ChromaDB(VectorDB):
         else:
           operator_metadata[key] = value
 
-      # Important!!
-      # Currently, only two filters combined with $and are supported
-      # for more clauses (not yet used), we need to nest clauses with $and
-      if num_filters == 2:
+      if num_filters > 1:
         query_metadata["$and"] = [
           {field: expr} for field, expr in operator_metadata.items()
         ]
