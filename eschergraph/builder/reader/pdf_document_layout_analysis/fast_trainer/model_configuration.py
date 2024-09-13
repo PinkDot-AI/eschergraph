@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from eschergraph.tools.pdf_document_layout_analysis.pdf_tokens_type_trainer.model_configuration import (
+from eschergraph.builder.reader.pdf_document_layout_analysis.pdf_tokens_type_trainer.model_configuration import (
   ModelConfiguration,
 )
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 from lxml.etree import ElementBase
 from pydantic import BaseModel
 
-from eschergraph.tools.pdf_document_layout_analysis.pdf_features.rectangle import (
+from eschergraph.builder.reader.pdf_document_layout_analysis.pdf_features.rectangle import (
   Rectangle,
 )
 

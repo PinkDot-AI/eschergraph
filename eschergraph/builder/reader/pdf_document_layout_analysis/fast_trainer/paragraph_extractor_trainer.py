@@ -2,20 +2,22 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from eschergraph.tools.pdf_document_layout_analysis.fast_trainer.paragraph import (
+from eschergraph.builder.reader.pdf_document_layout_analysis.fast_trainer.paragraph import (
   Paragraph,
 )
-from eschergraph.tools.pdf_document_layout_analysis.pdf_features.pdf_token import (
+from eschergraph.builder.reader.pdf_document_layout_analysis.pdf_features.pdf_token import (
   PdfToken,
 )
-from eschergraph.tools.pdf_document_layout_analysis.pdf_segment import PdfSegment
-from eschergraph.tools.pdf_document_layout_analysis.pdf_token_type_labels.token_type import (
+from eschergraph.builder.reader.pdf_document_layout_analysis.pdf_segment import (
+  PdfSegment,
+)
+from eschergraph.builder.reader.pdf_document_layout_analysis.pdf_token_type_labels.token_type import (
   TokenType,
 )
-from eschergraph.tools.pdf_document_layout_analysis.pdf_tokens_type_trainer.token_features import (
+from eschergraph.builder.reader.pdf_document_layout_analysis.pdf_tokens_type_trainer.token_features import (
   TokenFeatures,
 )
-from eschergraph.tools.pdf_document_layout_analysis.pdf_tokens_type_trainer.token_type_trainer import (
+from eschergraph.builder.reader.pdf_document_layout_analysis.pdf_tokens_type_trainer.token_type_trainer import (
   TokenTypeTrainer,
 )
 

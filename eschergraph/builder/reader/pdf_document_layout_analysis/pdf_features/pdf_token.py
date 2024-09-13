@@ -2,17 +2,19 @@ from __future__ import annotations
 
 from lxml.etree import ElementBase
 
-from eschergraph.tools.pdf_document_layout_analysis.pdf_features.pdf_font import PdfFont
-from eschergraph.tools.pdf_document_layout_analysis.pdf_features.pdf_token_context import (
+from eschergraph.builder.reader.pdf_document_layout_analysis.pdf_features.pdf_font import (
+  PdfFont,
+)
+from eschergraph.builder.reader.pdf_document_layout_analysis.pdf_features.pdf_token_context import (
   PdfTokenContext,
 )
-from eschergraph.tools.pdf_document_layout_analysis.pdf_features.rectangle import (
+from eschergraph.builder.reader.pdf_document_layout_analysis.pdf_features.rectangle import (
   Rectangle,
 )
-from eschergraph.tools.pdf_document_layout_analysis.pdf_token_type_labels.label import (
+from eschergraph.builder.reader.pdf_document_layout_analysis.pdf_token_type_labels.label import (
   Label,
 )
-from eschergraph.tools.pdf_document_layout_analysis.pdf_token_type_labels.token_type import (
+from eschergraph.builder.reader.pdf_document_layout_analysis.pdf_token_type_labels.token_type import (
   TokenType,
 )
 

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from eschergraph.tools.pdf_document_layout_analysis.pdf_features.pdf_token import (
+from eschergraph.builder.reader.pdf_document_layout_analysis.pdf_features.pdf_token import (
   PdfToken,
 )
 

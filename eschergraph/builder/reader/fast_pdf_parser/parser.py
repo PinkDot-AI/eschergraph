@@ -11,25 +11,29 @@ from typing import Optional
 
 from huggingface_hub import hf_hub_download
 
-from eschergraph.exceptions import ExternalDependencyException
-from eschergraph.tools.fast_pdf_parser.models import PdfParsedSegment
-from eschergraph.tools.pdf_document_layout_analysis.fast_trainer.model_configuration import (
+from eschergraph.builder.reader.fast_pdf_parser.models import PdfParsedSegment
+from eschergraph.builder.reader.pdf_document_layout_analysis.fast_trainer.model_configuration import (
   MODEL_CONFIGURATION as PARAGRAPH_EXTRACTION_CONFIGURATION,
 )
-from eschergraph.tools.pdf_document_layout_analysis.fast_trainer.paragraph_extractor_trainer import (
+from eschergraph.builder.reader.pdf_document_layout_analysis.fast_trainer.paragraph_extractor_trainer import (
   ParagraphExtractorTrainer,
 )
-from eschergraph.tools.pdf_document_layout_analysis.pdf_features.pdf_features import (
+from eschergraph.builder.reader.pdf_document_layout_analysis.pdf_features.pdf_features import (
   PdfFeatures,
 )
-from eschergraph.tools.pdf_document_layout_analysis.pdf_features.pdf_page import PdfPage
-from eschergraph.tools.pdf_document_layout_analysis.pdf_segment import PdfSegment
-from eschergraph.tools.pdf_document_layout_analysis.pdf_tokens_type_trainer.model_configuration import (
+from eschergraph.builder.reader.pdf_document_layout_analysis.pdf_features.pdf_page import (
+  PdfPage,
+)
+from eschergraph.builder.reader.pdf_document_layout_analysis.pdf_segment import (
+  PdfSegment,
+)
+from eschergraph.builder.reader.pdf_document_layout_analysis.pdf_tokens_type_trainer.model_configuration import (
   ModelConfiguration,
 )
-from eschergraph.tools.pdf_document_layout_analysis.pdf_tokens_type_trainer.token_type_trainer import (
+from eschergraph.builder.reader.pdf_document_layout_analysis.pdf_tokens_type_trainer.token_type_trainer import (
   TokenTypeTrainer,
 )
+from eschergraph.exceptions import ExternalDependencyException
 
 ROOT_PATH: str = Path(__file__).parent.parent.absolute().as_posix()
 MODELS_PATH: str = ROOT_PATH + "/fast_models"

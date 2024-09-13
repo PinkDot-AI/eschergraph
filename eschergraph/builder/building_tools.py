@@ -3,9 +3,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from eschergraph.agents.llm import ModelProvider
+from eschergraph.builder.reader.reader import Chunk
+from eschergraph.builder.reader.reader import Reader
 from eschergraph.tools.estimator import Estimator
-from eschergraph.tools.reader import Chunk
-from eschergraph.tools.reader import Reader
 
 if TYPE_CHECKING:
   from eschergraph.graph.persistence.document import DocumentData

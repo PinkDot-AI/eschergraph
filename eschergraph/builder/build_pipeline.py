@@ -13,12 +13,12 @@ from eschergraph.agents.llm import ModelProvider
 from eschergraph.agents.reranker import Reranker
 from eschergraph.builder.build_log import BuildLog
 from eschergraph.builder.build_log import NodeEdgeExt
+from eschergraph.builder.reader.reader import Chunk
 from eschergraph.config import JSON_BUILD
 from eschergraph.config import JSON_PROPERTY
 from eschergraph.graph.persistence import Metadata
 from eschergraph.tools.community_builder import CommunityBuilder
 from eschergraph.tools.node_matcher import NodeMatcher
-from eschergraph.tools.reader import Chunk
 
 if TYPE_CHECKING:
   from eschergraph.graph.graph import Graph

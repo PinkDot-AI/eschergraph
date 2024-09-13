@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import base64
+import io
 import os
 import time
 from typing import Any
@@ -11,13 +13,21 @@ import tiktoken
 from attrs import define
 from attrs import field
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from PIL import Image
 
-from eschergraph.exceptions import FileTypeNotProcessableException
-from eschergraph.tools.fast_pdf_parser import FastPdfParser
-from eschergraph.tools.fast_pdf_parser import PdfParsedSegment
-from eschergraph.tools.pdf_document_layout_analysis.pdf_parser_large.pdf_parser_large import (
+from eschergraph.builder.reader.crop_images import crop_image_from_file
+from eschergraph.builder.reader.fast_pdf_parser import FastPdfParser
+from eschergraph.builder.reader.fast_pdf_parser import PdfParsedSegment
+from eschergraph.builder.reader.pdf_parser_large.data_structure import (
+  AnalysisResult,
+)
+from eschergraph.builder.reader.pdf_parser_large.data_structure import (
+  Table,
+)
+from eschergraph.builder.reader.pdf_parser_large.pdf_parser_large import (
   pdf_parser_large,
 )
+from eschergraph.exceptions import FileTypeNotProcessableException
 
 
 @define
@@ -29,6 +39,19 @@ class Chunk:
   doc_id: UUID
   page_num: Optional[int]
   doc_name: str
+
+
+@define
+class VisualDocumentElement:
+  """This is the dataclasse for the Visual elemenets in a document. For now Figures and Tables."""
+
+  content: str
+  caption: str | None
+  save_location: str
+  page_num: int | None
+  doc_id: UUID
+  doc_name: str
+  type: str
 
 
 # TODO: add more files types: html, docx, pptx, xlsx.
@@ -49,6 +72,7 @@ class Reader:
   total_tokens: int = 0
   chunks: list[Chunk] = field(factory=list)
   doc_id: UUID = field(factory=uuid4)
+  visual_elements: list[VisualDocumentElement] = field(factory=list)
 
   @property
   def filename(self) -> str:
@@ -64,10 +88,13 @@ class Reader:
     elif self.file_location.endswith(".pdf"):
       # Handle pdf file
       if self.multimodal:
-        response_json = self._get_document_analysis_large()
-      response_json = self._get_document_analysis()
-      if response_json:
-        self._handle_json_response(response_json)
+        results = self._get_document_analysis_large()
+        if results:
+          self._handle_multi_modal(results)
+      else:
+        response_json = self._get_document_analysis()
+        if response_json:
+          self._handle_json_response(response_json)
     else:
       # Raise an exception for unsupported file types
       raise FileTypeNotProcessableException(
@@ -88,18 +115,145 @@ class Reader:
   def _get_document_analysis_large(self) -> list[PdfParsedSegment]:
     return pdf_parser_large(document_path=self.file_location)
 
+  def save_image_from_base64(self, base64_string: str, output_path: str) -> None:
+    """Decodes a base64 string and saves the resulting image to the specified path.
+
+    Args:
+        base64_string (str): The base64-encoded image string.
+        output_path (str): The file path where the image will be saved.
+
+    Returns:
+        None
+
+    Raises:
+        Exception: If there's an error during image processing or saving.
+    """
+    try:
+      # Decode the base64 string to bytes
+      image_bytes = base64.b64decode(base64_string)
+
+      # Create a BytesIO object from the image bytes
+      image_buffer = io.BytesIO(image_bytes)
+
+      # Open the image using Pillow
+      with Image.open(image_buffer) as img:
+        # Save the image in its original format with maximum quality
+        img.save(output_path, quality=95, subsampling=0)
+
+    except Exception as e:
+      print(f"Error saving image: {str(e)}")
+
+  def _handle_multi_modal(self, analysis_results: AnalysisResult) -> None:
+    """Processes and saves tables and figures from analysis results, creating markdown for tables and.
+
+    saving cropped images for both tables and figures.
+
+    Args:
+        analysis_results (AnalysisResult): The analysis results containing tables, figures, and paragraphs.
+
+    Returns:
+        None
+    """
+    base_name = os.path.basename(self.file_location)
+    output_folder = os.path.join("eschergraph_storage", base_name)
+
+    # Create subfolders for tables and figures
+    tables_folder = os.path.join(output_folder, "tables")
+    figures_folder = os.path.join(output_folder, "figures")
+    os.makedirs(tables_folder, exist_ok=True)
+    os.makedirs(figures_folder, exist_ok=True)
+
+    # Handling tables
+    for table_idx, table in enumerate(analysis_results["tables"]):
+      caption = table["caption"]
+      markdown_output = f"### Table {table_idx + 1}: {table['caption']}\n\n"
+      markdown_output += self.generate_markdown_table(table)
+      for region in table["bounding_regions"]:
+        boundingbox = (
+          region["polygon"][0],  # x0 (left)
+          region["polygon"][1],  # y0 (top)
+          region["polygon"][4],  # x1 (right)
+          region["polygon"][5],  # y1 (bottom)
+        )
+        cropped_image = crop_image_from_file(
+          self.file_location, region["page_number"] - 1, boundingbox
+        )
+        output_file = f"table_{table_idx}.png"
+        cropped_image_filename = os.path.join(tables_folder, output_file)
+        cropped_image.save(cropped_image_filename)
+        v = VisualDocumentElement(
+          content=markdown_output,
+          caption=caption,
+          save_location=cropped_image_filename,
+          doc_id=self.doc_id,
+          doc_name=self.filename,
+          page_num=table["page_num"],
+          type="TABLE",
+        )
+        self.visual_elements.append(v)
+    # Handling figures
+    for figure_idx, figure in enumerate(analysis_results["figures"]):
+      caption = figure["caption"]
+
+      figure_filename = f"figure_{figure_idx + 1}.png"
+      figure_path = os.path.join(figures_folder, figure_filename)
+
+      self.save_image_from_base64(figure["content"], figure_path)
+
+      # Create a VisualDocumentElement for the figure
+      v = VisualDocumentElement(
+        content=markdown_output,
+        caption=caption,
+        save_location=figure_path,
+        doc_id=self.doc_id,
+        doc_name=self.filename,
+        page_num=figure["page_num"],
+        type="FIGURE",
+      )
+      self.visual_elements.append(v)
+
+  def generate_markdown_table(self, table: Table) -> str:
+    """Generates a markdown representation of a table from the given Table data.
+
+    Args:
+        table (Table): The table data containing cells, row and column count.
+
+    Returns:
+        str: A string containing the table formatted as markdown.
+
+    """
+    # Initialize a 2D list (rows x columns) for the table content
+    markdown_table = [
+      ["" for _ in range(table["column_count"])] for _ in range(table["row_count"])
+    ]
+
+    # Populate the 2D list with content from the table cells
+    for cell in table["cells"]:
+      markdown_table[cell["row_index"]][cell["column_index"]] = cell["content"]
+
+    # Convert the 2D list to markdown format
+    markdown_str = ""
+
+    # Add the header row (first row)
+    header_row = markdown_table[0]
+    markdown_str += "| " + " | ".join(header_row) + " |\n"
+
+    # Add the separator (markdown requires a line with dashes between header and content)
+    markdown_str += "| " + " | ".join(["---"] * table["column_count"]) + " |\n"
+
+    # Add the remaining rows
+    for row in markdown_table[1:]:
+      markdown_str += "| " + " | ".join(row) + " |\n"
+
+    return markdown_str
+
   def _handle_json_response(self, response_json: Any) -> None:
     current_chunk: list[str] = []
     current_token_count: int = 0
     chunk_id: int = 0
 
     for i, item in enumerate(response_json):
-      if item["type"] in ["TABLE", "PICTURE", "CAPTION"] and self.multimodal:
-        # TODO: implement multimodal handling
-        print("----")
-        print(item)
-
-      elif item["type"] in ["TEXT", "SECTION_HEADER", "list_ITEM", "FORMULA"]:
+      if item["type"] in ["TEXT", "SECTION_HEADER", "list_ITEM", "FORMULA"]:
         text: str = item["text"] + "\n"
         tokens: int = self._count_tokens(text)
         # Calculate the effective token limit

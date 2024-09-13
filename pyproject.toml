@@ -28,6 +28,7 @@ lightgbm = "^4.5.0"
 tabulate = "^0.9.0"
 fuzzywuzzy = "^0.18.0"
 python-levenshtein = "^0.25.1"
+pymupdf = "^1.24.10"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.7.1"
@@ -130,7 +131,7 @@ select = [
     "E228",
 ]
 # Altered external code
-exclude = ["eschergraph/tools/pdf_document_layout_analysis/**/*"]
+exclude = ["eschergraph/builder/reader/pdf_document_layout_analysis/**/*"]
 [tool.ruff.lint.extend-per-file-ignores]
 # Ignore all docstrings in tests
 "tests/*" = ["D"]

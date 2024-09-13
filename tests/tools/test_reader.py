@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from eschergraph.tools.reader import Chunk
-from eschergraph.tools.reader import Reader
+from eschergraph.builder.reader.reader import Chunk
+from eschergraph.builder.reader.reader import Reader
 
 
 def test_reader_pdf() -> None:

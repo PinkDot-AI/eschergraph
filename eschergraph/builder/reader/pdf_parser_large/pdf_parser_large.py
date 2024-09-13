@@ -4,15 +4,23 @@ import os
 
 import requests
 
-from eschergraph.tools.pdf_document_layout_analysis.pdf_parser_large.data_structure import (
+from eschergraph.builder.reader.pdf_parser_large.data_structure import (
   AnalysisResult,
 )
 
 
-# Function to call the /analyze_document endpoint
 def pdf_parser_large(
   document_path: str, endpoint_url: str = "http://127.0.0.1:8000/analyze_document"
-):
+) -> None | list[AnalysisResult]:
+  """Sends a PDF document to an API endpoint for analysis and returns the parsed analysis results.
+
+  Args:
+      document_path (str): The file path of the PDF document to be analyzed.
+      endpoint_url (str, optional): The URL of the API endpoint. Defaults to "http://127.0.0.1:8000/analyze_document".
+
+  Returns:
+      None or list[AnalysisResult]: A list of `AnalysisResult` objects if the analysis is successful, or None if no results are available.
+  """
   if not os.path.isfile(document_path):
     raise FileNotFoundError(f"The file at {document_path} does not exist.")
 
@@ -29,6 +37,7 @@ def pdf_parser_large(
       data = response.json()
       # Validate and parse the response into the AnalysisResult model
       analysis_result = AnalysisResult(**data)
+
       return analysis_result
     except Exception as e:
       raise ValueError(f"Error parsing the response: {str(e)}")

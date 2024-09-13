@@ -2,8 +2,10 @@ from __future__ import annotations
 
 from lxml.etree import ElementBase
 
-from eschergraph.tools.pdf_document_layout_analysis.pdf_features.pdf_font import PdfFont
-from eschergraph.tools.pdf_document_layout_analysis.pdf_features.pdf_token import (
+from eschergraph.builder.reader.pdf_document_layout_analysis.pdf_features.pdf_font import (
+  PdfFont,
+)
+from eschergraph.builder.reader.pdf_document_layout_analysis.pdf_features.pdf_token import (
   PdfToken,
 )
 

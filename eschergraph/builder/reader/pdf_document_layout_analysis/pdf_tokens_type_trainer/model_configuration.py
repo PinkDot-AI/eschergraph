@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import asdict
 from dataclasses import dataclass
 
-from eschergraph.tools.pdf_document_layout_analysis.pdf_token_type_labels.token_type import (
+from eschergraph.builder.reader.pdf_document_layout_analysis.pdf_token_type_labels.token_type import (
   TokenType,
 )
 

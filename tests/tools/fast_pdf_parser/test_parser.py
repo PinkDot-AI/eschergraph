@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from eschergraph.tools.fast_pdf_parser.parser import FastPdfParser
+from eschergraph.builder.reader.fast_pdf_parser.parser import FastPdfParser
 
 
 def test_fast_pdf_parser() -> None:

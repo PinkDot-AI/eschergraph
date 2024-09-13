@@ -13,15 +13,19 @@ from lxml.etree import XMLSyntaxError
 from pypdf import PdfReader
 from pypdf import PdfWriter
 
-from eschergraph.tools.pdf_document_layout_analysis.pdf_features.pdf_font import PdfFont
-from eschergraph.tools.pdf_document_layout_analysis.pdf_features.pdf_modes import (
+from eschergraph.builder.reader.pdf_document_layout_analysis.pdf_features.pdf_font import (
+  PdfFont,
+)
+from eschergraph.builder.reader.pdf_document_layout_analysis.pdf_features.pdf_modes import (
   PdfModes,
 )
-from eschergraph.tools.pdf_document_layout_analysis.pdf_features.pdf_page import PdfPage
-from eschergraph.tools.pdf_document_layout_analysis.pdf_token_type_labels.pdf_labels import (
+from eschergraph.builder.reader.pdf_document_layout_analysis.pdf_features.pdf_page import (
+  PdfPage,
+)
+from eschergraph.builder.reader.pdf_document_layout_analysis.pdf_token_type_labels.pdf_labels import (
   PdfLabels,
 )
-from eschergraph.tools.pdf_document_layout_analysis.pdf_token_type_labels.token_type import (
+from eschergraph.builder.reader.pdf_document_layout_analysis.pdf_token_type_labels.token_type import (
   TokenType,
 )
 
