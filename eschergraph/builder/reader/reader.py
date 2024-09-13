@@ -58,10 +58,9 @@ class Reader:
     """This is the main function that parses the document."""
     start_time: float = time.time()
     if self.file_location.endswith(".txt"):
-      # Handle txt file
       self._handle_plain_text()
+
     elif self.file_location.endswith(".pdf"):
-      # Handle pdf file
       if self.multimodal:
         # TODO
         pass
@@ -69,12 +68,12 @@ class Reader:
         response_json = self._get_document_analysis()
         if response_json:
           self._handle_json_response(response_json)
+
     else:
       # Raise an exception for unsupported file types
       raise FileTypeNotProcessableException(
         f"File type of {self.file_location} is not processable."
       )
-
     total_tokens: int = sum(self._count_tokens(c.text) for c in self.chunks)
     self.total_tokens = total_tokens
     print(
