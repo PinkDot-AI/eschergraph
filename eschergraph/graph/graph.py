@@ -10,6 +10,7 @@ from eschergraph.agents.providers.openai import OpenAIModel
 from eschergraph.agents.providers.openai import OpenAIProvider
 from eschergraph.agents.reranker import Reranker
 from eschergraph.config import DEFAULT_GRAPH_NAME
+from eschergraph.config import MAIN_COLLECTION
 from eschergraph.exceptions import CredentialException
 from eschergraph.exceptions import IllogicalActionException
 from eschergraph.graph.edge import Edge
@@ -169,7 +170,7 @@ class Graph:
     # Prepare data for synchronization
     create_main, ids_to_delete = prepare_sync_data(repository=self.repository)
 
-    main_collection: str = "main_collection"
+    main_collection: str = MAIN_COLLECTION
 
     if ids_to_delete:
       self.vector_db.delete_by_ids(ids_to_delete, main_collection)

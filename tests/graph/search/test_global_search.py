@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
+from eschergraph.config import MAIN_COLLECTION
 from eschergraph.graph.graph import Graph
 from eschergraph.graph.search.global_search import _get_relevant_extractions
 from eschergraph.graph.search.global_search import AttributeSearch
@@ -62,6 +63,6 @@ def test_get_relevant_extractions(graph_unit: Graph) -> None:
 
     assert result == reranked_results
     graph_unit.vector_db.search.assert_called_once_with(
-      query=prompt, top_n=15, metadata={"level": 1}, collection_name="main_collection"
+      query=prompt, top_n=15, metadata={"level": 1}, collection_name=MAIN_COLLECTION
     )
     graph_unit.vector_db.format_search_results.assert_called_once_with(search_results)

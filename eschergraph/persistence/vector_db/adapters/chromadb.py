@@ -105,12 +105,27 @@ class ChromaDB(VectorDB):
     embedding = self.embedding_model.get_embedding([query])
     # TODO: add a check to see if the collection already exists?
     collection = self.client.get_or_create_collection(name=collection_name)
+    query_metadata: dict[str, Any] | None = {}
+
+    if not metadata:
+      query_metadata = None
+    else:
+      # Parse the metadata list into a contained in expression
+      for key, value in metadata.items():
+        if isinstance(value, list):
+          query_metadata[key] = {"$in": value}
+        else:
+          query_metadata[key] = value
+
     results: QueryResult = collection.query(
       query_embeddings=embedding,
       n_results=top_n,
-      where=metadata,
+      where=query_metadata,
       include=["documents", "metadatas", "distances"],
     )
+
+    # Correction, in case top_n is larger than number in collection
+    num_result: int = len(results["ids"][0])
 
     return [
       VectorSearchResult(
@@ -119,7 +134,7 @@ class ChromaDB(VectorDB):
         type=results["metadatas"][0][i]["type"],
         distance=results["distances"][0][i],
       )
-      for i in range(top_n)
+      for i in range(num_result)
     ]
 
   def delete_by_ids(self, ids: list[UUID], collection_name: str) -> None:

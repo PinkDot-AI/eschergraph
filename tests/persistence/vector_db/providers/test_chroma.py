@@ -6,13 +6,11 @@ from uuid import UUID
 from uuid import uuid4
 
 import pytest
-from faker import Faker
 
 from eschergraph.agents import Embedding
 from eschergraph.persistence.vector_db.adapters import ChromaDB
 from eschergraph.persistence.vector_db.vector_search_result import VectorSearchResult
-
-faker: Faker = Faker()
+from tests.persistence.vector_db.help import generate_insert_data
 
 
 @pytest.fixture(scope="function")
@@ -26,23 +24,6 @@ def chroma_unit() -> ChromaDB:
   return ChromaDB(
     save_name="unit-test", embedding_model=mock_embedding, persistent=False
   )
-
-
-def generate_insert_data(
-  num_docs: int = 10,
-) -> tuple[list[str], list[UUID], list[dict[str, str | int]]]:
-  docs: list[str] = [faker.text(max_nb_chars=80) for _ in range(num_docs)]
-  ids: list[UUID] = [uuid4() for _ in range(num_docs)]
-  metadatas: list[dict[str, str | int]] = [
-    {
-      "level": random.randint(0, 10),
-      "type": random.choice(["node", "edge", "property"]),
-      "document_id": str(uuid4()),
-    }
-    for _ in range(num_docs)
-  ]
-
-  return docs, ids, metadatas
 
 
 def test_chroma_insert_vector(chroma_unit: ChromaDB) -> None:
@@ -83,6 +64,20 @@ def test_chroma_search(chroma_unit: ChromaDB) -> None:
   assert len(results) == 5
 
 
+def test_chroma_search_less_in_collection_than_top_n(chroma_unit: ChromaDB) -> None:
+  docs, ids, metadatas = generate_insert_data()
+  test_collection: str = "search_test_less_than"
+  chroma_unit.insert(
+    documents=docs, ids=ids, metadata=metadatas, collection_name=test_collection
+  )
+  results: list[VectorSearchResult] = chroma_unit.search(
+    query="test", top_n=15, collection_name=test_collection
+  )
+
+  assert {r.id for r in results} == set(ids)
+  assert len(results) == 10
+
+
 def test_chroma_search_with_metadata(chroma_unit: ChromaDB) -> None:
   docs, ids, metadatas = generate_insert_data()
 
@@ -109,3 +104,35 @@ def test_chroma_search_with_metadata(chroma_unit: ChromaDB) -> None:
 
   assert {r.id for r in results} == set(ids[0:5])
   assert len(results) == 5
+
+
+def test_chroma_search_with_metadata_list(chroma_unit: ChromaDB) -> None:
+  docs, ids, metadatas = generate_insert_data(num_docs=15)
+
+  # Change the metadata to allow for filtering on a document
+  doc1: UUID = uuid4()
+  doc2: UUID = uuid4()
+  doc3: UUID = uuid4()
+
+  for i in range(5):
+    metadatas[i]["document_id"] = str(doc1)
+
+  for i in range(5, 10):
+    metadatas[i]["document_id"] = str(doc2)
+
+  for i in range(10, 15):
+    metadatas[i]["document_id"] = str(doc3)
+
+  test_collection: str = "search_test"
+  chroma_unit.insert(
+    documents=docs, ids=ids, metadata=metadatas, collection_name=test_collection
+  )
+  results: list[VectorSearchResult] = chroma_unit.search(
+    query="test",
+    top_n=10,
+    collection_name=test_collection,
+    metadata={"document_id": [str(doc1), str(doc2)]},
+  )
+
+  assert {r.id for r in results} == set(ids[0:10])
+  assert len(results) == 10

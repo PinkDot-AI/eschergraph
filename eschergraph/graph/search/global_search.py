@@ -3,7 +3,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from eschergraph.agents.jinja_helper import process_template
-from eschergraph.graph.search.quick_search import AttributeSearch
+from eschergraph.config import MAIN_COLLECTION
+from eschergraph.graph.search.attribute_search import AttributeSearch
 from eschergraph.graph.search.quick_search import rerank_and_filter_attributes
 
 if TYPE_CHECKING:
@@ -49,7 +50,7 @@ def _get_relevant_extractions(graph: Graph, prompt: str) -> list[AttributeSearch
       query=prompt,
       top_n=15,
       metadata={"level": 1},
-      collection_name="main_collection",
+      collection_name=MAIN_COLLECTION,
     )
   )
 
