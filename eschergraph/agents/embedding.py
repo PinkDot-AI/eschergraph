@@ -10,7 +10,7 @@ load_dotenv()
 
 
 def get_embedding_model(embedding_type: str = "text_embedding_3_large") -> Embedding:
-  """Factory method to get the default embedding model openais text embedding large.
+  """Factory method to get the default embedding model: openai's text embedding 3 large.
 
   Args:
     embedding_type (str): Type of the embedding model.

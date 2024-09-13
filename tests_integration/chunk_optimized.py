@@ -15,7 +15,7 @@ from eschergraph.builder.reader.reader import Reader
 from eschergraph.config import JSON_BUILD
 from eschergraph.config import JSON_PROPERTY
 from eschergraph.graph.graph import Graph
-from eschergraph.graph.persistence.metadata import Metadata
+from eschergraph.persistence.metadata import Metadata
 
 
 def chunk_optimizer():

@@ -10,9 +10,10 @@ from dotenv import load_dotenv
 from pytest import TempPathFactory
 
 from eschergraph.agents.llm import ModelProvider
+from eschergraph.agents.reranker import Reranker
 from eschergraph.graph import Graph
-from eschergraph.graph.persistence import Repository
-from eschergraph.graph.persistence.vector_db import VectorDB
+from eschergraph.persistence import Repository
+from eschergraph.persistence.vector_db import VectorDB
 
 load_dotenv()
 
@@ -40,7 +41,7 @@ def saved_graph_dir(tmp_path_factory: TempPathFactory) -> Path:
 @pytest.fixture(scope="function")
 def graph_unit() -> Graph:
   model: MagicMock = MagicMock(spec=ModelProvider)
-  reranker: MagicMock = MagicMock(spec=ModelProvider)
+  reranker: MagicMock = MagicMock(spec=Reranker)
   vector_db: MagicMock = MagicMock(spec=VectorDB)
   repository: MagicMock = MagicMock(spec=Repository)
 

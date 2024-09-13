@@ -15,9 +15,9 @@ from eschergraph.graph import Edge
 from eschergraph.graph import Graph
 from eschergraph.graph import Node
 from eschergraph.graph import Property
-from eschergraph.graph.persistence import Metadata
-from eschergraph.graph.persistence import Repository
-from eschergraph.graph.persistence.vector_db import VectorDB
+from eschergraph.persistence import Metadata
+from eschergraph.persistence import Repository
+from eschergraph.persistence.vector_db import VectorDB
 
 faker: Faker = Faker()
 

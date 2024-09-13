@@ -10,15 +10,15 @@ from attrs import field
 from eschergraph.exceptions import NodeCreationException
 from eschergraph.graph.base import EscherBase
 from eschergraph.graph.community import Community
+from eschergraph.graph.getter_setter import loading_getter_setter
 from eschergraph.graph.loading import LoadState
-from eschergraph.graph.persistence import Metadata
 from eschergraph.graph.property import Property
-from eschergraph.graph.utils import loading_getter_setter
+from eschergraph.persistence import Metadata
 
 # To prevent circular import errors
 if TYPE_CHECKING:
   from eschergraph.graph.edge import Edge
-  from eschergraph.graph.persistence import Repository
+  from eschergraph.persistence import Repository
 
 
 @loading_getter_setter

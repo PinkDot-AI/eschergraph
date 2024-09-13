@@ -10,12 +10,11 @@ from attrs import field
 from attrs import fields_dict
 
 from eschergraph.graph.loading import LoadState
-from eschergraph.graph.persistence import Repository
+from eschergraph.persistence import Repository
 
 # To prevent circular import errors
 if TYPE_CHECKING:
-  from eschergraph.graph.persistence import Repository
-  from eschergraph.graph.persistence import Metadata
+  from eschergraph.persistence import Metadata
 
 
 @define
