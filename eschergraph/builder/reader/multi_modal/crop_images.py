@@ -4,7 +4,9 @@ import fitz  # PyMuPDF
 from PIL import Image
 
 
-def crop_image_from_pdf_page(pdf_path, page_number, bounding_box) -> Image:
+def crop_image_from_pdf_page(
+  pdf_path: str, page_number: int, bounding_box: list[float]
+) -> Image:
   """Crop a region from a given page in a PDF and handle cases where the bounding box is outside the page.
 
   Args:

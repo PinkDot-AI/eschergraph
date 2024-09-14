@@ -86,10 +86,11 @@ class Reader:
     parsed_paragraphs: list[PdfParsedSegment] = FastPdfParser.parse(
       file_path=self.file_location
     )
-    return [
+    reformated_paragraphs: list[Paragraph] = [
       Reader._to_paragraph_structure(pdf_segment=segment, id=idx)
       for idx, segment in enumerate(parsed_paragraphs)
     ]
+    return reformated_paragraphs
 
   def _chunk_paragraphs(self, parsed_paragraphs: list[Paragraph]) -> None:
     current_chunk: list[str] = []
@@ -103,9 +104,7 @@ class Reader:
         # Calculate the effective token limit
         effective_token_limit: int = self.optimal_tokens
         if current_token_count + tokens > effective_token_limit:
-          self._process_text_chunk(
-            current_chunk, chunk_id, int(paragraph["page_number"])
-          )
+          self._process_text_chunk(current_chunk, chunk_id, paragraph["page_number"])
           chunk_id += 1
           current_chunk = [text]
           current_token_count = tokens
@@ -118,20 +117,18 @@ class Reader:
           and current_token_count > 0.8 * self.optimal_tokens
         ):
           current_chunk.pop(-1)
-          self._process_text_chunk(
-            current_chunk, chunk_id, int(paragraph["page_number"])
-          )
+          self._process_text_chunk(current_chunk, chunk_id, paragraph["page_number"])
           chunk_id += 1
           current_chunk = [text]
           current_token_count = tokens
     # Process any remaining text in the last chunk
     if current_chunk:
       self._process_text_chunk(
-        current_chunk, chunk_id, int(parsed_paragraphs[-1]["page_number"])
+        current_chunk, chunk_id, parsed_paragraphs[-1]["page_number"]
       )
 
   def _process_text_chunk(
-    self, chunk_list: list[str], chunk_id: int, page_num: int
+    self, chunk_list: list[str], chunk_id: int, page_num: int | None
   ) -> None:
     """Processes a list of text chunks into a Chunk object and appends it to the chunks list if it passes the filter.
 

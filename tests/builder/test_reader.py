@@ -3,6 +3,7 @@ from __future__ import annotations
 from unittest.mock import MagicMock
 from uuid import uuid4
 
+from eschergraph.builder.reader.fast_pdf_parser.models import PdfParsedSegment
 from eschergraph.builder.reader.multi_modal.data_structure import Paragraph
 from eschergraph.builder.reader.reader import Chunk
 from eschergraph.builder.reader.reader import Reader
@@ -22,19 +23,18 @@ def test_chunk_paragraphs() -> None:
   last_chunk_id = -1
   last_page_num = -1
   for c in chunks:
-    # check assending chunk id
     assert c.chunk_id > last_chunk_id
     last_chunk_id = c.chunk_id
-    # check assending page num
-    assert c.page_num >= last_page_num
-    last_page_num = c.page_num
+
+    if c.page_num:
+      assert c.page_num >= last_page_num
+      last_page_num = c.page_num
 
     # chunk whether optimal tokens does not have too much varience
     assert reader._count_tokens(c.text) <= 430
 
 
-def test_handle_plain_text():
-  # Setup the mock reader object with specific return values and attributes
+def test_handle_plain_text() -> None:
   mock_reader = MagicMock(spec=Reader)
   mock_reader.file_location = "test_files/txt_file.txt"  # Path to a mock file
   mock_reader.chunk_size = 800
@@ -57,39 +57,39 @@ def test_handle_plain_text():
 
 
 def test_contains_non_alpha() -> None:
-  input_string = "ThisIsAllAlpha"
-  b: bool = Reader._contains_many_non_alpha(input_string)
-  assert b is False, "The string contains only alphabets, should return False."
+  input_string1: str = "ThisIsAllAlpha"
+  a: bool = Reader._contains_many_non_alpha(input_string1)
+  assert a is False, "The string contains only alphabets, should return False."
 
-  input_string = "1234!@#$"
-  b: bool = Reader._contains_many_non_alpha(input_string)
+  input_string2: str = "1234!@#$"
+  b: bool = Reader._contains_many_non_alpha(input_string2)
   assert b is True, "The string contains only non-alpha characters, should return True."
 
-  input_string = "M123!@#"
-  b: bool = Reader._contains_many_non_alpha(input_string)
-  assert b is True, "Non-alpha characters exceed the threshold, should return True."
+  input_string3: str = "M123!@#"
+  c: bool = Reader._contains_many_non_alpha(input_string3)
+  assert c is True, "Non-alpha characters exceed the threshold, should return True."
 
-  input_string = "Test 123 with spaces!"
-  b: bool = Reader._contains_many_non_alpha(input_string)
+  input_string4: str = "Test 123 with spaces!"
+  d: bool = Reader._contains_many_non_alpha(input_string4)
   assert (
-    b is False
+    d is False
   ), "Whitespaces should be ignored, and the non-alpha characters do not exceed the threshold."
 
-  input_string = ""
-  b: bool = Reader._contains_many_non_alpha(input_string)
-  assert b is False, "Empty string should return False."
+  input_string5: str = ""
+  e: bool = Reader._contains_many_non_alpha(input_string5)
+  assert e is False, "Empty string should return False."
 
-  input_string = "abc123"  # 50% non-alpha characters (3/6)
+  input_string6: str = "abc123"  # 50% non-alpha characters (3/6)
   threshold_percentage = 0.50
-  b: bool = Reader._contains_many_non_alpha(input_string, threshold_percentage)
+  f: bool = Reader._contains_many_non_alpha(input_string6, threshold_percentage)
   assert (
-    b is False
+    f is False
   ), "At the threshold, should return False as it's not exceeding the threshold."
 
 
 def test_to_paragraph_structure() -> None:
   # Create example pdf_segment objects similar to what was provided
-  pdf_segments = [
+  pdf_segments: list[PdfParsedSegment] = [
     {
       "left": 108,
       "top": 110,
@@ -136,7 +136,7 @@ def test_to_paragraph_structure() -> None:
     },
   ]
 
-  expected_results = [
+  expected_results: list[dict[str, str | int | None]] = [
     {
       "id": 1,
       "role": None,
@@ -165,5 +165,5 @@ def test_to_paragraph_structure() -> None:
 
   # Compare the results
   for i, pdf_segment in enumerate(pdf_segments):
-    result = Reader._to_paragraph_structure(pdf_segment, id=i + 1)
+    result: Paragraph = Reader._to_paragraph_structure(pdf_segment, id=i + 1)
     assert result == expected_results[i]
