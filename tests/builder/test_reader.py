@@ -1,24 +1,169 @@
 from __future__ import annotations
 
+from unittest.mock import MagicMock
+from uuid import uuid4
+
+from eschergraph.builder.reader.multi_modal.data_structure import Paragraph
 from eschergraph.builder.reader.reader import Chunk
 from eschergraph.builder.reader.reader import Reader
 
 
-def test_reader_pdf() -> None:
+def test_chunk_paragraphs() -> None:
   reader: Reader = Reader(
-    file_location="test_files/Attention Is All You Need.pdf", multimodal=False
+    file_location="test_files/Attention Is All You Need.pdf",
+    multimodal=False,
+    optimal_tokens=400,
   )
-  reader.parse()
+  parsed_paragraphs: list[Paragraph] = reader._get_document_analysis()
+  reader._chunk_paragraphs(parsed_paragraphs)
 
-  assert reader.chunks
+  chunks: list[Chunk] = reader.chunks
 
-  for chunk in reader.chunks:
-    assert isinstance(chunk, Chunk)
+  last_chunk_id = -1
+  last_page_num = -1
+  for c in chunks:
+    # check assending chunk id
+    assert c.chunk_id > last_chunk_id
+    last_chunk_id = c.chunk_id
+    # check assending page num
+    assert c.page_num >= last_page_num
+    last_page_num = c.page_num
+
+    # chunk whether optimal tokens does not have too much varience
+    assert reader._count_tokens(c.text) <= 430
 
 
-def test_multi_modal() -> None:
-  reader: Reader = Reader(
-    file_location="test_files/Attention Is All You Need.pdf", multimodal=True
-  )
+def test_handle_plain_text():
+  # Setup the mock reader object with specific return values and attributes
+  mock_reader = MagicMock(spec=Reader)
+  mock_reader.file_location = "test_files/txt_file.txt"  # Path to a mock file
+  mock_reader.chunk_size = 800
+  mock_reader.overlap = 100
+  mock_reader.doc_id = uuid4()
+  mock_reader.filename = "mock_document"
+  mock_reader.chunks = []
 
-  reader.parse()
+  # Call the actual method to test
+  Reader._handle_plain_text(mock_reader)
+
+  assert len(mock_reader.chunks) > 0  # Ensure chunks were created
+  assert all(isinstance(chunk, Chunk) for chunk in mock_reader.chunks)
+  assert mock_reader.chunks[0].doc_id == mock_reader.doc_id
+  assert mock_reader.chunks[0].doc_name == mock_reader.filename
+  assert mock_reader.chunks[0].page_num is None
+  assert isinstance(mock_reader.chunks[0].text, str)
+  for c in mock_reader.chunks:
+    assert len(c.text) <= mock_reader.chunk_size
+
+
+def test_contains_non_alpha() -> None:
+  input_string = "ThisIsAllAlpha"
+  b: bool = Reader._contains_many_non_alpha(input_string)
+  assert b is False, "The string contains only alphabets, should return False."
+
+  input_string = "1234!@#$"
+  b: bool = Reader._contains_many_non_alpha(input_string)
+  assert b is True, "The string contains only non-alpha characters, should return True."
+
+  input_string = "M123!@#"
+  b: bool = Reader._contains_many_non_alpha(input_string)
+  assert b is True, "Non-alpha characters exceed the threshold, should return True."
+
+  input_string = "Test 123 with spaces!"
+  b: bool = Reader._contains_many_non_alpha(input_string)
+  assert (
+    b is False
+  ), "Whitespaces should be ignored, and the non-alpha characters do not exceed the threshold."
+
+  input_string = ""
+  b: bool = Reader._contains_many_non_alpha(input_string)
+  assert b is False, "Empty string should return False."
+
+  input_string = "abc123"  # 50% non-alpha characters (3/6)
+  threshold_percentage = 0.50
+  b: bool = Reader._contains_many_non_alpha(input_string, threshold_percentage)
+  assert (
+    b is False
+  ), "At the threshold, should return False as it's not exceeding the threshold."
+
+
+def test_to_paragraph_structure() -> None:
+  # Create example pdf_segment objects similar to what was provided
+  pdf_segments = [
+    {
+      "left": 108,
+      "top": 110,
+      "width": 397,
+      "height": 30,
+      "page_number": 12,
+      "page_width": 612,
+      "page_height": 792,
+      "text": "[26] David McClosky, Eugene Charniak...",
+      "type": "LIST_ITEM",
+    },
+    {
+      "left": 108,
+      "top": 155,
+      "width": 396,
+      "height": 20,
+      "page_number": 12,
+      "page_width": 612,
+      "page_height": 792,
+      "text": "[27] Ankur Parikh, Oscar TÃ¤ckstrÃ¶m...",
+      "type": "LIST_ITEM",
+    },
+    {
+      "left": 108,
+      "top": 189,
+      "width": 396,
+      "height": 20,
+      "page_number": 12,
+      "page_width": 612,
+      "page_height": 792,
+      "text": "[28] Romain Paulus, Caiming Xiong...",
+      "type": "TEXT",
+    },
+    {
+      "left": 108,
+      "top": 280,
+      "width": 396,
+      "height": 20,
+      "page_number": 12,
+      "page_width": 612,
+      "page_height": 792,
+      "text": "[30] Ofir Press and Lior Wolf...",
+      "type": "SECTION_HEADER",
+    },
+  ]
+
+  expected_results = [
+    {
+      "id": 1,
+      "role": None,
+      "content": "[26] David McClosky, Eugene Charniak...",
+      "page_number": 12,
+    },
+    {
+      "id": 2,
+      "role": None,
+      "content": "[27] Ankur Parikh, Oscar TÃ¤ckstrÃ¶m...",
+      "page_number": 12,
+    },
+    {
+      "id": 3,
+      "role": None,
+      "content": "[28] Romain Paulus, Caiming Xiong...",
+      "page_number": 12,
+    },
+    {
+      "id": 4,
+      "role": "sectionHeading",
+      "content": "[30] Ofir Press and Lior Wolf...",
+      "page_number": 12,
+    },
+  ]
+
+  # Compare the results
+  for i, pdf_segment in enumerate(pdf_segments):
+    result = Reader._to_paragraph_structure(pdf_segment, id=i + 1)
+    assert result == expected_results[i]

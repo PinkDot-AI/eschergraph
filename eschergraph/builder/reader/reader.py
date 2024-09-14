@@ -67,7 +67,7 @@ class Reader:
       else:
         response_json = self._get_document_analysis()
         if response_json:
-          self._handle_json_response(response_json)
+          self._chunk_paragraphs(response_json)
 
     else:
       # Raise an exception for unsupported file types
@@ -83,40 +83,36 @@ class Reader:
 
   def _get_document_analysis(self) -> list[Paragraph]:
     # Send the file to the specified URL and get the response
-    fastpdfparser_output: list[PdfParsedSegment] = FastPdfParser.parse(
+    parsed_paragraphs: list[PdfParsedSegment] = FastPdfParser.parse(
       file_path=self.file_location
     )
     return [
       Reader._to_paragraph_structure(pdf_segment=segment, id=idx)
-      for idx, segment in enumerate(fastpdfparser_output)
+      for idx, segment in enumerate(parsed_paragraphs)
     ]
 
-  def _handle_json_response(self, parsed_paragraphs: list[Paragraph]) -> None:
+  def _chunk_paragraphs(self, parsed_paragraphs: list[Paragraph]) -> None:
     current_chunk: list[str] = []
     current_token_count: int = 0
     chunk_id: int = 0
 
-    for i, paragraph in enumerate(parsed_paragraphs):
+    for paragraph in parsed_paragraphs:
       if paragraph["role"] != "null":
         text: str = paragraph["content"] + "\n"
         tokens: int = self._count_tokens(text)
         # Calculate the effective token limit
         effective_token_limit: int = self.optimal_tokens
-
-        # Check if adding this item exceeds the effective token limit
         if current_token_count + tokens > effective_token_limit:
-          # Process the current chunk and start a new one with the current item
           self._process_text_chunk(
             current_chunk, chunk_id, int(paragraph["page_number"])
           )
-          chunk_id += 1  # Increment the chunk ID
+          chunk_id += 1
           current_chunk = [text]
           current_token_count = tokens
         else:
-          # Add the item to the current chunk
           current_chunk.append(text)
           current_token_count += tokens
-        # If it's a SECTION_HEADER and the current chunk size is greater than 80% of optimal_tokens, start a new chunk
+        # If it's a sectionHeading and the current chunk size is greater than 80% of optimal_tokens, start a new chunk
         if (
           paragraph["role"] == "sectionHeading"
           and current_token_count > 0.8 * self.optimal_tokens
@@ -125,7 +121,7 @@ class Reader:
           self._process_text_chunk(
             current_chunk, chunk_id, int(paragraph["page_number"])
           )
-          chunk_id += 1  # Increment the chunk ID
+          chunk_id += 1
           current_chunk = [text]
           current_token_count = tokens
     # Process any remaining text in the last chunk
@@ -137,47 +133,73 @@ class Reader:
   def _process_text_chunk(
     self, chunk_list: list[str], chunk_id: int, page_num: int
   ) -> None:
+    """Processes a list of text chunks into a Chunk object and appends it to the chunks list if it passes the filter.
+
+    Args:
+        chunk_list (list[str]): A list of text chunks to be processed.
+        chunk_id (int): An identifier for the chunk.
+        page_num (int): The page number where the chunk originates.
+
+    Returns:
+        None
+    """
     text: str = " ".join(chunk_list)
 
     if not Reader._chunk_filter(text):
       return
 
-    chunk: Chunk = Chunk(
-      text=text,
-      chunk_id=chunk_id,
-      page_num=page_num,
-      doc_id=self.doc_id,
-      doc_name=self.file_location,
+    self.chunks.append(
+      Chunk(
+        text=text,
+        chunk_id=chunk_id,
+        page_num=page_num,
+        doc_id=self.doc_id,
+        doc_name=self.file_location,
+      )
     )
-    self.chunks.append(chunk)
 
   def _handle_plain_text(self) -> None:
+    """Reads the content of a plain text file, splits it into chunks, and creates Chunk objects for each valid chunk.
+
+    Args:
+        None
+
+    Returns:
+        None
+    """
+    # Read the file content
     with open(self.file_location, "r", encoding="utf-8") as txt_file:
-      text_content: str = (
-        txt_file.read().strip()
-      )  # Reads the entire file content as a single string
-    text_splitter: RecursiveCharacterTextSplitter = RecursiveCharacterTextSplitter(
+      text_content = txt_file.read().strip()
+
+    # Split the content into chunks with langchain
+    text_splitter = RecursiveCharacterTextSplitter(
       chunk_size=self.chunk_size, chunk_overlap=self.overlap
     )
     all_splits = text_splitter.create_documents([text_content])
-    chunks: list[Chunk] = []
-    for idx, split in enumerate(all_splits):
-      chunk_text: str = split.page_content
-      split.metadata[""]
-      if self._chunk_filter(chunk_text):
-        chunks.append(
-          Chunk(
-            text=chunk_text,
-            chunk_id=idx,
-            page_num=None,
-            doc_id=self.doc_id,
-            doc_name=self.filename,
-          )
-        )
-    self.chunks = chunks
+
+    # Filter and create Chunk objects
+    self.chunks: list[Chunk] = [
+      Chunk(
+        text=split.page_content,
+        chunk_id=idx,
+        page_num=None,
+        doc_id=self.doc_id,
+        doc_name=self.filename,
+      )
+      for idx, split in enumerate(all_splits)
+      if self._chunk_filter(split.page_content)
+    ]
 
   @staticmethod
   def _chunk_filter(chunk: str) -> bool:
+    """Filters out chunks based on length and non-alpha character percentage.
+
+    Args:
+        chunk (str): The text chunk to be filtered.
+
+    Returns:
+        bool: True if the chunk passes the filter, False otherwise.
+    """
     min_length = 100
     if len(chunk) < min_length:
       return False
@@ -189,21 +211,33 @@ class Reader:
   def _contains_many_non_alpha(
     input_string: str, threshold_percentage: float = 0.40
   ) -> bool:
-    # This function checks where there are too many non-alpha characters in the chunk. This is a good indication of bad chunks.
-    # Sometimes chunks with a lot of math do get removed with this filter, so that's why I chose a 0.4 threshold (quite high).
-    # The threshold_percentage can be quite sensitive to the test.
-    # threshold_percentage means the percentage of non-alpha characters allowed in the string, NOT including whitespaces
+    """Checks if a string contains more non-alpha characters than allowed based on the threshold percentage.
+
+    Args:
+        input_string (str): The string to be checked.
+        threshold_percentage (float, optional): The percentage threshold for non-alpha characters (default is 0.40).
+
+    Returns:
+        bool: True if the percentage of non-alpha characters exceeds the threshold, False otherwise.
+    """
     string_without_white_space = input_string.replace(" ", "")
     non_alpha_count = sum(not c.isalpha() for c in string_without_white_space)
 
     total_length = len(string_without_white_space)
 
     percentage = (non_alpha_count / total_length) if total_length > 0 else 0
-    # Return True if the percentage exceeds the threshold
     return percentage > threshold_percentage
 
   @staticmethod
   def _count_tokens(text: str) -> int:
+    """Counts the number of tokens in a given text using a specific tokenizer.
+
+    Args:
+        text (str): The text to be tokenized.
+
+    Returns:
+        int: The number of tokens in the text.
+    """
     tokenizer = tiktoken.get_encoding("cl100k_base")
     tokens: list[int] = tokenizer.encode(text)
     return len(tokens)
@@ -213,6 +247,15 @@ class Reader:
     pdf_segment: PdfParsedSegment,
     id: int,
   ) -> Paragraph:
+    """Converts a PDF parsed segment into a Paragraph object with appropriate role and content.
+
+    Args:
+        pdf_segment (PdfParsedSegment): The PDF segment containing type, text, and page number.
+        id (int): An identifier for the paragraph.
+
+    Returns:
+        Paragraph: A Paragraph object representing the PDF segment.
+    """
     role: str | None = "null"
     if pdf_segment["type"] in ["TEXT", "LIST_ITEM", "FORMULA"]:
       role = None
