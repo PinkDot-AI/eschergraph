@@ -30,6 +30,10 @@ def sample_table() -> Table:
       {"row_index": 2, "column_index": 1, "content": "Row2Col2"},
       {"row_index": 2, "column_index": 2, "content": "Row2Col3"},
     ],
+    "id": 0,
+    "caption": "This is a caption",
+    "page_num": 18,
+    "bounding_regions": [{"page_number": 2, "polygon": [1.2, 2.2, 4.1, 2.1]}],
   }
 
 
@@ -44,6 +48,10 @@ def empty_table() -> Table:
       {"row_index": 1, "column_index": 0, "content": ""},
       {"row_index": 1, "column_index": 1, "content": ""},
     ],
+    "id": 0,
+    "caption": "This is a caption",
+    "page_num": 18,
+    "bounding_regions": [{"page_number": 2, "polygon": [1.2, 2.2, 4.1, 2.1]}],
   }
 
 
@@ -58,6 +66,10 @@ def special_char_table() -> Table:
       {"row_index": 1, "column_index": 0, "content": "Row*&1"},
       {"row_index": 1, "column_index": 1, "content": "Row()2"},
     ],
+    "id": 0,
+    "caption": "This is a caption",
+    "page_num": 18,
+    "bounding_regions": [{"page_number": 2, "polygon": [1.2, 2.2, 4.1, 2.1]}],
   }
 
 

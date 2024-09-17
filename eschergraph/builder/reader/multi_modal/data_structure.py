@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from typing import Optional
 from typing import TypedDict
 from uuid import UUID
 
@@ -11,7 +10,7 @@ class BoundingRegion(TypedDict):
   """Represents a region on a page, defined by its page number and an optional polygon."""
 
   page_number: int
-  polygon: Optional[list[float]]
+  polygon: list[float] | None
 
 
 class TableCell(TypedDict):
@@ -29,7 +28,7 @@ class Paragraph(TypedDict):
   id: int
   role: str | None
   content: str
-  page_number: int | None
+  page_num: int | None
 
 
 class Table(TypedDict):
@@ -41,7 +40,7 @@ class Table(TypedDict):
   bounding_regions: list[BoundingRegion]
   cells: list[TableCell]
   caption: str | None
-  page_number: int
+  page_num: int
 
 
 class Figure(TypedDict):

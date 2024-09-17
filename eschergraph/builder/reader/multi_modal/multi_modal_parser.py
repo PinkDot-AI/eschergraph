@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from typing import Optional
 from uuid import UUID
 
 import fitz  # PyMuPDF
@@ -8,9 +9,11 @@ import requests
 from PIL import Image
 
 from eschergraph.builder.reader.multi_modal.data_structure import AnalysisResult
+from eschergraph.builder.reader.multi_modal.data_structure import BoundingRegion
 from eschergraph.builder.reader.multi_modal.data_structure import Paragraph
 from eschergraph.builder.reader.multi_modal.data_structure import Table
 from eschergraph.builder.reader.multi_modal.data_structure import VisualDocumentElement
+from eschergraph.exceptions import ExternalProviderException
 
 
 def get_multi_model_elements(
@@ -26,12 +29,15 @@ def get_multi_model_elements(
       list[VisualDocumentElement]: A list of visual elements extracted from the document.
   """
   try:
-    results: AnalysisResult = _get_pinkdot_parser(document_path=file_location)
-    visual_elements: list[VisualDocumentElement] = _handle_multi_modal(
-      results, file_location, doc_id
-    )
-    parsed_paragraphs: list[Paragraph] = results["paragraphs"]
-    return parsed_paragraphs, visual_elements
+    results: AnalysisResult | None = _get_pinkdot_parser(document_path=file_location)
+    if results:
+      visual_elements: list[VisualDocumentElement] = _handle_multi_modal(
+        results, file_location, doc_id
+      )
+      parsed_paragraphs: list[Paragraph] = results["paragraphs"]
+      return parsed_paragraphs, visual_elements
+    else:
+      raise ExternalProviderException("Pinkdot AI platform did not return valid object")
   except Exception as e:
     raise e
 
@@ -91,7 +97,7 @@ def _handle_tables(
     markdown_output += _generate_markdown_table(table)
 
     for region in table["bounding_regions"]:
-      cropped_image_filename = _save_cropped_image(
+      cropped_image_filename: str = _save_cropped_image(
         file_location, region, tables_folder, table_idx, "TABLE"
       )
       v = VisualDocumentElement(
@@ -143,8 +149,24 @@ def _handle_figures(
   return visual_elements
 
 
+def get_bounding_box(region: BoundingRegion) -> Optional[list[float]]:
+  """Returns the bounding box of a region if the polygon is available, otherwise None."""
+  polygon = region["polygon"]
+  if polygon is None or len(polygon) < 6:
+    # Return None or raise an exception if polygon is None or has insufficient points
+    return None
+
+  bounding_box = (
+    polygon[0],  # x0 (left)
+    polygon[1],  # y0 (top)
+    polygon[4],  # x1 (right)
+    polygon[5],  # y1 (bottom)
+  )
+  return bounding_box
+
+
 def _save_cropped_image(
-  file_location: str, region: dict, folder: str, idx: int, element_type: str
+  file_location: str, region: BoundingRegion, folder: str, idx: int, element_type: str
 ) -> str:
   """Crops an image from a PDF page and saves it.
 
@@ -158,19 +180,17 @@ def _save_cropped_image(
   Returns:
       str: The file path of the saved image.
   """
-  boundingbox = (
-    region["polygon"][0],  # x0 (left)
-    region["polygon"][1],  # y0 (top)
-    region["polygon"][4],  # x1 (right)
-    region["polygon"][5],  # y1 (bottom)
-  )
-  cropped_image = _crop_image_from_pdf_page(
-    file_location, region["page_number"] - 1, boundingbox
-  )
-  output_file = f"{element_type.lower()}_{idx}.png"
-  cropped_image_filename = os.path.join(folder, output_file)
-  cropped_image.save(cropped_image_filename)
-  return cropped_image_filename
+  boundingbox = get_bounding_box(region=region)
+  if boundingbox:
+    cropped_image = _crop_image_from_pdf_page(
+      file_location, region["page_number"] - 1, boundingbox
+    )
+    output_file = f"{element_type.lower()}_{idx}.png"
+    cropped_image_filename = os.path.join(folder, output_file)
+    cropped_image.save(cropped_image_filename)
+    return cropped_image_filename
+  else:
+    return ""
 
 
 def _generate_markdown_table(table: Table) -> str:
@@ -235,8 +255,7 @@ def _get_pinkdot_parser(
       # Parse the JSON response
       data = response.json()
       # Validate and parse the response into the AnalysisResult model
-      analysis_result = AnalysisResult(**data)
-
+      analysis_result: AnalysisResult = AnalysisResult(**data)  # ignore
       return analysis_result
     except Exception as e:
       raise ValueError(f"Error parsing the response: {str(e)}")
@@ -244,7 +263,7 @@ def _get_pinkdot_parser(
 
 def _crop_image_from_pdf_page(
   pdf_path: str, page_number: int, bounding_box: list[float]
-) -> Image:
+) -> Image.Image:
   """Crop a region from a given page in a PDF and handle cases where the bounding box is outside the page.
 
   Args:
@@ -283,9 +302,8 @@ def _crop_image_from_pdf_page(
   pix_cropped = page.get_pixmap(matrix=fitz.Matrix(300 / 72, 300 / 72), clip=rect)
 
   # Create an image from the pixmap
-  img_cropped = Image.frombytes(
-    "RGB", [pix_cropped.width, pix_cropped.height], pix_cropped.samples
-  )
+  size: tuple[int, int] = pix_cropped.width, pix_cropped.height  # ignore
+  img_cropped = Image.frombytes(mode="RGB", size=size, data=pix_cropped.samples)
 
   doc.close()
 
