@@ -70,8 +70,6 @@ def get_attributes_search(
   if doc_filter:
     search_metadata["document_id"] = [str(id) for id in doc_filter]
 
-  print(search_metadata)
-
   # Perform the final search for attributes
   attributes_results: list[VectorSearchResult] = graph.vector_db.search(
     query=query,
@@ -81,7 +79,7 @@ def get_attributes_search(
   )
 
   # Filter and reformat the reranked attributes before returning them
-  return rerank_and_filter_attributes(graph, query, attributes_results, threshold=0.18)
+  return rerank_and_filter_attributes(graph, query, attributes_results, threshold=0.40)
 
 
 def rerank_and_filter_attributes(

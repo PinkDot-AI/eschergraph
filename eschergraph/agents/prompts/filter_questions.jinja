@@ -1,0 +1,9 @@
+Filter out all the question-answer pairs for which the answer is not explicitly mentioned or detailed in the provided chunk. 
+Retain only those pairs where the chunk contains direct information, facts, or concepts that fully support the answer. 
+If the chunk partially addresses an answer but lacks specific details, exclude that question-answer pair as well. 
+The goal is to keep only the pairs that have complete and clear answers within the chunk.
+Please respond in the following JSON format: 
+{"Q&A": [{"question": <QUESTION_1>, "answer": <ANSWER_1>}, {"question": <QUESTION_2>, "answer": <ANSWER_2>}]}
+
+The chunk: {{ paper_text }}
+Question-answers pairs: {{  qa_pairs }}

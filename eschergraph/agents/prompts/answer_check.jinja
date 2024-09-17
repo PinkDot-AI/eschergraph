@@ -1,0 +1,26 @@
+You are going to grade the provided answer on three criteria: completeness, accuracy, and reasonableness.
+In order to do so, you also have access to the question and its reference answer.
+
+Question: {{ question }}
+
+Reference answer: {{ reference_answer }}
+
+Provided answer: {{ answer }}
+
+Grade the answer according to the following three criteria:
+- Completeness assesses whether the answer
+comprehensively covers all relevant aspects of
+the question and effectively utilizes the details
+in the paper.
+- Accuracy measures how well the generated
+answer corresponds to the relevant facts or
+information presented in the given paper. Any
+claims or statements in the answer should be
+supported by evidence from the paper.
+- Reasonableness pertains to the internal logic
+within the generated answer. It involves assessing whether the answer is logically coherent without contradictions.
+
+Provide a grade from 1 to 5 for each criterium, where 1 is really poor and 5 is excellent.
+
+Provide your answer in the following JSON format:
+{"completeness": <GRADE>, "accuracy": <GRADE>, "reasonableness": <GRADE>}

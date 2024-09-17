@@ -1,0 +1,14 @@
+Generate 10 scientific Q&A pairs as diverse as possible based on facts and knowledge
+presented in given paper, focusing on keywords you generated. Keep the following requirements in
+mind: Avoid asking simple or definitional questions. 
+
+Please assume that there is no corresponding paper to refer to when asking questions, so ensure that
+the questions and answers are self-contained (do not refer to external sources like figures or tables,
+or use demonstrative pronouns such as "this"). Incorporate specific data and insights from the
+paper to create detailed and informative answers. Ensure that the answers are concise, accurate, and
+directly related to the corresponding questions. Please present the question-answer pairs in the following JSON format:
+{"Q&A": [{"question": <QUESTION_1>, "answer": <ANSWER_1>}, {"question": <QUESTION_2>, "answer": <ANSWER_2>}]}
+
+Keywords: {{ keywords }}
+
+Text (an extract from the paper): {{ paper_text }}

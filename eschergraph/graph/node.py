@@ -171,4 +171,4 @@ class Node(EscherBase):
     Returns:
       The string representation of a node.
     """
-    return f"Node Name: {self.name} Description:{self.description}"
+    return f"Node Name: {self.name} Description: {self.description}"
