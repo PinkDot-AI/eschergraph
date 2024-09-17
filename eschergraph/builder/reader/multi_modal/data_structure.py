@@ -41,7 +41,7 @@ class Table(TypedDict):
   bounding_regions: list[BoundingRegion]
   cells: list[TableCell]
   caption: str | None
-  page_num: int
+  page_number: int
 
 
 class Figure(TypedDict):

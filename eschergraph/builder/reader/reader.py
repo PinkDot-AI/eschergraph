@@ -15,6 +15,9 @@ from eschergraph.builder.reader.fast_pdf_parser.models import PdfParsedSegment
 from eschergraph.builder.reader.fast_pdf_parser.parser import FastPdfParser
 from eschergraph.builder.reader.multi_modal.data_structure import Paragraph
 from eschergraph.builder.reader.multi_modal.data_structure import VisualDocumentElement
+from eschergraph.builder.reader.multi_modal.multi_modal_parser import (
+  get_multi_model_elements,
+)
 from eschergraph.exceptions import FileTypeNotProcessableException
 
 
@@ -26,7 +29,6 @@ class Chunk:
   chunk_id: int
   doc_id: UUID
   page_num: Optional[int]
-  doc_name: str
 
 
 # TODO: add more files types: html, docx, pptx, xlsx.
@@ -55,31 +57,53 @@ class Reader:
     return os.path.basename(self.file_location)
 
   def parse(self) -> list[Chunk] | None:
-    """This is the main function that parses the document."""
-    start_time: float = time.time()
+    """Main function that parses the document."""
+    start_time = time.time()
+
+    # Handle different file types
     if self.file_location.endswith(".txt"):
-      self._handle_plain_text()
+      self._parse_plain_text()
 
     elif self.file_location.endswith(".pdf"):
-      if self.multimodal:
-        # TODO
-        pass
-      else:
-        response_json = self._get_document_analysis()
-        if response_json:
-          self._chunk_paragraphs(response_json)
+      self._parse_pdf()
 
     else:
-      # Raise an exception for unsupported file types
       raise FileTypeNotProcessableException(
         f"File type of {self.file_location} is not processable."
       )
-    total_tokens: int = sum(self._count_tokens(c.text) for c in self.chunks)
-    self.total_tokens = total_tokens
-    print(
-      f"Parsed {self.file_location} with multimodal = {self.multimodal} into {len(self.chunks)} chunks, {self.total_tokens} tokens, in {round(time.time() - start_time, 3)} seconds"
-    )
+
+    self.total_tokens = sum(self._count_tokens(c.text) for c in self.chunks)
+    print(self._format_summary(time.time() - start_time))
+
     return self.chunks
+
+  def _parse_pdf(self) -> None:
+    """Handles the parsing logic for PDF files."""
+    if self.multimodal:
+      parsed_paragraphs, visual_elements = get_multi_model_elements(
+        file_location=self.file_location, doc_id=self.doc_id
+      )
+      self.visual_elements = visual_elements
+      self._chunk_paragraphs(parsed_paragraphs)
+    else:
+      parsed_paragraphs = self._get_document_analysis()
+      if parsed_paragraphs:
+        self._chunk_paragraphs(parsed_paragraphs)
+
+  def _format_summary(self, elapsed_time: float) -> str:
+    """Formats the summary string after parsing."""
+    s_extra = ""
+
+    if self.multimodal:
+      table_count = sum(1 for v_e in self.visual_elements if v_e.type == "Table")
+      figure_count = sum(1 for v_e in self.visual_elements if v_e.type == "FIGURE")
+      s_extra = f"{table_count} tables, {figure_count} figures,"
+
+    return (
+      f"Parsed {self.file_location} with multimodal = {self.multimodal} into "
+      f"{len(self.chunks)} chunks, {s_extra} {self.total_tokens} tokens, in "
+      f"{round(elapsed_time, 3)} seconds"
+    )
 
   def _get_document_analysis(self) -> list[Paragraph]:
     # Send the file to the specified URL and get the response
@@ -104,7 +128,7 @@ class Reader:
         # Calculate the effective token limit
         effective_token_limit: int = self.optimal_tokens
         if current_token_count + tokens > effective_token_limit:
-          self._process_text_chunk(current_chunk, chunk_id, paragraph["page_number"])
+          self._process_text_chunk(current_chunk, chunk_id, paragraph["page_num"])
           chunk_id += 1
           current_chunk = [text]
           current_token_count = tokens
@@ -114,17 +138,17 @@ class Reader:
         # If it's a sectionHeading and the current chunk size is greater than 80% of optimal_tokens, start a new chunk
         if (
           paragraph["role"] == "sectionHeading"
-          and current_token_count > 0.8 * self.optimal_tokens
+          and current_token_count > 0.7 * self.optimal_tokens
         ):
           current_chunk.pop(-1)
-          self._process_text_chunk(current_chunk, chunk_id, paragraph["page_number"])
+          self._process_text_chunk(current_chunk, chunk_id, paragraph["page_num"])
           chunk_id += 1
           current_chunk = [text]
           current_token_count = tokens
     # Process any remaining text in the last chunk
     if current_chunk:
       self._process_text_chunk(
-        current_chunk, chunk_id, parsed_paragraphs[-1]["page_number"]
+        current_chunk, chunk_id, parsed_paragraphs[-1]["page_num"]
       )
 
   def _process_text_chunk(
@@ -147,15 +171,14 @@ class Reader:
 
     self.chunks.append(
       Chunk(
-        text=text,
+        text=text.strip(),
         chunk_id=chunk_id,
         page_num=page_num,
         doc_id=self.doc_id,
-        doc_name=self.file_location,
       )
     )
 
-  def _handle_plain_text(self) -> None:
+  def _parse_plain_text(self) -> None:
     """Reads the content of a plain text file, splits it into chunks, and creates Chunk objects for each valid chunk.
 
     Args:
@@ -181,7 +204,6 @@ class Reader:
         chunk_id=idx,
         page_num=None,
         doc_id=self.doc_id,
-        doc_name=self.filename,
       )
       for idx, split in enumerate(all_splits)
       if self._chunk_filter(split.page_content)
@@ -263,5 +285,5 @@ class Reader:
       id=id,
       role=role,
       content=pdf_segment["text"],
-      page_number=pdf_segment["page_number"],
+      page_num=pdf_segment["page_number"],
     )

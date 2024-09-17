@@ -3,17 +3,19 @@ from __future__ import annotations
 import os
 from uuid import UUID
 
+import fitz  # PyMuPDF
 import requests
+from PIL import Image
 
-from eschergraph.builder.reader.multi_modal.crop_images import crop_image_from_pdf_page
 from eschergraph.builder.reader.multi_modal.data_structure import AnalysisResult
+from eschergraph.builder.reader.multi_modal.data_structure import Paragraph
 from eschergraph.builder.reader.multi_modal.data_structure import Table
 from eschergraph.builder.reader.multi_modal.data_structure import VisualDocumentElement
 
 
 def get_multi_model_elements(
   file_location: str, doc_id: UUID
-) -> list[VisualDocumentElement]:
+) -> tuple[list[Paragraph], list[VisualDocumentElement]]:
   """Retrieves multi-modal elements from a file location by parsing the document.
 
   Args:
@@ -24,8 +26,12 @@ def get_multi_model_elements(
       list[VisualDocumentElement]: A list of visual elements extracted from the document.
   """
   try:
-    results: list[AnalysisResult] = _get_pinkdot_parser(document_path=file_location)
-    return _handle_multi_modal(results, file_location, doc_id)
+    results: AnalysisResult = _get_pinkdot_parser(document_path=file_location)
+    visual_elements: list[VisualDocumentElement] = _handle_multi_modal(
+      results, file_location, doc_id
+    )
+    parsed_paragraphs: list[Paragraph] = results["paragraphs"]
+    return parsed_paragraphs, visual_elements
   except Exception as e:
     raise e
 
@@ -66,7 +72,7 @@ def _handle_multi_modal(
 
 def _handle_tables(
   analysis_results: AnalysisResult, tables_folder: str, doc_id: UUID, file_location: str
-) -> list:
+) -> list[VisualDocumentElement]:
   """Processes and saves tables from analysis results.
 
   Args:
@@ -105,7 +111,7 @@ def _handle_figures(
   figures_folder: str,
   doc_id: UUID,
   file_location: str,
-) -> list:
+) -> list[VisualDocumentElement]:
   """Processes and saves figures from analysis results.
 
   Args:
@@ -117,7 +123,7 @@ def _handle_figures(
   Returns:
       list: List of VisualDocumentElement for figures.
   """
-  visual_elements = []
+  visual_elements: list[VisualDocumentElement] = []
   for figure_idx, figure in enumerate(analysis_results["figures"]):
     caption = figure["caption"]
 
@@ -158,7 +164,7 @@ def _save_cropped_image(
     region["polygon"][4],  # x1 (right)
     region["polygon"][5],  # y1 (bottom)
   )
-  cropped_image = crop_image_from_pdf_page(
+  cropped_image = _crop_image_from_pdf_page(
     file_location, region["page_number"] - 1, boundingbox
   )
   output_file = f"{element_type.lower()}_{idx}.png"
@@ -204,7 +210,7 @@ def _generate_markdown_table(table: Table) -> str:
 
 def _get_pinkdot_parser(
   document_path: str, endpoint_url: str = "http://127.0.0.1:8000/analyze_document"
-) -> None | list[AnalysisResult]:
+) -> None | AnalysisResult:
   """Sends a PDF document to an API endpoint for analysis and returns the parsed analysis results.
 
   Args:
@@ -234,3 +240,53 @@ def _get_pinkdot_parser(
       return analysis_result
     except Exception as e:
       raise ValueError(f"Error parsing the response: {str(e)}")
+
+
+def _crop_image_from_pdf_page(
+  pdf_path: str, page_number: int, bounding_box: list[float]
+) -> Image:
+  """Crop a region from a given page in a PDF and handle cases where the bounding box is outside the page.
+
+  Args:
+      pdf_path (str): The path to the PDF file.
+      page_number (int): The page number to crop from (0-indexed).
+      bounding_box (tuple): The bounding box coordinates in the format (x0, y0, x1, y1).
+
+  Returns:
+      A PIL Image of the cropped area.
+  """
+  # Load the PDF and the page
+  doc = fitz.open(pdf_path)
+  page = doc.load_page(page_number)
+
+  # Get page dimensions in points (72 points = 1 inch)
+  page_width, page_height = page.rect.width, page.rect.height
+
+  # Ensure bounding box coordinates are ordered correctly
+  x0, y0, x1, y1 = bounding_box
+  if y0 > y1:
+    y0, y1 = y1, y0  # Swap values if y0 is greater than y1
+  if x0 > x1:
+    x0, x1 = x1, x0  # Swap values if x0 is greater than x1
+
+  # Limit bounding box to the page dimensions
+  x0 = max(0, min(x0, page_width))
+  y0 = max(0, min(y0, page_height))
+  x1 = max(0, min(x1, page_width))
+  y1 = max(0, min(y1, page_height))
+
+  # Convert to pixel coordinates (assuming 72 DPI for points)
+  crop_box = [x * 72 for x in (x0, y0, x1, y1)]
+
+  # Cropping the page. The rect requires the coordinates in the format (x0, y0, x1, y1).
+  rect = fitz.Rect(crop_box)
+  pix_cropped = page.get_pixmap(matrix=fitz.Matrix(300 / 72, 300 / 72), clip=rect)
+
+  # Create an image from the pixmap
+  img_cropped = Image.frombytes(
+    "RGB", [pix_cropped.width, pix_cropped.height], pix_cropped.samples
+  )
+
+  doc.close()
+
+  return img_cropped

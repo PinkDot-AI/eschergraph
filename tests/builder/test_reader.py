@@ -44,12 +44,11 @@ def test_handle_plain_text() -> None:
   mock_reader.chunks = []
 
   # Call the actual method to test
-  Reader._handle_plain_text(mock_reader)
+  Reader._parse_plain_text(mock_reader)
 
   assert len(mock_reader.chunks) > 0  # Ensure chunks were created
   assert all(isinstance(chunk, Chunk) for chunk in mock_reader.chunks)
   assert mock_reader.chunks[0].doc_id == mock_reader.doc_id
-  assert mock_reader.chunks[0].doc_name == mock_reader.filename
   assert mock_reader.chunks[0].page_num is None
   assert isinstance(mock_reader.chunks[0].text, str)
   for c in mock_reader.chunks:
@@ -141,25 +140,25 @@ def test_to_paragraph_structure() -> None:
       "id": 1,
       "role": None,
       "content": "[26] David McClosky, Eugene Charniak...",
-      "page_number": 12,
+      "page_num": 12,
     },
     {
       "id": 2,
       "role": None,
       "content": "[27] Ankur Parikh, Oscar TÃ¤ckstrÃ¶m...",
-      "page_number": 12,
+      "page_num": 12,
     },
     {
       "id": 3,
       "role": None,
       "content": "[28] Romain Paulus, Caiming Xiong...",
-      "page_number": 12,
+      "page_num": 12,
     },
     {
       "id": 4,
       "role": "sectionHeading",
       "content": "[30] Ofir Press and Lior Wolf...",
-      "page_number": 12,
+      "page_num": 12,
     },
   ]
 
