@@ -19,6 +19,7 @@ KEYWORDS_SAVED: str = "./eschergraph_storage/keywords.json"
 QA_PROMPT: str = "questions.jinja"
 QA_SAVED: str = "./eschergraph_storage/qa.json"
 FILTER_PROMPT: str = "filter_questions.jinja"
+SAVE_CHUNKS: str = "./eschergraph_storage/chunks.json"
 
 model: OpenAIProvider = OpenAIProvider(model=OpenAIModel.GPT_4o)
 
@@ -70,10 +71,23 @@ def get_retrieval_qa(filename, keywords) -> dict[int, Any]:
   return qa_doc
 
 
+def get_chunks(filename) -> dict[str, str]:
+  """Get all the chunks from a file."""
+  reader: Reader = Reader(file_location=filename)
+  chunks: list[Chunk] = reader.parse()
+  chunk_dict: dict[str, str] = {}
+  for chunk in chunks:
+    chunk_dict[str(chunk.chunk_id)] = chunk.text
+
+  return chunk_dict
+
+
 if __name__ == "__main__":
   # keywords: dict[str, list[str]] = get_keywords(TEST_FILE)
   # save(keywords, KEYWORDS_SAVED)
   # keywords: dict[str, list[str]] = load(KEYWORDS_SAVED)
   # qa_doc: dict[int, Any] = get_retrieval_qa(TEST_FILE)
   # save(qa_doc, QA_SAVED)
-  print(get_keywords(TEST_FILE))
+  # print(get_keywords(TEST_FILE))
+  chunks_to_save: dict[str, str] = get_chunks(TEST_FILE)
+  save(chunks_to_save, SAVE_CHUNKS)

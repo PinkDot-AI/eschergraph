@@ -1,18 +1,15 @@
 from __future__ import annotations
 
-from eschergraph.agents import OpenAIModel
-from eschergraph.agents import OpenAIProvider
+from eschergraph.agents.llm import ModelProvider
 from eschergraph.graph import Graph
 
 TEST_DOCUMENT: str = "./test_files/Attention Is All You Need.pdf"
 
 
 # Watch out! Running this may incur costs for building the graph
-def get_or_create_graph() -> Graph:
+def get_or_create_graph(model: ModelProvider) -> Graph:
   """Get or build the graph needed for the evaluation."""
-  graph: Graph = Graph(
-    name="eval_global_search", model=OpenAIProvider(model=OpenAIModel.GPT_4o)
-  )
+  graph: Graph = Graph(name="eval_global_search", model=model)
 
   # Check if the test file has already been added to the graph
   if graph.repository.get_all_at_level(0):
