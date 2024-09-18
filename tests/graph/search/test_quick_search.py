@@ -13,6 +13,7 @@ from eschergraph.graph.graph import Graph
 from eschergraph.graph.search.quick_search import AttributeSearch
 from eschergraph.graph.search.quick_search import get_attributes_search
 from eschergraph.graph.search.quick_search import quick_search
+from eschergraph.graph.search.quick_search import RAGAnswer
 from eschergraph.graph.search.quick_search import rerank_and_filter_attributes
 from eschergraph.persistence.vector_db.vector_search_result import VectorSearchResult
 from tests.persistence.vector_db.help import generate_vector_search_results
@@ -21,7 +22,8 @@ RAG_SEARCH = "search/question_with_context.jinja"
 
 
 def test_quick_search_empty_query(graph_unit: Graph) -> None:
-  assert quick_search(graph_unit, "") == "please ask a question"
+  RAGanswer: RAGAnswer = quick_search(graph_unit, "")
+  assert RAGanswer.answer == "please ask a question"
 
 
 def test_quick_search_no_attributes_found(graph_unit: Graph) -> None:
@@ -29,9 +31,8 @@ def test_quick_search_no_attributes_found(graph_unit: Graph) -> None:
     "eschergraph.graph.search.quick_search.get_attributes_search", return_value=[]
   ):
     graph_unit.model.get_plain_response.return_value = "No results found"
-
-    result = quick_search(graph_unit, "test query")
-    assert result == "No results found"
+    RAGanswer: RAGAnswer = quick_search(graph_unit, "test query")
+    assert RAGanswer.answer == "No results found"
     graph_unit.model.get_plain_response.assert_called_with(
       process_template(
         RAG_SEARCH,
@@ -54,8 +55,8 @@ def test_quick_search_answer_generated(graph_unit: Graph) -> None:
   ):
     graph_unit.model.get_plain_response.return_value = "Generated answer"
 
-    result = quick_search(graph_unit, "test query with attributes")
-    assert result == "Generated answer"
+    RAGAnswer: RAGAnswer = quick_search(graph_unit, "test query with attributes")
+    assert RAGAnswer.answer == "Generated answer"
     graph_unit.model.get_plain_response.assert_called_with(
       process_template(
         RAG_SEARCH,
@@ -78,8 +79,8 @@ def test_quick_search_answer_generation_fails(graph_unit: Graph) -> None:
   ):
     graph_unit.model.get_plain_response.return_value = None
 
-    result = quick_search(graph_unit, "test query with failed generation")
-    assert result == "Something went wrong with generating the answer"
+    result: RAGAnswer = quick_search(graph_unit, "test query with failed generation")
+    assert result.answer == "Something went wrong with generating the answer"
 
 
 def test_get_attributes_search(graph_unit: Graph) -> None:

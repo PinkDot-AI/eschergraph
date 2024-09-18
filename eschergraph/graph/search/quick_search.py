@@ -5,10 +5,13 @@ from typing import Optional
 from typing import TYPE_CHECKING
 from uuid import UUID
 
+from attr import define
+
 from eschergraph.agents.jinja_helper import process_template
 from eschergraph.agents.reranker import RerankerResult
 from eschergraph.config import MAIN_COLLECTION
 from eschergraph.graph.search.attribute_search import AttributeSearch
+from eschergraph.persistence.metadata import MetadataVisual
 from eschergraph.persistence.vector_db.vector_search_result import VectorSearchResult
 
 if TYPE_CHECKING:
@@ -17,38 +20,62 @@ if TYPE_CHECKING:
 RAG_SEARCH = "search/question_with_context.jinja"
 
 
-# TODO: add explicit source references to the answer
+@define
+class RAGAnswer:
+  """The data class for RAG answers containing the answers, sources and possible visuals."""
+
+  answer: str
+  sources: list[AttributeSearch] | None
+  visuals: list[MetadataVisual] | None
+
+
 def quick_search(
   graph: Graph, query: str, doc_filter: Optional[list[UUID]] = None
-) -> str:
+) -> RAGAnswer:
   """Performs a quick search and Retrieval-Augmented Generation (RAG) using the vector database and language model.
 
   Args:
-    query (str): The input string to search for relevant attributes in the graph.
-    graph (Graph): The graph on which the quick search is performed.
-    doc_filter: (Optional[list[UUID]]) The optional list of document id's to filter for.
+      query (str): The input string to search for relevant attributes in the graph.
+      graph (Graph): The graph on which the quick search is performed.
+      doc_filter: (Optional[list[UUID]]) The optional list of document id's to filter for.
 
   Returns:
-    str: The answer from the LLM.
+      RAGAnswer: An object containing the answer, sources, and any visual metadata.
   """
   # Retrieve and rank attributes based on the query
   if query.strip() == "":
-    return "please ask a question"
+    return RAGAnswer(answer="please ask a question", sources=None, visuals=None)
+
   attributes: list[AttributeSearch] = get_attributes_search(graph, query, doc_filter)
   chunks_string: str = ""
+
   if len(attributes) == 0:
     chunks_string = "Nothing found in the graph regarding this question!"
   else:
     for a in attributes:
       chunks_string += a.text + "\n"
+
   prompt: str = process_template(
     RAG_SEARCH, data={"CONTEXT": chunks_string, "QUERY": query}
   )
+
   answer: str | None = graph.model.get_plain_response(prompt)
-  if answer:
-    return answer
-  else:
-    return "Something went wrong with generating the answer"
+
+  visuals: list[MetadataVisual] = []
+  for a in attributes:
+    if a.metadata:
+      item = list(a.metadata)[0]
+      if item.visual_metadata:
+        visuals.append(item.visual_metadata)
+
+  # Create the RAGAnswer object
+  rag_answer = RAGAnswer(
+    answer=answer if answer else "Something went wrong with generating the answer",
+    sources=attributes,
+    visuals=visuals if visuals else None,
+  )
+
+  return rag_answer
 
 
 def get_attributes_search(

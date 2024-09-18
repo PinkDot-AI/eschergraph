@@ -50,6 +50,7 @@ class Reader:
   chunks: list[Chunk] = field(factory=list)
   doc_id: UUID = field(factory=uuid4)
   visual_elements: list[VisualDocumentElement] = field(factory=list)
+  full_text: str = ""
 
   @property
   def filename(self) -> str:
@@ -73,8 +74,6 @@ class Reader:
       )
 
     self.total_tokens = sum(self._count_tokens(c.text) for c in self.chunks)
-    print(self._format_summary(time.time() - start_time))
-
     return self.chunks
 
   def _parse_pdf(self) -> None:
@@ -89,21 +88,6 @@ class Reader:
       parsed_paragraphs = self._get_document_analysis()
       if parsed_paragraphs:
         self._chunk_paragraphs(parsed_paragraphs)
-
-  def _format_summary(self, elapsed_time: float) -> str:
-    """Formats the summary string after parsing."""
-    s_extra = ""
-
-    if self.multimodal:
-      table_count = sum(1 for v_e in self.visual_elements if v_e.type == "Table")
-      figure_count = sum(1 for v_e in self.visual_elements if v_e.type == "FIGURE")
-      s_extra = f"{table_count} tables, {figure_count} figures,"
-
-    return (
-      f"Parsed {self.file_location} with multimodal = {self.multimodal} into "
-      f"{len(self.chunks)} chunks, {s_extra} {self.total_tokens} tokens, in "
-      f"{round(elapsed_time, 3)} seconds"
-    )
 
   def _get_document_analysis(self) -> list[Paragraph]:
     # Send the file to the specified URL and get the response
@@ -124,6 +108,7 @@ class Reader:
     for paragraph in parsed_paragraphs:
       if paragraph["role"] != "null":
         text: str = paragraph["content"] + "\n"
+        self.full_text += text  # adding text to the full text attribute
         tokens: int = self._count_tokens(text)
         # Calculate the effective token limit
         effective_token_limit: int = self.optimal_tokens
@@ -190,6 +175,7 @@ class Reader:
     # Read the file content
     with open(self.file_location, "r", encoding="utf-8") as txt_file:
       text_content = txt_file.read().strip()
+      self.full_text = text_content
 
     # Split the content into chunks with langchain
     text_splitter = RecursiveCharacterTextSplitter(

@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import base64
 import json
 import os
 from enum import Enum
 from typing import Any
+from typing import Optional
 
 from attrs import define
 from attrs import field
@@ -83,6 +85,33 @@ class OpenAIProvider(ModelProvider, Embedding):
       The answer given or None.
     """
     return self._get_response(prompt)
+
+  @retry(wait=wait_random_exponential(multiplier=1, max=40), stop=stop_after_attempt(2))
+  def get_multi_modal_response(self, prompt: str, image_path: str) -> Any:
+    """Get a text response from OpenAI.
+
+    Note that the model that is used is specified when instantiating the class.
+
+    Args:
+      prompt (str): The user prompt that is send to ChatGPT.
+      image_path (str): the image to be analyse with the text
+
+    Returns:
+      The answer given or None.
+    """
+    messages: list[ChatCompletionMessageParam] = self._get_messages(prompt, image_path)
+    try:
+      response: ChatCompletion = self.client.chat.completions.create(
+        model=self.model.value,
+        messages=messages,
+        response_format={"type": "json_object"},
+      )
+      self._add_token_usage(response)
+      return json.loads(  # type: ignore
+        response.choices[0].message.content
+      )
+    except Exception as e:
+      raise ExternalProviderException(e)
 
   @retry(wait=wait_random_exponential(multiplier=1, max=40), stop=stop_after_attempt(3))
   def get_formatted_response(self, prompt: str, response_format: ResponseFormat) -> Any:
@@ -206,10 +235,36 @@ class OpenAIProvider(ModelProvider, Embedding):
     return chat_tools
 
   @staticmethod
-  def _get_messages(prompt: str) -> list[ChatCompletionMessageParam]:
+  def _get_messages(
+    prompt: str, image_path: Optional[str] = None
+  ) -> list[ChatCompletionMessageParam]:
     messages: list[ChatCompletionMessageParam] = []
     messages.append(
       ChatCompletionSystemMessageParam(role="system", content=SYSTEM_MESSAGE)
     )
-    messages.append(ChatCompletionUserMessageParam(role="user", content=prompt))
+
+    user_message_content = [{"type": "text", "text": prompt}]
+
+    if image_path:
+      # Encode the image as base64
+      encoded_image = OpenAIProvider._encode_image(image_path)
+      if encoded_image:
+        user_message_content.append({
+          "type": "image_url",
+          "image_url": {"url": f"data:image/jpeg;base64,{encoded_image}"},
+        })
+
+    messages.append(
+      ChatCompletionUserMessageParam(role="user", content=user_message_content)
+    )
+
     return messages
+
+  @staticmethod
+  def _encode_image(image_path: str) -> Optional[str]:
+    try:
+      with open(image_path, "rb") as image_file:
+        return base64.b64encode(image_file.read()).decode("utf-8")
+    except Exception as e:
+      print(f"Error encoding image: {e}")
+      return None

@@ -1,0 +1,56 @@
+You are given the markdown of a table. The table may contain information about various entities and their relationships. 
+The goal is to map all the relations of the table with regarding entities, and descript all relevnt information in the table.
+
+The table name will be regarded as if it is an entity.
+Extract the entities and describe the relationships between the table and these entities in a structured format. Entities has to be named entities.
+
+There might be possible relations between entities mentioned in the table. Also extract these relations.
+
+Analyse the table and the capiton and give a rich description for the table.
+Give the table a name based on the caption, make sure to include that it is a table in the name.
+
+--JSON Output format:--  
+{  
+  "entities": [  
+    {"name": "<entity_name1>", "description": "<entity_description1>"},  
+    {"name": "<entity_name2>", "description": "<entity_description2>"}  
+  ],  
+  "relationships": [  
+    {"source": "<table_name>", "target": "<entity_name1>", "relationship": "<relationship_description>"},  
+    {"source": "<table_name>", "target": "<entity_name2>", "relationship": "<relationship_description>"},  
+    {"source": "<entity_name1>", "target": "<entity_name2>", "relationship": "<relationship_description>"}  
+  ]  
+}  
+
+--Example:--  
+For a table describing sales performance across different regions:  
+
+- **Table Name:** Sales Report Q3  
+- **Entity 1:** North America (NA)  
+- **Entity 2:** Europe (EU)  
+- **Entity 3:** Asia Pacific (APAC)  
+Caption: Sales Report Q3 for hypothetical company
+Answer:
+{  
+  "entities": [  
+    {"name": "Sales Report Q3  ", "description": "Sales Report Q3 for hypothetical company description the regions North American (NA), Europe (EU) and Asia Pacific (APAC)"},  
+    {"name": "North America (NA) ", "description": "<North America (NA) description>"}  
+    {"name": "Europe (EU)", "description": "<Europe (EU)   description>"}  
+    {"name": "Asia Pacific (APAC)   ", "description": "<Asia Pacific (APAC) description>"}  
+
+  ],  
+  "relationships": [  
+    {"source": "Table 1 - Sales Report Q3", "target": "North America (NA)", "relationship": "Has a table sales report in Q3 of x for hypothetical company"},  
+    {"source": "Table 1 - Sales Report Q3", "target": "Europe (EU)", "relationship": "Has a table sales report in Q3 of y for hypothetical company"},  
+    {"source": "Table 1 - Sales Report Q3", "target": "Asia Pacific (APAC)", "relationship": "Has a table sales report in Q3 of z for hypothetical company"}  
+  ]  
+}  
+
+ -Real Data-
+######################
+
+{{markdown_table}}  
+Table caption: {{table_caption}}
+These are the keywords of the document in which the table appears {{keywords}}
+
+######################

@@ -93,7 +93,7 @@ def _handle_tables(
   visual_elements = []
   for table_idx, table in enumerate(analysis_results["tables"]):
     caption = table["caption"]
-    markdown_output = f"### Table {table_idx + 1}: {caption}\n\n"
+    markdown_output = f"{caption}\n"
     markdown_output += _generate_markdown_table(table)
 
     for region in table["bounding_regions"]:
@@ -149,7 +149,7 @@ def _handle_figures(
   return visual_elements
 
 
-def get_bounding_box(region: BoundingRegion) -> Optional[list[float]]:
+def _get_bounding_box(region: BoundingRegion) -> Optional[list[float]]:
   """Returns the bounding box of a region if the polygon is available, otherwise None."""
   polygon = region["polygon"]
   if polygon is None or len(polygon) < 6:
@@ -180,7 +180,7 @@ def _save_cropped_image(
   Returns:
       str: The file path of the saved image.
   """
-  boundingbox = get_bounding_box(region=region)
+  boundingbox = _get_bounding_box(region=region)
   if boundingbox:
     cropped_image = _crop_image_from_pdf_page(
       file_location, region["page_number"] - 1, boundingbox

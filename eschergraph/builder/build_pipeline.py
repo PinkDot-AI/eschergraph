@@ -4,6 +4,7 @@ from concurrent.futures import as_completed
 from concurrent.futures import ThreadPoolExecutor
 from typing import cast
 from typing import TYPE_CHECKING
+from uuid import uuid4
 
 from attrs import define
 from attrs import field
@@ -13,10 +14,16 @@ from eschergraph.agents.llm import ModelProvider
 from eschergraph.agents.reranker import Reranker
 from eschergraph.builder.build_log import BuildLog
 from eschergraph.builder.build_log import NodeEdgeExt
+from eschergraph.builder.reader.multi_modal.data_structure import VisualDocumentElement
 from eschergraph.builder.reader.reader import Chunk
 from eschergraph.config import JSON_BUILD
+from eschergraph.config import JSON_FIGURE
+from eschergraph.config import JSON_KEYWORDS
 from eschergraph.config import JSON_PROPERTY
-from eschergraph.persistence import Metadata
+from eschergraph.config import JSON_TABLE
+from eschergraph.exceptions import DataLoadingException
+from eschergraph.persistence.metadata import Metadata
+from eschergraph.persistence.metadata import MetadataVisual
 from eschergraph.tools.community_builder import CommunityBuilder
 from eschergraph.tools.node_matcher import NodeMatcher
 
@@ -33,21 +40,30 @@ class BuildPipeline:
   reranker: Reranker
   building_logs: list[BuildLog] = field(factory=list)
   unique_entities: list[str] = field(factory=list)
+  keywords: list[str] = field(factory=list)
 
   # TODO: copy the building logs somewhere
-  def run(self, chunks: list[Chunk], graph: Graph) -> list[BuildLog]:
+  def run(
+    self,
+    chunks: list[Chunk],
+    graph: Graph,
+    full_text: str,
+    visual_elements: list[VisualDocumentElement] | None = None,
+  ) -> list[BuildLog]:
     """Run the build pipeline.
 
     Returns:
       A list of build logs that can be used to add nodes and edges to the graph.
     """
-    # Step 1: extract the nodes and edges per chunk
+    self._extract_keywords(full_text=full_text)
+
     self._extract_node_edges(chunks)
 
-    # Step 2: extract the properties per chunk (for extracted nodes)
     self._extract_properties()
 
-    # Step 3: match the nodes together to extract entities from names
+    if visual_elements:
+      self._handle_multi_modal(visual_elements)
+
     unique_entities: list[str] = self._get_unique_entities()
 
     updated_logs: list[BuildLog] = NodeMatcher(
@@ -58,19 +74,14 @@ class BuildPipeline:
     )
 
     # Step 4: remove unmatched nodes from the updated logs
-
-    # add persistence of new and old building logs
     self._persist_to_graph(graph=graph, updated_logs=updated_logs)
 
-    # Build the community layer
     CommunityBuilder.build(level=0, graph=graph)
 
-    # Adding changes to vector db
     graph.sync_vectordb()
 
     # self._save_logs()
 
-    # Save graph (perhaps make explicit)
     graph.repository.save()
 
     return updated_logs
@@ -87,12 +98,22 @@ class BuildPipeline:
         except Exception as e:
           print(f"Error processing chunk: {e}")
 
+  def _extract_keywords(self, full_text: str) -> None:
+    prompt_formatted: str = process_template(JSON_KEYWORDS, {"full_text": full_text})
+    answer_json = self.model.get_json_response(prompt=prompt_formatted)
+    try:
+      self.keywords = answer_json["keywords"]
+    except:
+      raise DataLoadingException("keywords extraction not in correct format")
+
   def _handle_nodes_edges_chunk(self, chunk: Chunk) -> None:
     prompt_formatted: str = process_template(JSON_BUILD, {"input_text": chunk.text})
 
     answer = self.model.get_json_response(prompt=prompt_formatted)
     json_nodes_edges: NodeEdgeExt = cast(NodeEdgeExt, answer)
-    metadata: Metadata = Metadata(document_id=chunk.doc_id, chunk_id=chunk.chunk_id)
+    metadata: Metadata = Metadata(
+      document_id=chunk.doc_id, chunk_id=chunk.chunk_id, visual_metadata=None
+    )
 
     # Add to the building logs
     self.building_logs.append(
@@ -174,6 +195,9 @@ class BuildPipeline:
           level=0,
           metadata=log.metadata,
         )
+      if log.metadata.visual_metadata:
+        print(log.metadata)
+        print(node_ext["name"].lower())
 
     # then loop again to add all edges and properties
     for log in updated_logs:
@@ -211,3 +235,80 @@ class BuildPipeline:
           continue
         for property_item in prop_ext["properties"]:
           node.add_property(description=property_item, metadata=log.metadata)
+
+  def _handle_multi_modal(self, visual_elements: list[VisualDocumentElement]):
+    def handle_element(visual_el: VisualDocumentElement) -> None:
+      if visual_el.type == "FIGURE":
+        self._handle_figure(visual_el)
+      elif visual_el.type == "TABLE":
+        self._handle_table(visual_el)
+      else:
+        raise Exception(f"wrong visual type {visual_el.type}")
+
+    with ThreadPoolExecutor() as executor:
+      # Submit each visual element to be processed in a separate thread
+      executor.map(handle_element, visual_elements)
+
+  def _handle_table(self, table: VisualDocumentElement) -> None:
+    caption = table.caption or "no caption given"
+    prompt_formatted: str = process_template(
+      JSON_TABLE,
+      {
+        "markdown_table": table.content,
+        "table_caption": caption,
+        "keywords": self.keywords,
+      },
+    )
+
+    visual_metadata: MetadataVisual = MetadataVisual(
+      id=uuid4(),
+      content=table.content,
+      save_location=table.save_location,
+      page_num=table.page_num,
+      type=table.type,
+    )
+
+    answer = self.model.get_json_response(prompt=prompt_formatted)
+    json_nodes_edges: NodeEdgeExt = cast(NodeEdgeExt, answer)
+
+    metadata: Metadata = Metadata(
+      document_id=table.doc_id, chunk_id=None, visual_metadata=visual_metadata
+    )
+    # Add to the building logs
+    self.building_logs.append(
+      BuildLog(
+        chunk_text=caption + " --- " + table.content,
+        metadata=metadata,
+        nodes=json_nodes_edges["entities"],
+        edges=json_nodes_edges["relationships"],
+      )
+    )
+
+  def _handle_figure(self, figure: VisualDocumentElement) -> None:
+    caption = figure.caption or "no caption given"
+    prompt_formatted: str = process_template(
+      JSON_FIGURE,
+      {"figure_caption": caption, "keywords": self.keywords},
+    )
+    answer = self.model.get_multi_modal_response(
+      prompt=prompt_formatted, image_path=figure.save_location
+    )
+    json_nodes_edges: NodeEdgeExt = cast(NodeEdgeExt, answer)
+    visual_metadata: MetadataVisual = MetadataVisual(
+      id=uuid4(),
+      content=figure.content,
+      save_location=figure.save_location,
+      page_num=figure.page_num,
+      type=figure.type,
+    )
+    metadata: Metadata = Metadata(
+      document_id=figure.doc_id, chunk_id=None, visual_metadata=visual_metadata
+    )
+    self.building_logs.append(
+      BuildLog(
+        chunk_text=caption,
+        metadata=metadata,
+        nodes=json_nodes_edges["entities"],
+        edges=json_nodes_edges["relationships"],
+      )
+    )

@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from eschergraph.agents.llm import ModelProvider
+from eschergraph.builder.reader.multi_modal.data_structure import VisualDocumentElement
 from eschergraph.builder.reader.reader import Chunk
 from eschergraph.builder.reader.reader import Reader
 from eschergraph.tools.estimator import Estimator
@@ -16,29 +17,38 @@ class BuildingTools:
 
   @staticmethod
   def process_files(
-    files: list[str],
-  ) -> tuple[list[Chunk], list[Document], int]:
+    files: list[str], multi_modal: bool
+  ) -> tuple[str, list[Chunk], list[Document], int, list[VisualDocumentElement]]:
     """Process the given files and extract chunks, document data, and total tokens.
 
     Args:
-        files (str | list[str]): A single file path or a list of file paths to process.
+      files (list[str]): A list of file paths to process.
+      multi_modal (bool): A flag indicating whether the parsing should be multi-modal.
 
     Returns:
-        tuple[list[Chunk], list[Document], int]: A tuple containing:
-            - A list of Chunk objects
-            - A list of Document objects
-            - The total number of tokens processed
+      tuple: A tuple containing the following:
+        - str: The concatenated text of all documents.
+        - list[Chunk]: A list of Chunk objects extracted from the documents.
+        - list[Document]: A list of Document objects representing metadata for each document.
+        - int: The total number of tokens processed across all documents.
+        - list[VisualDocumentElement]: A list of visual elements (only if `multi_modal` is True).
     """
     from eschergraph.persistence.document import Document
 
     chunks: list[Chunk] = []
     document_data: list[Document] = []
     total_tokens: int = 0
+    full_text: str = ""
+    visual_elements: list[VisualDocumentElement] = [] if multi_modal else None
 
     for file in files:
-      reader = Reader(file_location=file)
+      reader = Reader(file_location=file, multimodal=multi_modal)
       reader.parse()
       chunks.extend(reader.chunks)
+      full_text += reader.full_text + "\n"
+
+      if multi_modal:
+        visual_elements.extend(reader.visual_elements)
 
       doc_data = Document(
         id=reader.doc_id,
@@ -49,7 +59,7 @@ class BuildingTools:
       document_data.append(doc_data)
       total_tokens += reader.total_tokens
 
-    return chunks, document_data, total_tokens
+    return full_text, chunks, document_data, total_tokens, visual_elements
 
   @staticmethod
   def display_build_info(

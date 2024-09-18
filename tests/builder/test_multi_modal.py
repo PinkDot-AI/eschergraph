@@ -191,7 +191,7 @@ def test_handle_tables() -> None:
       assert v.caption == "Sample Table"
       assert v.page_num == 1
       assert v.save_location == expected_cropped_image_filename
-      assert v.content == f"### Table 1: Sample Table\n\n{expected_markdown_table}"
+      assert v.content == f"{v.caption}\n{expected_markdown_table}"
 
 
 def test_handle_figures() -> None:

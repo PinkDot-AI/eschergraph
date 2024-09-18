@@ -6,8 +6,3 @@ path = "test_files/Attention Is All You Need.pdf"
 
 r = Reader(file_location=path, multimodal=True)
 r.parse()
-
-for c in r.chunks:
-  print(len(c.text))
-  print(c)
-  print("---")

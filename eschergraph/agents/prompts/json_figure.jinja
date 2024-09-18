@@ -1,0 +1,43 @@
+You are given a figure, analyse this well regarding information about various entities and their relationships. 
+The goal is to map all the relations of the figure with regarding entities and extract all relevent information in the figure.
+The figure will be regarded as if it is an entity.
+Extract the entities and describe the relationships between the figure and these entities in a structured format.
+
+There might be possible relations between entities mentioned in the figure. Also extract these relations.
+Analyse the figure and the capiton and give a rich description of the figure. 
+Give the figure a name based on the caption, make sure to include that it is a figure in the name.
+
+-Steps-
+1. Identify all named entities in singular form. For people please include the entire name. Entities can also be technologies. 
+For each identified entity, extract the following information:
+- entity_name: Name of the entity
+- entity_description: Comprehensive description of the entity's attributes and activities
+
+Format each entity output as a JSON entry with the following format:
+
+{"name": <entity name>, "description": <entity description>}
+
+2. From the entities identified in step 1, identify all pairs of (source_entity, target_entity) that are *clearly related* to each other.
+For each pair of related entities, extract the following information:
+- source_entity: name of the source entity, as identified in step 1
+- target_entity: name of the target entity, as identified in step 1
+- relationship_description: explanation as to why you think the source entity and the target entity are related to each other
+
+-- Comeplete JSON Output format:--  
+{  
+  "entities": [  
+    {"name": "<figure_name>", "description": "<rich figure description>"},  
+    {"name": "<entity_name2>", "description": "<entity_description2>"}  
+  ],  
+  "relationships": [  
+    {"source": "<table_name>", "target": "<entity_name1>", "relationship": "<relationship_description>"},  
+    {"source": "<table_name>", "target": "<entity_name2>", "relationship": "<relationship_description>"},  
+    {"source": "<entity_name1>", "target": "<entity_name2>", "relationship": "<relationship_description>"}  
+  ]  
+}
+
+ -Real Data-
+############### 
+Figure caption: {{figure_caption}}
+These are the keywords of the document in which the figure appears {{keywords}}
+###############
