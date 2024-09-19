@@ -156,12 +156,12 @@ def _get_bounding_box(region: BoundingRegion) -> Optional[list[float]]:
     # Return None or raise an exception if polygon is None or has insufficient points
     return None
 
-  bounding_box = (
+  bounding_box = [
     polygon[0],  # x0 (left)
     polygon[1],  # y0 (top)
     polygon[4],  # x1 (right)
     polygon[5],  # y1 (bottom)
-  )
+  ]
   return bounding_box
 
 
@@ -255,7 +255,9 @@ def _get_pinkdot_parser(
       # Parse the JSON response
       data = response.json()
       # Validate and parse the response into the AnalysisResult model
-      analysis_result: AnalysisResult = AnalysisResult(**data)  # ignore
+      analysis_result: AnalysisResult = AnalysisResult(
+        tables=data["tables"], figures=data["figures"], paragraphs=data["paragraphs"]
+      )  # ignore
       return analysis_result
     except Exception as e:
       raise ValueError(f"Error parsing the response: {str(e)}")

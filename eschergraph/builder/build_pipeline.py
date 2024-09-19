@@ -14,6 +14,7 @@ from eschergraph.agents.llm import ModelProvider
 from eschergraph.agents.reranker import Reranker
 from eschergraph.builder.build_log import BuildLog
 from eschergraph.builder.build_log import NodeEdgeExt
+from eschergraph.builder.building_tools import BuildingTools
 from eschergraph.builder.reader.multi_modal.data_structure import VisualDocumentElement
 from eschergraph.builder.reader.reader import Chunk
 from eschergraph.config import JSON_BUILD
@@ -236,7 +237,7 @@ class BuildPipeline:
         for property_item in prop_ext["properties"]:
           node.add_property(description=property_item, metadata=log.metadata)
 
-  def _handle_multi_modal(self, visual_elements: list[VisualDocumentElement]):
+  def _handle_multi_modal(self, visual_elements: list[VisualDocumentElement]) -> None:
     def handle_element(visual_el: VisualDocumentElement) -> None:
       if visual_el.type == "FIGURE":
         self._handle_figure(visual_el)
@@ -256,7 +257,7 @@ class BuildPipeline:
       {
         "markdown_table": table.content,
         "table_caption": caption,
-        "keywords": self.keywords,
+        "keywords": ", ".join(self.keywords),
       },
     )
 
@@ -288,12 +289,14 @@ class BuildPipeline:
     caption = figure.caption or "no caption given"
     prompt_formatted: str = process_template(
       JSON_FIGURE,
-      {"figure_caption": caption, "keywords": self.keywords},
+      {"figure_caption": caption, "keywords": ", ".join(self.keywords)},
     )
     answer = self.model.get_multi_modal_response(
       prompt=prompt_formatted, image_path=figure.save_location
     )
+    BuildingTools.check_node_edge_format(answer)
     json_nodes_edges: NodeEdgeExt = cast(NodeEdgeExt, answer)
+
     visual_metadata: MetadataVisual = MetadataVisual(
       id=uuid4(),
       content=figure.content,

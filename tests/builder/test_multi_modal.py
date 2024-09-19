@@ -6,6 +6,8 @@ from uuid import uuid4
 
 import pytest
 
+from eschergraph.builder.reader.multi_modal.data_structure import AnalysisResult
+from eschergraph.builder.reader.multi_modal.data_structure import BoundingRegion
 from eschergraph.builder.reader.multi_modal.data_structure import Table
 from eschergraph.builder.reader.multi_modal.multi_modal_parser import (
   _generate_markdown_table,
@@ -19,21 +21,84 @@ def sample_table() -> Table:
   return {
     "column_count": 3,
     "row_count": 3,
+    "bounding_regions": [BoundingRegion(page_number=2, polygon=[1.2, 2.2, 4.1, 2.1])],
     "cells": [
-      {"row_index": 0, "column_index": 0, "content": "Header1"},
-      {"row_index": 0, "column_index": 1, "content": "Header2"},
-      {"row_index": 0, "column_index": 2, "content": "Header3"},
-      {"row_index": 1, "column_index": 0, "content": "Row1Col1"},
-      {"row_index": 1, "column_index": 1, "content": "Row1Col2"},
-      {"row_index": 1, "column_index": 2, "content": "Row1Col3"},
-      {"row_index": 2, "column_index": 0, "content": "Row2Col1"},
-      {"row_index": 2, "column_index": 1, "content": "Row2Col2"},
-      {"row_index": 2, "column_index": 2, "content": "Row2Col3"},
+      {
+        "row_index": 0,
+        "column_index": 0,
+        "content": "Header1",
+        "bounding_regions": [
+          BoundingRegion(page_number=2, polygon=[1.2, 2.2, 4.1, 2.1])
+        ],
+      },
+      {
+        "row_index": 0,
+        "column_index": 1,
+        "content": "Header2",
+        "bounding_regions": [
+          BoundingRegion(page_number=2, polygon=[1.2, 2.2, 4.1, 2.1])
+        ],
+      },
+      {
+        "row_index": 0,
+        "column_index": 2,
+        "content": "Header3",
+        "bounding_regions": [
+          BoundingRegion(page_number=2, polygon=[1.2, 2.2, 4.1, 2.1])
+        ],
+      },
+      {
+        "row_index": 1,
+        "column_index": 0,
+        "content": "Row1Col1",
+        "bounding_regions": [
+          BoundingRegion(page_number=2, polygon=[1.2, 2.2, 4.1, 2.1])
+        ],
+      },
+      {
+        "row_index": 1,
+        "column_index": 1,
+        "content": "Row1Col2",
+        "bounding_regions": [
+          BoundingRegion(page_number=2, polygon=[1.2, 2.2, 4.1, 2.1])
+        ],
+      },
+      {
+        "row_index": 1,
+        "column_index": 2,
+        "content": "Row1Col3",
+        "bounding_regions": [
+          BoundingRegion(page_number=2, polygon=[1.2, 2.2, 4.1, 2.1])
+        ],
+      },
+      {
+        "row_index": 2,
+        "column_index": 0,
+        "content": "Row2Col1",
+        "bounding_regions": [
+          BoundingRegion(page_number=2, polygon=[1.2, 2.2, 4.1, 2.1])
+        ],
+      },
+      {
+        "row_index": 2,
+        "column_index": 1,
+        "content": "Row2Col2",
+        "bounding_regions": [
+          BoundingRegion(page_number=2, polygon=[1.2, 2.2, 4.1, 2.1])
+        ],
+      },
+      {
+        "row_index": 2,
+        "column_index": 2,
+        "content": "Row2Col3",
+        "bounding_regions": [
+          BoundingRegion(page_number=2, polygon=[1.2, 2.2, 4.1, 2.1])
+        ],
+      },
     ],
     "id": 0,
     "caption": "This is a caption",
     "page_num": 18,
-    "bounding_regions": [{"page_number": 2, "polygon": [1.2, 2.2, 4.1, 2.1]}],
   }
 
 
@@ -43,10 +108,38 @@ def empty_table() -> Table:
     "column_count": 2,
     "row_count": 2,
     "cells": [
-      {"row_index": 0, "column_index": 0, "content": ""},
-      {"row_index": 0, "column_index": 1, "content": ""},
-      {"row_index": 1, "column_index": 0, "content": ""},
-      {"row_index": 1, "column_index": 1, "content": ""},
+      {
+        "row_index": 0,
+        "column_index": 0,
+        "content": "",
+        "bounding_regions": [
+          BoundingRegion(page_number=2, polygon=[1.2, 2.2, 4.1, 2.1])
+        ],
+      },
+      {
+        "row_index": 0,
+        "column_index": 1,
+        "content": "",
+        "bounding_regions": [
+          BoundingRegion(page_number=2, polygon=[1.2, 2.2, 4.1, 2.1])
+        ],
+      },
+      {
+        "row_index": 1,
+        "column_index": 0,
+        "content": "",
+        "bounding_regions": [
+          BoundingRegion(page_number=2, polygon=[1.2, 2.2, 4.1, 2.1])
+        ],
+      },
+      {
+        "row_index": 1,
+        "column_index": 1,
+        "content": "",
+        "bounding_regions": [
+          BoundingRegion(page_number=2, polygon=[1.2, 2.2, 4.1, 2.1])
+        ],
+      },
     ],
     "id": 0,
     "caption": "This is a caption",
@@ -61,10 +154,38 @@ def special_char_table() -> Table:
     "column_count": 2,
     "row_count": 2,
     "cells": [
-      {"row_index": 0, "column_index": 0, "content": "Header!@#"},
-      {"row_index": 0, "column_index": 1, "content": "Header$%^"},
-      {"row_index": 1, "column_index": 0, "content": "Row*&1"},
-      {"row_index": 1, "column_index": 1, "content": "Row()2"},
+      {
+        "row_index": 0,
+        "column_index": 0,
+        "content": "Header!@#",
+        "bounding_regions": [
+          BoundingRegion(page_number=2, polygon=[1.2, 2.2, 4.1, 2.1])
+        ],
+      },
+      {
+        "row_index": 0,
+        "column_index": 1,
+        "content": "Header$%^",
+        "bounding_regions": [
+          BoundingRegion(page_number=2, polygon=[1.2, 2.2, 4.1, 2.1])
+        ],
+      },
+      {
+        "row_index": 1,
+        "column_index": 0,
+        "content": "Row*&1",
+        "bounding_regions": [
+          BoundingRegion(page_number=2, polygon=[1.2, 2.2, 4.1, 2.1])
+        ],
+      },
+      {
+        "row_index": 1,
+        "column_index": 1,
+        "content": "Row()2",
+        "bounding_regions": [
+          BoundingRegion(page_number=2, polygon=[1.2, 2.2, 4.1, 2.1])
+        ],
+      },
     ],
     "id": 0,
     "caption": "This is a caption",
@@ -74,7 +195,7 @@ def special_char_table() -> Table:
 
 
 # Test with normal data
-def test_generate_markdown_table(sample_table) -> None:
+def test_generate_markdown_table(sample_table: Table) -> None:
   expected_markdown = (
     "| Header1 | Header2 | Header3 |\n"
     "| --- | --- | --- |\n"
@@ -88,16 +209,16 @@ def test_generate_markdown_table(sample_table) -> None:
 
 
 # Test with an empty table
-def test_generate_markdown_empty_table(empty_table) -> None:
-  expected_markdown = "|  |  |\n" "| --- | --- |\n" "|  |  |\n"
-  markdown_result = _generate_markdown_table(empty_table)
+def test_generate_markdown_empty_table(empty_table: Table) -> None:
+  expected_markdown: str = "|  |  |\n" "| --- | --- |\n" "|  |  |\n"
+  markdown_result: str = _generate_markdown_table(empty_table)
   assert (
     markdown_result == expected_markdown
   ), f"Expected: {expected_markdown}, but got: {markdown_result}"
 
 
 # Test with special characters in the table
-def test_generate_markdown_special_char_table(special_char_table) -> None:
+def test_generate_markdown_special_char_table(special_char_table: Table) -> None:
   expected_markdown = (
     "| Header!@# | Header$%^ |\n" "| --- | --- |\n" "| Row*&1 | Row()2 |\n"
   )
@@ -109,13 +230,26 @@ def test_generate_markdown_special_char_table(special_char_table) -> None:
 
 # Edge case: Table with one row and one column
 def test_generate_markdown_single_cell() -> None:
-  table = {
+  table: Table = {
+    "id": 0,
+    "caption": "This is a caption",
+    "page_num": 18,
+    "bounding_regions": [{"page_number": 2, "polygon": [1.2, 2.2, 4.1, 2.1]}],
     "column_count": 1,
     "row_count": 1,
-    "cells": [{"row_index": 0, "column_index": 0, "content": "HeaderOnly"}],
+    "cells": [
+      {
+        "row_index": 0,
+        "column_index": 0,
+        "content": "HeaderOnly",
+        "bounding_regions": [
+          BoundingRegion(page_number=2, polygon=[1.2, 2.2, 4.1, 2.1])
+        ],
+      }
+    ],
   }
-  expected_markdown = "| HeaderOnly |\n" "| --- |\n"
-  markdown_result = _generate_markdown_table(table)
+  expected_markdown: str = "| HeaderOnly |\n" "| --- |\n"
+  markdown_result: str = _generate_markdown_table(table)
   assert (
     markdown_result == expected_markdown
   ), f"Expected: {expected_markdown}, but got: {markdown_result}"
@@ -123,22 +257,89 @@ def test_generate_markdown_single_cell() -> None:
 
 # Edge case: Table with multiple empty rows
 def test_generate_markdown_empty_rows() -> None:
-  table = {
+  table: Table = {
+    "id": 0,
+    "caption": "This is a caption",
+    "page_num": 18,
+    "bounding_regions": [{"page_number": 2, "polygon": [1.2, 2.2, 4.1, 2.1]}],
     "column_count": 3,
     "row_count": 3,
     "cells": [
-      {"row_index": 0, "column_index": 0, "content": "Header1"},
-      {"row_index": 0, "column_index": 1, "content": "Header2"},
-      {"row_index": 0, "column_index": 2, "content": "Header3"},
-      {"row_index": 1, "column_index": 0, "content": ""},
-      {"row_index": 1, "column_index": 1, "content": ""},
-      {"row_index": 1, "column_index": 2, "content": ""},
-      {"row_index": 2, "column_index": 0, "content": "Row2Col1"},
-      {"row_index": 2, "column_index": 1, "content": ""},
-      {"row_index": 2, "column_index": 2, "content": "Row2Col3"},
+      {
+        "row_index": 0,
+        "column_index": 0,
+        "content": "Header1",
+        "bounding_regions": [
+          BoundingRegion(page_number=2, polygon=[1.2, 2.2, 4.1, 2.1])
+        ],
+      },
+      {
+        "row_index": 0,
+        "column_index": 1,
+        "content": "Header2",
+        "bounding_regions": [
+          BoundingRegion(page_number=2, polygon=[1.2, 2.2, 4.1, 2.1])
+        ],
+      },
+      {
+        "row_index": 0,
+        "column_index": 2,
+        "content": "Header3",
+        "bounding_regions": [
+          BoundingRegion(page_number=2, polygon=[1.2, 2.2, 4.1, 2.1])
+        ],
+      },
+      {
+        "row_index": 1,
+        "column_index": 0,
+        "content": "",
+        "bounding_regions": [
+          BoundingRegion(page_number=2, polygon=[1.2, 2.2, 4.1, 2.1])
+        ],
+      },
+      {
+        "row_index": 1,
+        "column_index": 1,
+        "content": "",
+        "bounding_regions": [
+          BoundingRegion(page_number=2, polygon=[1.2, 2.2, 4.1, 2.1])
+        ],
+      },
+      {
+        "row_index": 1,
+        "column_index": 2,
+        "content": "",
+        "bounding_regions": [
+          BoundingRegion(page_number=2, polygon=[1.2, 2.2, 4.1, 2.1])
+        ],
+      },
+      {
+        "row_index": 2,
+        "column_index": 0,
+        "content": "Row2Col1",
+        "bounding_regions": [
+          BoundingRegion(page_number=2, polygon=[1.2, 2.2, 4.1, 2.1])
+        ],
+      },
+      {
+        "row_index": 2,
+        "column_index": 1,
+        "content": "",
+        "bounding_regions": [
+          BoundingRegion(page_number=2, polygon=[1.2, 2.2, 4.1, 2.1])
+        ],
+      },
+      {
+        "row_index": 2,
+        "column_index": 2,
+        "content": "Row2Col3",
+        "bounding_regions": [
+          BoundingRegion(page_number=2, polygon=[1.2, 2.2, 4.1, 2.1])
+        ],
+      },
     ],
   }
-  expected_markdown = (
+  expected_markdown: str = (
     "| Header1 | Header2 | Header3 |\n"
     "| --- | --- | --- |\n"
     "|  |  |  |\n"
@@ -158,14 +359,22 @@ def test_handle_tables() -> None:
   output_folder = os.path.join("eschergraph_storage", base_name)
   tables_folder = os.path.join(output_folder, "tables")
 
-  analysis_results = {
+  analysis_results: AnalysisResult = {
     "tables": [
       {
+        "id": 0,
         "caption": "Sample Table",
-        "bounding_regions": [{"top": 0, "left": 0, "width": 100, "height": 100}],
+        "bounding_regions": [
+          BoundingRegion(page_number=2, polygon=[1.2, 2.2, 4.1, 2.1])
+        ],
         "page_num": 1,
+        "row_count": 1,
+        "cells": [],
+        "column_count": 1,
       }
-    ]
+    ],
+    "paragraphs": [],
+    "figures": [],
   }
 
   expected_cropped_image_filename = "mocked_image_path.png"
@@ -202,14 +411,19 @@ def test_handle_figures() -> None:
   output_folder = os.path.join("eschergraph_storage", base_name)
   figures_folder = os.path.join(output_folder, "figures")
 
-  analysis_results = {
+  analysis_results: AnalysisResult = {
     "figures": [
       {
+        "id": str(1),
         "caption": "Sample Figure",
-        "bounding_regions": [{"top": 0, "left": 0, "width": 200, "height": 200}],
+        "bounding_regions": [
+          BoundingRegion(page_number=2, polygon=[1.2, 2.2, 4.1, 2.1])
+        ],
         "page_num": 2,
       }
-    ]
+    ],
+    "tables": [],
+    "paragraphs": [],
   }
 
   expected_cropped_image_filename = "mocked_figure_image_path.png"

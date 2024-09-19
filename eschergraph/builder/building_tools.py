@@ -18,7 +18,7 @@ class BuildingTools:
   @staticmethod
   def process_files(
     files: list[str], multi_modal: bool
-  ) -> tuple[str, list[Chunk], list[Document], int, list[VisualDocumentElement]]:
+  ) -> tuple[str, list[Chunk], list[Document], int, list[VisualDocumentElement] | None]:
     """Process the given files and extract chunks, document data, and total tokens.
 
     Args:
@@ -39,7 +39,7 @@ class BuildingTools:
     document_data: list[Document] = []
     total_tokens: int = 0
     full_text: str = ""
-    visual_elements: list[VisualDocumentElement] = [] if multi_modal else None
+    visual_elements: list[VisualDocumentElement] | None = [] if multi_modal else None
 
     for file in files:
       reader = Reader(file_location=file, multimodal=multi_modal)
@@ -47,7 +47,7 @@ class BuildingTools:
       chunks.extend(reader.chunks)
       full_text += reader.full_text + "\n"
 
-      if multi_modal:
+      if multi_modal and visual_elements:
         visual_elements.extend(reader.visual_elements)
 
       doc_data = Document(
@@ -87,13 +87,46 @@ class BuildingTools:
     )
 
   @staticmethod
-  def get_user_approval() -> bool:
-    """Prompt the user for approval to build the graph.
+  def check_node_ext(input_dict: dict) -> bool:
+    """Checks if the input_dict matches the NodeExt structure."""
+    required_keys = {"name": str, "description": str}
+    return all(
+      key in input_dict and isinstance(input_dict[key], required_type)
+      for key, required_type in required_keys.items()
+    )
 
-    Returns:
-        bool: True if the user approves, False otherwise.
-    """
-    user_input = input(
-      "Press y to build graph - press anything else to cancel: "
-    ).lower()
-    return user_input == "y"
+  @staticmethod
+  def check_edge_ext(input_dict: dict) -> bool:
+    """Checks if the input_dict matches the EdgeExt structure."""
+    required_keys = {"source": str, "target": str, "relationship": str}
+    return all(
+      key in input_dict and isinstance(input_dict[key], required_type)
+      for key, required_type in required_keys.items()
+    )
+
+  @staticmethod
+  def check_property_ext(input_dict: dict) -> bool:
+    """Checks if the input_dict matches the PropertyExt structure."""
+    required_keys = {"entity_name": str, "properties": list}
+    return all(
+      key in input_dict and isinstance(input_dict[key], required_type)
+      for key, required_type in required_keys.items()
+    ) and all(isinstance(prop, str) for prop in input_dict["properties"])
+
+  @staticmethod
+  def check_node_edge_ext(input_dict: dict) -> bool:
+    """Checks if the input_dict matches the NodeEdgeExt structure."""
+    required_keys = {"entities": list, "relationships": list}
+
+    if not all(
+      key in input_dict and isinstance(input_dict[key], list) for key in required_keys
+    ):
+      return False
+
+    # Check each entity and relationship inside the lists
+    return all(
+      BuildingTools.check_node_ext(entity) for entity in input_dict["entities"]
+    ) and all(
+      BuildingTools.check_edge_ext(relationship)
+      for relationship in input_dict["relationships"]
+    )

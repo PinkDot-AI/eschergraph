@@ -55,7 +55,7 @@ def test_quick_search_answer_generated(graph_unit: Graph) -> None:
   ):
     graph_unit.model.get_plain_response.return_value = "Generated answer"
 
-    RAGAnswer: RAGAnswer = quick_search(graph_unit, "test query with attributes")
+    RAGAnswer = quick_search(graph_unit, "test query with attributes")
     assert RAGAnswer.answer == "Generated answer"
     graph_unit.model.get_plain_response.assert_called_with(
       process_template(

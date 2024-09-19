@@ -32,7 +32,7 @@ class Metadata:
 
   def __hash__(self) -> int:
     """This is the hash function for the Metadata datastructure."""
-    visual_id = 1
+    visual_id: int | UUID = 1
     if isinstance(self.visual_metadata, dict):
       self.visual_metadata = MetadataVisual(**self.visual_metadata)
     if self.visual_metadata:
