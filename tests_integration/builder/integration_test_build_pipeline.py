@@ -26,12 +26,24 @@ def integration_test_building() -> None:
   query = "What does the Figure 1. Generic Risk Model with Key Risk Factors illustrate?"
   answer = graph.search(query)
   print(answer.answer)
-  print(answer.visuals)
+  print()
+  for s in answer.sources:
+    print(s)
+    print()
+
+  for v in answer.visuals:
+    print(v.save_location)
   print("\n-------------\n")
   query = "What does the Figure 1 illustrate?"
   answer = graph.search(query)
   print(answer.answer)
-  print(answer.visuals)
+  print()
+  for s in answer.sources:
+    print(s)
+    print()
+
+  for v in answer.visuals:
+    print(v.save_location)
 
 
 integration_test_building()

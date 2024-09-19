@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import Any
 from typing import TYPE_CHECKING
 
 from eschergraph.agents.llm import ModelProvider
@@ -39,7 +40,7 @@ class BuildingTools:
     document_data: list[Document] = []
     total_tokens: int = 0
     full_text: str = ""
-    visual_elements: list[VisualDocumentElement] | None = [] if multi_modal else None
+    visual_elements: list[VisualDocumentElement] = []
 
     for file in files:
       reader = Reader(file_location=file, multimodal=multi_modal)
@@ -47,7 +48,7 @@ class BuildingTools:
       chunks.extend(reader.chunks)
       full_text += reader.full_text + "\n"
 
-      if multi_modal and visual_elements:
+      if multi_modal:
         visual_elements.extend(reader.visual_elements)
 
       doc_data = Document(
@@ -87,7 +88,7 @@ class BuildingTools:
     )
 
   @staticmethod
-  def check_node_ext(input_dict: dict) -> bool:
+  def check_node_ext(input_dict: dict[str, Any]) -> bool:
     """Checks if the input_dict matches the NodeExt structure."""
     required_keys = {"name": str, "description": str}
     return all(
@@ -96,7 +97,7 @@ class BuildingTools:
     )
 
   @staticmethod
-  def check_edge_ext(input_dict: dict) -> bool:
+  def check_edge_ext(input_dict: dict[str, Any]) -> bool:
     """Checks if the input_dict matches the EdgeExt structure."""
     required_keys = {"source": str, "target": str, "relationship": str}
     return all(
@@ -105,7 +106,7 @@ class BuildingTools:
     )
 
   @staticmethod
-  def check_property_ext(input_dict: dict) -> bool:
+  def check_property_ext(input_dict: dict[str, Any]) -> bool:
     """Checks if the input_dict matches the PropertyExt structure."""
     required_keys = {"entity_name": str, "properties": list}
     return all(
@@ -114,7 +115,7 @@ class BuildingTools:
     ) and all(isinstance(prop, str) for prop in input_dict["properties"])
 
   @staticmethod
-  def check_node_edge_ext(input_dict: dict) -> bool:
+  def check_node_edge_ext(input_dict: dict[str, Any]) -> bool:
     """Checks if the input_dict matches the NodeEdgeExt structure."""
     required_keys = {"entities": list, "relationships": list}
 

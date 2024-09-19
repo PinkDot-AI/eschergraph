@@ -31,6 +31,7 @@ class NodeModel(TypedDict):
   community: Optional[UUID]
   metadata: list[MetadataModel]
   child_nodes: set[UUID]
+  is_a_visual: bool
 
 
 class EdgeModel(TypedDict):

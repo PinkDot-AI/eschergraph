@@ -166,9 +166,9 @@ class NodeMatcher:
         print("suggestions", suggestion)
 
       if true_nodes == suggestion:
-        print(
-          "No need for any merging because Levenshtein suggestion is the same as the GPT suggestion"
-        )
+        # print(
+        #   "No need for any merging because Levenshtein suggestion is the same as the GPT suggestion"
+        # )
         continue
 
       self._process_entities_for_logs(building_logs, entity_to_nodes)
@@ -214,7 +214,7 @@ class NodeMatcher:
         true_node = next(iter(nodes))
         if entity == true_node:
           continue
-        print(f'Merging "{entity}" into true entity "{true_node}"')
+        # print(f'Merging "{entity}" into true entity "{true_node}"')
 
       node_info = self._collect_node_info(building_logs, list(nodes))
       assigned_node_cache: dict[str, str] = {}
@@ -260,9 +260,9 @@ class NodeMatcher:
               description=node_name_lower, node_info=node_info
             )
           assigned_node = assigned_node_cache[entity]
-          print(
-            f'Replacing property key "{node_name_lower}" with "{assigned_node}" in properties_json.'
-          )
+          # print(
+          #   f'Replacing property key "{node_name_lower}" with "{assigned_node}" in properties_json.'
+          # )
           prop_item["entity_name"] = assigned_node.lower()
 
   def _replace_entity_name(
@@ -290,7 +290,7 @@ class NodeMatcher:
           description=description, node_info=node_info
         )
       assigned_node = assigned_node_cache[entity_name]
-      print(
-        f'Replacing {key} "{entity}" with "{assigned_node}" in item {(entity_name, item.get("description", ""))}.'
-      )
+      # print(
+      #   f'Replacing {key} "{entity}" with "{assigned_node}" in item {(entity_name, item.get("description", ""))}.'
+      # )
       item[key] = assigned_node

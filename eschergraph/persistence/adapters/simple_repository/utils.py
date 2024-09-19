@@ -97,6 +97,7 @@ def new_node_to_node_model(node: Node) -> NodeModel:
     "community": node.community.node.id if node.community.node else None,
     "metadata": [cast(MetadataModel, asdict(md)) for md in node.metadata],
     "child_nodes": {child.id for child in node.child_nodes},
+    "is_a_visual": node.is_a_visual,
   }
 
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from concurrent.futures import as_completed
 from concurrent.futures import ThreadPoolExecutor
+from typing import Any
 from typing import cast
 from typing import TYPE_CHECKING
 from uuid import uuid4
@@ -14,6 +15,7 @@ from eschergraph.agents.llm import ModelProvider
 from eschergraph.agents.reranker import Reranker
 from eschergraph.builder.build_log import BuildLog
 from eschergraph.builder.build_log import NodeEdgeExt
+from eschergraph.builder.build_log import NodeExt
 from eschergraph.builder.building_tools import BuildingTools
 from eschergraph.builder.reader.multi_modal.data_structure import VisualDocumentElement
 from eschergraph.builder.reader.reader import Chunk
@@ -64,7 +66,6 @@ class BuildPipeline:
 
     if visual_elements:
       self._handle_multi_modal(visual_elements)
-
     unique_entities: list[str] = self._get_unique_entities()
 
     updated_logs: list[BuildLog] = NodeMatcher(
@@ -167,7 +168,9 @@ class BuildPipeline:
 
     # Iterate over each log item in building_logs
     for log in self.building_logs:
-      # Collect all entities from the edges (source and target)
+      if log.metadata.visual_metadata:
+        # ship all visual items for node merging
+        continue
       for edge in log.edges:
         unique_entities.add(edge["source"].lower())
         unique_entities.add(edge["target"].lower())
@@ -185,7 +188,13 @@ class BuildPipeline:
   def _persist_to_graph(self, graph: Graph, updated_logs: list[BuildLog]) -> None:
     # first add all nodes
     for log in updated_logs:
+      # add conditional is_a_visual to the node if the buildinglogs says so
+
       for node_ext in log.nodes:
+        is_a_visual = (
+          log.main_visual_entity_name
+          and log.main_visual_entity_name.lower() == node_ext["name"].lower()
+        )
         if graph.repository.get_node_by_name(
           node_ext["name"].lower(), document_id=log.metadata.document_id
         ):
@@ -195,10 +204,8 @@ class BuildPipeline:
           description=node_ext["description"],
           level=0,
           metadata=log.metadata,
+          is_a_visual=is_a_visual,
         )
-      if log.metadata.visual_metadata:
-        print(log.metadata)
-        print(node_ext["name"].lower())
 
     # then loop again to add all edges and properties
     for log in updated_logs:
@@ -238,80 +245,107 @@ class BuildPipeline:
           node.add_property(description=property_item, metadata=log.metadata)
 
   def _handle_multi_modal(self, visual_elements: list[VisualDocumentElement]) -> None:
-    def handle_element(visual_el: VisualDocumentElement) -> None:
-      if visual_el.type == "FIGURE":
-        self._handle_figure(visual_el)
-      elif visual_el.type == "TABLE":
-        self._handle_table(visual_el)
-      else:
-        raise Exception(f"wrong visual type {visual_el.type}")
-
     with ThreadPoolExecutor() as executor:
       # Submit each visual element to be processed in a separate thread
-      executor.map(handle_element, visual_elements)
+      executor.map(self._handle_visual, visual_elements)
 
-  def _handle_table(self, table: VisualDocumentElement) -> None:
-    caption = table.caption or "no caption given"
-    prompt_formatted: str = process_template(
-      JSON_TABLE,
-      {
-        "markdown_table": table.content,
-        "table_caption": caption,
-        "keywords": ", ".join(self.keywords),
-      },
+  def _handle_visual(self, visual_element: VisualDocumentElement) -> None:
+    caption = visual_element.caption or "no caption given"
+
+    # Define prompts and model responses based on the visual type
+    if visual_element.type == "TABLE":
+      prompt_formatted: str = process_template(
+        JSON_TABLE,
+        {
+          "markdown_table": visual_element.content,
+          "table_caption": caption,
+          "keywords": ", ".join(self.keywords),
+        },
+      )
+      answer = self.model.get_json_response(prompt=prompt_formatted)
+
+    elif visual_element.type == "FIGURE":
+      prompt_formatted: str = process_template(
+        JSON_FIGURE,
+        {"figure_caption": caption, "keywords": ", ".join(self.keywords)},
+      )
+      answer = self.model.get_multi_modal_response(
+        prompt=prompt_formatted, image_path=visual_element.save_location
+      )
+    else:
+      raise Exception(f"Unsupported visual type {visual_element.type}")
+
+    # Process the response into entities and relationships
+    entities, main_visual_entity_name = self.transform_to_NodeExt(answer)
+    json_nodes_edges: NodeEdgeExt = NodeEdgeExt(
+      entities=entities, relationships=answer["relationships"]
     )
+    if not BuildingTools.check_node_edge_ext(json_nodes_edges):
+      print(json_nodes_edges)
+      raise DataLoadingException(
+        f"{visual_element.type} extraction not in the right format"
+      )
 
     visual_metadata: MetadataVisual = MetadataVisual(
       id=uuid4(),
-      content=table.content,
-      save_location=table.save_location,
-      page_num=table.page_num,
-      type=table.type,
+      content=visual_element.content,
+      save_location=visual_element.save_location,
+      page_num=visual_element.page_num,
+      type=visual_element.type,
     )
-
-    answer = self.model.get_json_response(prompt=prompt_formatted)
-    json_nodes_edges: NodeEdgeExt = cast(NodeEdgeExt, answer)
 
     metadata: Metadata = Metadata(
-      document_id=table.doc_id, chunk_id=None, visual_metadata=visual_metadata
+      document_id=visual_element.doc_id, chunk_id=None, visual_metadata=visual_metadata
     )
-    # Add to the building logs
+
     self.building_logs.append(
       BuildLog(
-        chunk_text=caption + " --- " + table.content,
+        chunk_text=caption
+        if visual_element.type == "FIGURE"
+        else caption + " --- " + visual_element.content,
         metadata=metadata,
         nodes=json_nodes_edges["entities"],
         edges=json_nodes_edges["relationships"],
+        main_visual_entity_name=main_visual_entity_name,
       )
     )
 
-  def _handle_figure(self, figure: VisualDocumentElement) -> None:
-    caption = figure.caption or "no caption given"
-    prompt_formatted: str = process_template(
-      JSON_FIGURE,
-      {"figure_caption": caption, "keywords": ", ".join(self.keywords)},
-    )
-    answer = self.model.get_multi_modal_response(
-      prompt=prompt_formatted, image_path=figure.save_location
-    )
-    BuildingTools.check_node_edge_format(answer)
-    json_nodes_edges: NodeEdgeExt = cast(NodeEdgeExt, answer)
+  @staticmethod
+  def transform_to_NodeExt(answer: dict[str, Any]) -> tuple[list[NodeExt], str | None]:
+    """Transforms the 'entities' key within the `answer` dictionary. Ensures that the 'entities' key exists.
 
-    visual_metadata: MetadataVisual = MetadataVisual(
-      id=uuid4(),
-      content=figure.content,
-      save_location=figure.save_location,
-      page_num=figure.page_num,
-      type=figure.type,
-    )
-    metadata: Metadata = Metadata(
-      document_id=figure.doc_id, chunk_id=None, visual_metadata=visual_metadata
-    )
-    self.building_logs.append(
-      BuildLog(
-        chunk_text=caption,
-        metadata=metadata,
-        nodes=json_nodes_edges["entities"],
-        edges=json_nodes_edges["relationships"],
-      )
-    )
+    that its value is a list, and that each entity within that list is a dictionary containing the
+    required fields: 'main_node', 'name', and 'description'.
+
+    Args:
+        answer (dict): A dictionary representing the response containing the 'entities' key.
+
+    Returns:
+        List[NodeExt]: A list of validated entities as dictionaries with 'name' and 'description' fields.
+
+    Raises:
+        DataLoadingException: If the 'entities' key is missing, not a list, or contains invalid data.
+    """
+    main_visual_entity_name: str | None = None
+    # Validate that 'entities' exists in answer and is of the correct type
+    if "entities" not in answer:
+      raise DataLoadingException("'entities' key missing from answer")
+
+    if not isinstance(answer["entities"], list):
+      raise DataLoadingException("'entities' in answer is not a list")
+
+    entities: list[NodeExt] = []
+    for entity in answer["entities"]:
+      # Validate that entity is a dictionary
+      if not isinstance(entity, dict):
+        raise DataLoadingException(f"Entity {entity} is not a dictionary")
+
+      # Validate that the entity contains 'main_node', 'name', and 'description'
+      if all(k in entity for k in ["main_node", "name", "description"]):
+        if entity.get("main_node") is True:
+          main_visual_entity_name = entity["name"]
+        entities.append({"name": entity["name"], "description": entity["description"]})
+      else:
+        raise DataLoadingException(f"Invalid entity format: {entity}")
+
+    return entities, main_visual_entity_name

@@ -10,6 +10,7 @@ from attr import define
 from eschergraph.agents.jinja_helper import process_template
 from eschergraph.agents.reranker import RerankerResult
 from eschergraph.config import MAIN_COLLECTION
+from eschergraph.graph.node import Node
 from eschergraph.graph.search.attribute_search import AttributeSearch
 from eschergraph.persistence.metadata import MetadataVisual
 from eschergraph.persistence.vector_db.vector_search_result import VectorSearchResult
@@ -61,13 +62,7 @@ def quick_search(
 
   answer: str | None = graph.model.get_plain_response(prompt)
 
-  visuals: list[MetadataVisual] = []
-  for a in attributes:
-    if a.metadata:
-      item = list(a.metadata)[0]
-      if item.visual_metadata:
-        visuals.append(item.visual_metadata)
-
+  visuals: list[MetadataVisual] = choose_suitable_visuals(graph, attributes)
   # Create the RAGAnswer object
   rag_answer = RAGAnswer(
     answer=answer if answer else "Something went wrong with generating the answer",
@@ -76,6 +71,41 @@ def quick_search(
   )
 
   return rag_answer
+
+
+def choose_suitable_visuals(
+  graph: Graph, attributes: list[AttributeSearch]
+) -> list[Node]:
+  """Identify and select unique visual nodes from a graph based on provided attributes.
+
+  This function iterates through a list of attributes, checking for visual metadata in each attribute's metadata.
+  It collects nodes from the graph that are marked as visual and belong to the same document as the attribute's parent nodes.
+
+  Args:
+      graph (Graph): The graph object containing the nodes and their metadata.
+      attributes (list[AttributeSearch]): A list of attributes to be used for filtering visual nodes.
+                                            Each attribute should have metadata that may include visual metadata and parent nodes.
+
+  Returns:
+      list[Node]: A list of unique visual nodes that match the given attributes. The nodes are returned in the form of a list.
+  """
+  unique_visual_nodes: set[Node] = set()
+
+  for attr in attributes:
+    item = list(attr.metadata)[0]
+    # only handle attributes with visuals
+    if not item.visual_metadata:
+      continue
+
+    for p_node in attr.parent_nodes:
+      node: Node | None = graph.repository.get_node_by_name(
+        p_node, document_id=item.document_id
+      )
+      if node.is_a_visual:
+        unique_visual_nodes.add(node)
+
+  print(unique_visual_nodes)
+  return list(unique_visual_nodes)
 
 
 def get_attributes_search(
@@ -97,8 +127,6 @@ def get_attributes_search(
   if doc_filter:
     search_metadata["document_id"] = [str(id) for id in doc_filter]
 
-  print(search_metadata)
-
   # Perform the final search for attributes
   attributes_results: list[VectorSearchResult] = graph.vector_db.search(
     query=query,
@@ -108,7 +136,7 @@ def get_attributes_search(
   )
 
   # Filter and reformat the reranked attributes before returning them
-  return rerank_and_filter_attributes(graph, query, attributes_results, threshold=0.18)
+  return rerank_and_filter_attributes(graph, query, attributes_results, threshold=0.1)
 
 
 def rerank_and_filter_attributes(
