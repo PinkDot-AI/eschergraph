@@ -86,6 +86,7 @@ class OpenAIProvider(ModelProvider, Embedding):
     """
     return self._get_response(prompt)
 
+  # TODO: based on compatibility with other providers combine into a single function with others
   @retry(wait=wait_random_exponential(multiplier=1, max=40), stop=stop_after_attempt(2))
   def get_multi_modal_response(self, prompt: str, image_path: str) -> Any:
     """Get a text response from OpenAI.

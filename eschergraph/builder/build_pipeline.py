@@ -24,7 +24,8 @@ from eschergraph.config import JSON_FIGURE
 from eschergraph.config import JSON_KEYWORDS
 from eschergraph.config import JSON_PROPERTY
 from eschergraph.config import JSON_TABLE
-from eschergraph.exceptions import DataLoadingException
+from eschergraph.exceptions import ImageProcessingException
+from eschergraph.exceptions import NodeCreationException
 from eschergraph.persistence.metadata import Metadata
 from eschergraph.persistence.metadata import MetadataVisual
 from eschergraph.tools.community_builder import CommunityBuilder
@@ -45,7 +46,6 @@ class BuildPipeline:
   unique_entities: list[str] = field(factory=list)
   keywords: list[str] = field(factory=list)
 
-  # TODO: copy the building logs somewhere
   def run(
     self,
     chunks: list[Chunk],
@@ -66,6 +66,7 @@ class BuildPipeline:
 
     if visual_elements:
       self._handle_multi_modal(visual_elements)
+
     unique_entities: list[str] = self._get_unique_entities()
 
     updated_logs: list[BuildLog] = NodeMatcher(
@@ -106,7 +107,7 @@ class BuildPipeline:
     try:
       self.keywords = answer_json["keywords"]
     except:
-      raise DataLoadingException("keywords extraction not in correct format")
+      raise NodeCreationException("keywords extraction not in correct format")
 
   def _handle_nodes_edges_chunk(self, chunk: Chunk) -> None:
     prompt_formatted: str = process_template(JSON_BUILD, {"input_text": chunk.text})
@@ -273,7 +274,7 @@ class BuildPipeline:
         prompt=prompt_formatted, image_path=visual_element.save_location
       )
     else:
-      raise Exception(f"Unsupported visual type {visual_element.type}")
+      raise ImageProcessingException(f"Unsupported visual type {visual_element.type}")
 
     # Process the response into entities and relationships
     entities, main_visual_entity_name = self.transform_to_NodeExt(answer)
@@ -282,7 +283,7 @@ class BuildPipeline:
     )
     if not BuildingTools.check_node_edge_ext(json_nodes_edges):
       print(json_nodes_edges)
-      raise DataLoadingException(
+      raise NodeCreationException(
         f"{visual_element.type} extraction not in the right format"
       )
 
@@ -312,33 +313,33 @@ class BuildPipeline:
 
   @staticmethod
   def transform_to_NodeExt(answer: dict[str, Any]) -> tuple[list[NodeExt], str | None]:
-    """Transforms the 'entities' key within the `answer` dictionary. Ensures that the 'entities' key exists.
+    """Transforms the 'entities' key within the `answer` dictionary.
 
-    that its value is a list, and that each entity within that list is a dictionary containing the
-    required fields: 'main_node', 'name', and 'description'.
+    Ensures that the 'entities' key exists, that its value is a list, and that each entity within that list is a dictionary
+    containing the required fields: 'main_node', 'name', and 'description'.
 
     Args:
-        answer (dict): A dictionary representing the response containing the 'entities' key.
+      answer (dict): A dictionary representing the response containing the 'entities' key.
 
     Returns:
-        List[NodeExt]: A list of validated entities as dictionaries with 'name' and 'description' fields.
+      List[NodeExt]: A list of validated entities as dictionaries with 'name' and 'description' fields.
 
     Raises:
-        DataLoadingException: If the 'entities' key is missing, not a list, or contains invalid data.
+      NodeCreationException: If the 'entities' key is missing, not a list, or contains invalid data.
     """
     main_visual_entity_name: str | None = None
     # Validate that 'entities' exists in answer and is of the correct type
     if "entities" not in answer:
-      raise DataLoadingException("'entities' key missing from answer")
+      raise NodeCreationException("'entities' key missing from answer")
 
     if not isinstance(answer["entities"], list):
-      raise DataLoadingException("'entities' in answer is not a list")
+      raise NodeCreationException("'entities' in answer is not a list")
 
     entities: list[NodeExt] = []
     for entity in answer["entities"]:
       # Validate that entity is a dictionary
       if not isinstance(entity, dict):
-        raise DataLoadingException(f"Entity {entity} is not a dictionary")
+        raise NodeCreationException(f"Entity {entity} is not a dictionary")
 
       # Validate that the entity contains 'main_node', 'name', and 'description'
       if all(k in entity for k in ["main_node", "name", "description"]):
@@ -346,6 +347,6 @@ class BuildPipeline:
           main_visual_entity_name = entity["name"]
         entities.append({"name": entity["name"], "description": entity["description"]})
       else:
-        raise DataLoadingException(f"Invalid entity format: {entity}")
+        raise NodeCreationException(f"Invalid entity format: {entity}")
 
     return entities, main_visual_entity_name

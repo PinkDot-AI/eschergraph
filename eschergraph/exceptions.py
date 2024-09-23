@@ -66,3 +66,7 @@ class DocumentAlreadyExistsException(BaseEscherGraphException):
 
 class FileException(BaseEscherGraphException):
   """Provided filepath is not a file or the file does not exist."""
+
+
+class ImageProcessingException(BaseEscherGraphException):
+  """Exception that occurs when processing an image."""
