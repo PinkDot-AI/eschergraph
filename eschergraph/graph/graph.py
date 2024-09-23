@@ -17,6 +17,7 @@ from eschergraph.graph.edge import Edge
 from eschergraph.graph.node import Node
 from eschergraph.graph.search.global_search import global_search
 from eschergraph.graph.search.quick_search import quick_search
+from eschergraph.graph.search.quick_search import RAGAnswer
 from eschergraph.graph.utils import duplicate_document_check
 from eschergraph.graph.utils import get_document_ids_from_filenames
 from eschergraph.graph.utils import search_check
@@ -110,6 +111,7 @@ class Graph:
     description: str,
     level: int,
     metadata: Metadata,
+    is_visual: bool = False,
   ) -> Node:
     """Add a node to the graph.
 
@@ -121,7 +123,7 @@ class Graph:
       description (str): A description of the node.
       level (int): The level of the node.
       metadata (Metadata): The metadata of the node.
-
+      is_visual (bool): bolean variable to indicate whether the node is a visual
     Returns:
       The node that has been created.
     """
@@ -131,6 +133,7 @@ class Graph:
       level=level,
       repository=self.repository,
       metadata={metadata},
+      is_visual=is_visual,
     )
 
     # Persist the node
@@ -183,7 +186,9 @@ class Graph:
         collection_name=main_collection,
       )
 
-  def search(self, query: str, filter_filenames: Optional[list[str]] = None) -> str:
+  def search(
+    self, query: str, filter_filenames: Optional[list[str]] = None
+  ) -> RAGAnswer:
     """Executes a search query using a vector database and a specified model.
 
     Args:
@@ -202,7 +207,6 @@ class Graph:
       doc_filter = get_document_ids_from_filenames(
         filenames=filter_filenames, repository=self.repository
       )
-
     return quick_search(graph=self, query=query, doc_filter=doc_filter)
 
   def global_search(
@@ -229,12 +233,12 @@ class Graph:
 
     return global_search(graph=self, query=query, doc_filter=doc_filter)
 
-  def build(self, files: str | list[str]) -> Graph:
+  def build(self, files: str | list[str], multi_modal: bool = False) -> Graph:
     """Build a graph from the given files.
 
     Args:
         files (str | list[str]): A single file path or a list of file paths to process.
-        always_approve (bool, optional): If True, skips user approval. Defaults to False.
+        multi_modal (bool): If True, handles multi modal elements of document such as figures and tables. Defaults to false
 
     Returns:
         Graph: The built graph object.
@@ -248,13 +252,17 @@ class Graph:
     # Check if the documents already exist
     duplicate_document_check(file_list, self.repository)
 
-    chunks, document_data, total_tokens = BuildingTools.process_files(file_list)
+    full_text, chunks, document_data, total_tokens, visual_elements = (
+      BuildingTools.process_files(file_list, multi_modal)
+    )
 
     BuildingTools.display_build_info(chunks, total_tokens, model=self.model)
 
     # Build graph
     builder = BuildPipeline(model=self.model, reranker=self.reranker)
-    builder.run(chunks=chunks, graph=self)
+    builder.run(
+      chunks=chunks, graph=self, full_text=full_text, visual_elements=visual_elements
+    )
 
     # Add document data objects to the repository
     for doc_data in document_data:

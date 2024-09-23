@@ -59,6 +59,21 @@ class ModelProvider(ABC):
     raise NotImplementedError
 
   @abstractmethod
+  def get_multi_modal_response(self, prompt: str, image_path: str) -> Any:
+    """Get a text response from OpenAI.
+
+    Note that the model that is used is specified when instantiating the class.
+
+    Args:
+      prompt (str): The user prompt that is send to ChatGPT.
+      image_path (str): the image to be analyse with the text
+
+    Returns:
+      The answer given or None.
+    """
+    raise NotImplementedError
+
+  @abstractmethod
   def get_formatted_response(self, prompt: str, response_format: Any) -> str | None:
     """Get a formatted response from an LLM.
 

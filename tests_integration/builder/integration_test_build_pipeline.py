@@ -14,25 +14,36 @@ TEST_FILE_2: str = "./test_files/test_file_2.pdf"
 
 def integration_test_building() -> None:
   # Set up all the graph dependencies
-  graph_name: str = "test_graph2"
-
+  graph_name: str = "test_graph"
   graph: Graph = Graph(
-    model=OpenAIProvider(model=OpenAIModel.GPT_4o_MINI),
     name=graph_name,
+    model=OpenAIProvider(model=OpenAIModel.GPT_4o_MINI),
   )
-  # graph.build(files=TEST_FILE_2)
 
-  # query = "what are the main theams of this document?"
-  # r = graph.global_search(query)
-  # print('GLOBAL ANSWER')
-  # print(r)
-  # print()
-  query = "What did Rahel Dette say in a qoute?"
+  # Build the graph
+  graph.build(files=TEST_FILE_2, multi_modal=True)
 
-  r = graph.search(query)
-  print("QUICK ANSWER")
-  print(r)
+  query = "What does the Figure 1. Generic Risk Model with Key Risk Factors illustrate?"
+  answer = graph.search(query)
+  print(answer.answer)
   print()
+  for s in answer.sources:
+    print(s)
+    print()
+
+  for v in answer.visuals:
+    print(v.save_location)
+  print("\n-------------\n")
+  query = "What does the Figure 1 illustrate?"
+  answer = graph.search(query)
+  print(answer.answer)
+  print()
+  for s in answer.sources:
+    print(s)
+    print()
+
+  for v in answer.visuals:
+    print(v.save_location)
 
 
 integration_test_building()

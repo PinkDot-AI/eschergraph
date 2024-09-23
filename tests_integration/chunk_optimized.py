@@ -10,12 +10,12 @@ from eschergraph.agents.providers.openai import OpenAIProvider
 from eschergraph.builder.build_log import BuildLog
 from eschergraph.builder.build_log import NodeEdgeExt
 from eschergraph.builder.build_pipeline import BuildPipeline
+from eschergraph.builder.reader.reader import Chunk
+from eschergraph.builder.reader.reader import Reader
 from eschergraph.config import JSON_BUILD
 from eschergraph.config import JSON_PROPERTY
 from eschergraph.graph.graph import Graph
 from eschergraph.persistence.metadata import Metadata
-from eschergraph.tools.reader import Chunk
-from eschergraph.tools.reader import Reader
 
 
 def chunk_optimizer():

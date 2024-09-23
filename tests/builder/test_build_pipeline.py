@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
+from uuid import UUID
 from uuid import uuid4
 
 import pytest
@@ -14,6 +15,7 @@ from eschergraph.builder.build_log import EdgeExt
 from eschergraph.builder.build_log import NodeExt
 from eschergraph.builder.build_log import PropertyExt
 from eschergraph.builder.build_pipeline import BuildPipeline
+from eschergraph.builder.reader.multi_modal.data_structure import VisualDocumentElement
 from eschergraph.graph.node import Node
 from eschergraph.persistence import Metadata
 from eschergraph.persistence.adapters.simple_repository import SimpleRepository
@@ -27,6 +29,45 @@ def builder_mock() -> BuildPipeline:
   openai_mock = MagicMock(spec=OpenAIProvider)
   jina_mock = MagicMock(spec=JinaReranker)
   return BuildPipeline(model=openai_mock, reranker=jina_mock)
+
+
+# TODO: use these mocks in the tests?
+# Mock VisualDocumentElements
+mock_figure_1 = VisualDocumentElement(
+  content="A bar chart showing sales data",
+  caption="Figure 1: Monthly Sales Data",
+  save_location="/path/to/figure1.png",
+  page_num=1,
+  doc_id=UUID("12345678-1234-5678-1234-567812345678"),
+  type="figure",
+)
+
+mock_figure_2 = VisualDocumentElement(
+  content="A line graph of temperature changes",
+  caption="Figure 2: Annual Temperature Trends",
+  save_location="/path/to/figure2.png",
+  page_num=2,
+  doc_id=UUID("87654321-4321-8765-4321-876543210987"),
+  type="figure",
+)
+
+mock_figure_3 = VisualDocumentElement(
+  content="A pie chart of market share",
+  caption=None,
+  save_location="/path/to/figure3.png",
+  page_num=3,
+  doc_id=UUID("11111111-2222-3333-4444-555555555555"),
+  type="figure",
+)
+# Mock VisualDocumentElement for a table
+mock_table = VisualDocumentElement(
+  content="| Column1 | Column2 |\n|---------|---------||\n| Data1   | Data2   |",
+  caption="Table 1: Sample Data",
+  save_location="/path/to/table1.png",
+  page_num=4,
+  doc_id=UUID("22222222-3333-4444-5555-666666666666"),
+  type="table",
+)
 
 
 # TODO: refactor to use a mock for the repository

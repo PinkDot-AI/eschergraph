@@ -46,3 +46,4 @@ class BuildLog:
   edges: list[EdgeExt]
   chunk_text: str
   properties: list[PropertyExt] = field(factory=list)
+  main_visual_entity_name: str | None = field(default=None)

@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from statistics import mode
 
-from eschergraph.tools.pdf_document_layout_analysis.pdf_features.pdf_token import (
+from eschergraph.builder.reader.pdf_document_layout_analysis.pdf_features.pdf_token import (
   PdfToken,
 )
-from eschergraph.tools.pdf_document_layout_analysis.pdf_features.rectangle import (
+from eschergraph.builder.reader.pdf_document_layout_analysis.pdf_features.rectangle import (
   Rectangle,
 )
-from eschergraph.tools.pdf_document_layout_analysis.pdf_token_type_labels.token_type import (
+from eschergraph.builder.reader.pdf_document_layout_analysis.pdf_token_type_labels.token_type import (
   TokenType,
 )
 

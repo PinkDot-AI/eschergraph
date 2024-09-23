@@ -13,7 +13,7 @@ We are actively working on enhancing EscherGraph to be multimodal. The VGT (Visi
 For paragraph detection and chunking, we use their models within our parser.
 
 ```python
-from eschergraph.tools.reader import Reader, Chunk
+from eschergraph.builder.reader.reader import Reader, Chunk
 file_location = 'test_files/Attention is All You Need.pdf'
 
 reader = Reader(
@@ -39,7 +39,7 @@ class Chunk:
 ### TXT files:
 For TXT files, we use the Langchain recursive splitter, with a standard chunk size of 1500 characters and an overlap of 300 characters.
 ```python
-from eschergraph.tools.reader import Reader
+from eschergraph.builder.reader.reader import Reader
 file_location = 'test_files/txt_file.txt'
 
 reader = Reader(

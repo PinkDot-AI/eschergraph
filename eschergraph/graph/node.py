@@ -38,6 +38,7 @@ class Node(EscherBase):
   _properties: Optional[list[Property]] = field(
     default=None, metadata={"group": LoadState.CORE}
   )
+  _is_visual: Optional[bool] = field(default=None, metadata={"group": LoadState.CORE})
   _edges: Optional[set[Edge]] = field(
     default=None, metadata={"group": LoadState.CONNECTED}
   )
@@ -56,6 +57,7 @@ class Node(EscherBase):
   edges: set[Edge] = field(init=False)
   community: Community = field(init=False)
   child_nodes: list[Node] = field(init=False)
+  is_visual: bool = field(init=False)
 
   @classmethod
   def create(
@@ -66,6 +68,7 @@ class Node(EscherBase):
     repository: Repository,
     metadata: Optional[set[Metadata]] = None,
     child_nodes: Optional[list[Node]] = None,
+    is_visual: bool = False,
   ) -> Node:
     """The method that allows for the creation of a new node.
 
@@ -79,6 +82,7 @@ class Node(EscherBase):
       repository (Repository): The repository that will store the node.
       metadata (Optional[set[Metadata]]): The optional metadata for the node.
       child_nodes (Optional[list[UUID]]): The optional child nodes for the node
+      is_visual (bool): Boolean to indicate whether the node is a figure or a table.
 
     Returns:
       The node that has been created.
@@ -111,6 +115,7 @@ class Node(EscherBase):
       edges=set(),
       child_nodes=child_nodes if child_nodes else [],
       loadstate=LoadState.FULL,
+      is_visual=is_visual,
     )
 
   def add_property(self, description: str, metadata: Metadata) -> None:
@@ -147,6 +152,7 @@ class Node(EscherBase):
         and self.level == other.level
         and self.metadata == other.metadata
         and self.properties == other.properties
+        and self.is_visual == other.is_visual
       )
 
     return False
@@ -161,8 +167,6 @@ class Node(EscherBase):
     """
     return hash(self.id)
 
-  # TODO: properly implement this method
-  # Done quickly to prevent infinite recursion
   def __repr__(self) -> str:
     """The representation method for a node.
 
@@ -171,4 +175,10 @@ class Node(EscherBase):
     Returns:
       The string representation of a node.
     """
-    return f"Node Name: {self.name} Description:{self.description}"
+    visual_str: str = ""
+    if self.is_visual is True:
+      item_metadata = list(self.metadata)[0]
+      if item_metadata.visual_metadata:
+        type = item_metadata.visual_metadata.type
+        visual_str = f"Type: {type}"
+    return f"Node Name: {self.name} Description: {self.description} {visual_str}"

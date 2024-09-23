@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "eschergraph"
-version = "0.3.0"
+version = "0.3.1"
 description = "The library that uses AI agents to enable building and searching in generalized knowledge graphs."
 authors = ["PinkDot AI"]
 license = "MIT"
@@ -28,6 +28,7 @@ lightgbm = "^4.5.0"
 tabulate = "^0.9.0"
 fuzzywuzzy = "^0.18.0"
 python-levenshtein = "^0.25.1"
+pymupdf = "^1.24.10"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.7.1"
@@ -130,7 +131,7 @@ select = [
     "E228",
 ]
 # Altered external code
-exclude = ["eschergraph/tools/pdf_document_layout_analysis/**/*"]
+exclude = ["eschergraph/builder/reader/pdf_document_layout_analysis/**/*"]
 [tool.ruff.lint.extend-per-file-ignores]
 # Ignore all docstrings in tests
 "tests/*" = ["D"]
@@ -151,9 +152,9 @@ docstring-code-line-length = 40
 
 [tool.mypy]
 exclude = [
-    'eschergraph/tools/pdf_document_layout_analysis/.*\.py$',
+    'eschergraph/builder/reader/pdf_document_layout_analysis/.*\.py$',
     'eschergraph/persistence/vector_db/adapters/chromadb.py$',
-    'eschergraph/tools/fast_pdf_parser/parser.py',
+    'eschergraph/builder/reader/fast_pdf_parser/parser.py$',
     'eschergraph/tools/node_matcher.py$',
     'eschergraph/agents/providers/.*\.py$'
 ]

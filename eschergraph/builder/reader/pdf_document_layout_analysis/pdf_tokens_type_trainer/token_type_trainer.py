@@ -5,16 +5,16 @@ from pathlib import Path
 import numpy as np
 from tqdm import tqdm
 
-from eschergraph.tools.pdf_document_layout_analysis.pdf_features.pdf_token import (
+from eschergraph.builder.reader.pdf_document_layout_analysis.pdf_features.pdf_token import (
   PdfToken,
 )
-from eschergraph.tools.pdf_document_layout_analysis.pdf_token_type_labels.token_type import (
+from eschergraph.builder.reader.pdf_document_layout_analysis.pdf_token_type_labels.token_type import (
   TokenType,
 )
-from eschergraph.tools.pdf_document_layout_analysis.pdf_tokens_type_trainer.pdf_trainer import (
+from eschergraph.builder.reader.pdf_document_layout_analysis.pdf_tokens_type_trainer.pdf_trainer import (
   PdfTrainer,
 )
-from eschergraph.tools.pdf_document_layout_analysis.pdf_tokens_type_trainer.token_features import (
+from eschergraph.builder.reader.pdf_document_layout_analysis.pdf_tokens_type_trainer.token_features import (
   TokenFeatures,
 )
 

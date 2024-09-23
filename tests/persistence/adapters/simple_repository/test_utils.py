@@ -84,7 +84,14 @@ def test_attributes_to_add_node() -> None:
 
   node_core: Node = create_basic_node()
   node_core._loadstate = LoadState.CORE
-  core_attributes: set[str] = {"name", "description", "level", "properties", "metadata"}
+  core_attributes: set[str] = {
+    "name",
+    "description",
+    "level",
+    "properties",
+    "metadata",
+    "is_visual",
+  }
 
   node_connected: Node = create_basic_node()
   node_connected._loadstate = LoadState.CONNECTED
@@ -119,7 +126,7 @@ def test_attributes_to_add_edge() -> None:
 def test_attributes_to_load_node() -> None:
   attributes_state: dict[int, set[str]] = {
     0: set(),
-    1: {"name", "description", "level", "properties", "metadata"},
+    1: {"name", "description", "level", "properties", "metadata", "is_visual"},
     2: {"edges"},
     3: {"community", "child_nodes"},
   }

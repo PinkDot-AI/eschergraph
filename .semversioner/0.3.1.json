@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "description": "Made a start with support for multimodal parsing",
+      "type": "patch"
+    }
+  ],
+  "created_at": "2024-09-23T14:07:48+00:00",
+  "version": "0.3.1"
+}
