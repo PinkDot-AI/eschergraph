@@ -31,6 +31,7 @@ def builder_mock() -> BuildPipeline:
   return BuildPipeline(model=openai_mock, reranker=jina_mock)
 
 
+# TODO: use these mocks in the tests?
 # Mock VisualDocumentElements
 mock_figure_1 = VisualDocumentElement(
   content="A bar chart showing sales data",

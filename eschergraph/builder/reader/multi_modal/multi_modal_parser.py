@@ -234,11 +234,11 @@ def _get_pinkdot_parser(
   """Sends a PDF document to an API endpoint for analysis and returns the parsed analysis results.
 
   Args:
-      document_path (str): The file path of the PDF document to be analyzed.
-      endpoint_url (str, optional): The URL of the API endpoint. Defaults to "http://127.0.0.1:8000/analyze_document".
+    document_path (str): The file path of the PDF document to be analyzed.
+    endpoint_url (str, optional): The URL of the API endpoint. Defaults to "http://127.0.0.1:8000/analyze_document".
 
   Returns:
-      None or list[AnalysisResult]: A list of `AnalysisResult` objects if the analysis is successful, or None if no results are available.
+    None or list[AnalysisResult]: A list of `AnalysisResult` objects if the analysis is successful, or None if no results are available.
   """
   if not os.path.isfile(document_path):
     raise FileNotFoundError(f"The file at {document_path} does not exist.")

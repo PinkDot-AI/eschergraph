@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from unittest.mock import MagicMock
 from uuid import uuid4
 
 from eschergraph.builder.reader.fast_pdf_parser.models import PdfParsedSegment
@@ -35,24 +34,21 @@ def test_chunk_paragraphs() -> None:
 
 
 def test_handle_plain_text() -> None:
-  mock_reader = MagicMock(spec=Reader)
-  mock_reader.file_location = "test_files/txt_file.txt"  # Path to a mock file
-  mock_reader.chunk_size = 800
-  mock_reader.overlap = 100
-  mock_reader.doc_id = uuid4()
-  mock_reader.filename = "mock_document"
-  mock_reader.chunks = []
+  reader = Reader(file_location="test_files/txt_file.txt")
+  reader.chunk_size = 800
+  reader.overlap = 100
+  reader.doc_id = uuid4()
+  reader.chunks = []
 
-  # Call the actual method to test
-  Reader._parse_plain_text(mock_reader)
+  reader._parse_plain_text()
 
-  assert len(mock_reader.chunks) > 0  # Ensure chunks were created
-  assert all(isinstance(chunk, Chunk) for chunk in mock_reader.chunks)
-  assert mock_reader.chunks[0].doc_id == mock_reader.doc_id
-  assert mock_reader.chunks[0].page_num is None
-  assert isinstance(mock_reader.chunks[0].text, str)
-  for c in mock_reader.chunks:
-    assert len(c.text) <= mock_reader.chunk_size
+  assert len(reader.chunks) > 0  # Ensure chunks were created
+  assert all(isinstance(chunk, Chunk) for chunk in reader.chunks)
+  assert reader.chunks[0].doc_id == reader.doc_id
+  assert reader.chunks[0].page_num is None
+  assert isinstance(reader.chunks[0].text, str)
+  for chunk in reader.chunks:
+    assert len(chunk.text) <= reader.chunk_size
 
 
 def test_contains_non_alpha() -> None:

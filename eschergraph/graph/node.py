@@ -57,6 +57,7 @@ class Node(EscherBase):
   community: Community = field(init=False)
   child_nodes: list[Node] = field(init=False)
 
+  # The fields that do not use lazy loading
   is_visual: bool = field(default=False)
 
   @classmethod
@@ -82,7 +83,7 @@ class Node(EscherBase):
       repository (Repository): The repository that will store the node.
       metadata (Optional[set[Metadata]]): The optional metadata for the node.
       child_nodes (Optional[list[UUID]]): The optional child nodes for the node
-      is_visual (bool): Bolean to indicate whether the node is a figure or a table
+      is_visual (bool): Boolean to indicate whether the node is a figure or a table.
 
     Returns:
       The node that has been created.
@@ -167,8 +168,6 @@ class Node(EscherBase):
     """
     return hash(self.id)
 
-  # TODO: properly implement this method
-  # Done quickly to prevent infinite recursion
   def __repr__(self) -> str:
     """The representation method for a node.
 

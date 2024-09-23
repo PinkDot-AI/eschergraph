@@ -5,7 +5,7 @@ from typing import Optional
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from attr import define
+from attrs import define
 
 from eschergraph.agents.jinja_helper import process_template
 from eschergraph.agents.reranker import RerankerResult
@@ -36,12 +36,12 @@ def quick_search(
   """Performs a quick search and Retrieval-Augmented Generation (RAG) using the vector database and language model.
 
   Args:
-      query (str): The input string to search for relevant attributes in the graph.
-      graph (Graph): The graph on which the quick search is performed.
-      doc_filter: (Optional[list[UUID]]) The optional list of document id's to filter for.
+    query (str): The input string to search for relevant attributes in the graph.
+    graph (Graph): The graph on which the quick search is performed.
+    doc_filter: (Optional[list[UUID]]) The optional list of document id's to filter for.
 
   Returns:
-      RAGAnswer: An object containing the answer, sources, and any visual metadata.
+    RAGAnswer: An object containing the answer, sources, and any visual metadata.
   """
   # Retrieve and rank attributes based on the query
   if query.strip() == "":
@@ -82,18 +82,18 @@ def choose_suitable_visuals(
   It collects nodes from the graph that are marked as visual and belong to the same document as the attribute's parent nodes.
 
   Args:
-      graph (Graph): The graph object containing the nodes and their metadata.
-      attributes (list[AttributeSearch]): A list of attributes to be used for filtering visual nodes.
-                                            Each attribute should have metadata that may include visual metadata and parent nodes.
+    graph (Graph): The graph object containing the nodes and their metadata.
+    attributes (list[AttributeSearch]): A list of attributes to be used for filtering visual nodes.
+                                          Each attribute should have metadata that may include visual metadata and parent nodes.
 
   Returns:
-      list[Node]: A list of unique visual nodes that match the given attributes. The nodes are returned in the form of a list.
+    list[Node]: A list of unique visual nodes that match the given attributes. The nodes are returned in the form of a list.
   """
   unique_visual_nodes: set[Node] = set()
 
   for attr in attributes:
     item = list(attr.metadata)[0]
-    # only handle attributes with visuals
+    # Only handle attributes with visuals
     if not item.visual_metadata:
       continue
 
@@ -104,7 +104,6 @@ def choose_suitable_visuals(
       if node.is_visual:
         unique_visual_nodes.add(node)
 
-  print(unique_visual_nodes)
   return list(unique_visual_nodes)
 
 

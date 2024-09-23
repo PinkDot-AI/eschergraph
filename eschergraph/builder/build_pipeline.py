@@ -24,6 +24,7 @@ from eschergraph.config import JSON_FIGURE
 from eschergraph.config import JSON_KEYWORDS
 from eschergraph.config import JSON_PROPERTY
 from eschergraph.config import JSON_TABLE
+from eschergraph.exceptions import ExternalProviderException
 from eschergraph.exceptions import ImageProcessingException
 from eschergraph.exceptions import NodeCreationException
 from eschergraph.persistence.metadata import Metadata
@@ -107,7 +108,7 @@ class BuildPipeline:
     try:
       self.keywords = answer_json["keywords"]
     except:
-      raise NodeCreationException("keywords extraction not in correct format")
+      raise ExternalProviderException("keywords extraction not in correct format")
 
   def _handle_nodes_edges_chunk(self, chunk: Chunk) -> None:
     prompt_formatted: str = process_template(JSON_BUILD, {"input_text": chunk.text})

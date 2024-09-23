@@ -4,7 +4,7 @@ import os
 from typing import Any
 
 import requests
-from attr import define
+from attrs import define
 from requests import Response
 
 from eschergraph.agents.reranker import Reranker
