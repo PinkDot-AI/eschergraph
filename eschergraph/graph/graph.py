@@ -9,6 +9,7 @@ from eschergraph.agents.providers.jina import JinaReranker
 from eschergraph.agents.providers.openai import OpenAIModel
 from eschergraph.agents.providers.openai import OpenAIProvider
 from eschergraph.agents.reranker import Reranker
+from eschergraph.builder.models import ProcessedFile
 from eschergraph.config import DEFAULT_GRAPH_NAME
 from eschergraph.config import MAIN_COLLECTION
 from eschergraph.exceptions import CredentialException
@@ -252,20 +253,20 @@ class Graph:
     # Check if the documents already exist
     duplicate_document_check(file_list, self.repository)
 
-    full_text, chunks, document_data, total_tokens, visual_elements = (
-      BuildingTools.process_files(file_list, multi_modal)
+    processed_files: list[ProcessedFile] = BuildingTools.process_files(
+      file_list, multi_modal
     )
 
-    BuildingTools.display_build_info(chunks, total_tokens, model=self.model)
+    BuildingTools.display_build_info(processed_files=processed_files, model=self.model)
 
-    # Build graph
-    builder = BuildPipeline(model=self.model, reranker=self.reranker)
-    builder.run(
-      chunks=chunks, graph=self, full_text=full_text, visual_elements=visual_elements
-    )
+    # Build the graph for each processed file
+    # TODO: potentially parallelize this, but watch out for rate limits
+    for file in processed_files:
+      builder = BuildPipeline(model=self.model, reranker=self.reranker)
+      builder.run(graph=self, processed_file=file)
 
-    # Add document data objects to the repository
-    for doc_data in document_data:
+    # Add the document data objects to the repository
+    for doc_data in [file.document for file in processed_files]:
       self.repository.add_document(document=doc_data)
 
     return self

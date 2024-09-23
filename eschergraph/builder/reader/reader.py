@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 import time
-from typing import Optional
 from uuid import UUID
 from uuid import uuid4
 
@@ -11,6 +10,7 @@ from attrs import define
 from attrs import field
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
+from eschergraph.builder.models import Chunk
 from eschergraph.builder.reader.fast_pdf_parser.models import PdfParsedSegment
 from eschergraph.builder.reader.fast_pdf_parser.parser import FastPdfParser
 from eschergraph.builder.reader.multi_modal.data_structure import Paragraph
@@ -19,16 +19,6 @@ from eschergraph.builder.reader.multi_modal.multi_modal_parser import (
   get_multi_model_elements,
 )
 from eschergraph.exceptions import FileTypeNotProcessableException
-
-
-@define
-class Chunk:
-  """The chunk object."""
-
-  text: str
-  chunk_id: int
-  doc_id: UUID
-  page_num: Optional[int]
 
 
 # TODO: add more files types: html, docx, pptx, xlsx.

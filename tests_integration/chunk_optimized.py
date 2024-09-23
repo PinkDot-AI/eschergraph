@@ -10,7 +10,7 @@ from eschergraph.agents.providers.openai import OpenAIProvider
 from eschergraph.builder.build_log import BuildLog
 from eschergraph.builder.build_log import NodeEdgeExt
 from eschergraph.builder.build_pipeline import BuildPipeline
-from eschergraph.builder.reader.reader import Chunk
+from eschergraph.builder.models import Chunk
 from eschergraph.builder.reader.reader import Reader
 from eschergraph.config import JSON_BUILD
 from eschergraph.config import JSON_PROPERTY

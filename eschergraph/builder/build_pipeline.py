@@ -17,6 +17,7 @@ from eschergraph.builder.build_log import BuildLog
 from eschergraph.builder.build_log import NodeEdgeExt
 from eschergraph.builder.build_log import NodeExt
 from eschergraph.builder.building_tools import BuildingTools
+from eschergraph.builder.models import ProcessedFile
 from eschergraph.builder.reader.multi_modal.data_structure import VisualDocumentElement
 from eschergraph.builder.reader.reader import Chunk
 from eschergraph.config import JSON_BUILD
@@ -47,26 +48,20 @@ class BuildPipeline:
   unique_entities: list[str] = field(factory=list)
   keywords: list[str] = field(factory=list)
 
-  def run(
-    self,
-    chunks: list[Chunk],
-    graph: Graph,
-    full_text: str,
-    visual_elements: list[VisualDocumentElement] | None = None,
-  ) -> list[BuildLog]:
+  def run(self, graph: Graph, processed_file: ProcessedFile) -> list[BuildLog]:
     """Run the build pipeline.
 
     Returns:
       A list of build logs that can be used to add nodes and edges to the graph.
     """
-    self._extract_keywords(full_text=full_text)
+    self._extract_keywords(full_text=processed_file.full_text)
 
-    self._extract_node_edges(chunks)
+    self._extract_node_edges(processed_file.chunks)
 
     self._extract_properties()
 
-    if visual_elements:
-      self._handle_multi_modal(visual_elements)
+    if processed_file.visual_elements:
+      self._handle_multi_modal(processed_file.visual_elements)
 
     unique_entities: list[str] = self._get_unique_entities()
 
