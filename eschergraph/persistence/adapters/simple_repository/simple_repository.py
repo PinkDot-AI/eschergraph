@@ -190,8 +190,8 @@ class SimpleRepository(Repository):
           Property(id=p_id, node=node, repository=self)
           for p_id in node_model["properties"]
         ]
-      elif attr == "is_a_visual":
-        node._is_a_visual = node_model["is_a_visual"]
+      elif attr == "is_visual":
+        node._is_visual = node_model["is_visual"]
       else:
         setattr(node, "_" + attr, node_model[attr])  # type: ignore
 
@@ -320,8 +320,8 @@ class SimpleRepository(Repository):
           if name_changed:
             old_name = node_model["name"]
             node_model["name"] = node.name
-        elif attr == "is_a_visual":
-          node_model["is_a_visual"] = node.is_a_visual
+        elif attr == "is_visual":
+          node_model["is_visual"] = node.is_visual
         else:
           node_model[attr] = Node.__dict__[attr].fget(node)  # type: ignore
 

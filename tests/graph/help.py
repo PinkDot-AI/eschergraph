@@ -48,6 +48,7 @@ def create_basic_node(repository: Optional[Repository] = None) -> Node:
     level=0,
     repository=repository,
     metadata={metadata},
+    is_visual=False,
   )
 
   for _ in range(num_properties):

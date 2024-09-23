@@ -111,7 +111,7 @@ class Graph:
     description: str,
     level: int,
     metadata: Metadata,
-    is_a_visual: bool = False,
+    is_visual: bool = False,
   ) -> Node:
     """Add a node to the graph.
 
@@ -123,7 +123,7 @@ class Graph:
       description (str): A description of the node.
       level (int): The level of the node.
       metadata (Metadata): The metadata of the node.
-      is_a_visual (bool): bolean variable to indicate whether the node is a visual
+      is_visual (bool): bolean variable to indicate whether the node is a visual
     Returns:
       The node that has been created.
     """
@@ -133,7 +133,7 @@ class Graph:
       level=level,
       repository=self.repository,
       metadata={metadata},
-      is_a_visual=is_a_visual,
+      is_visual=is_visual,
     )
 
     # Persist the node

@@ -188,10 +188,10 @@ class BuildPipeline:
   def _persist_to_graph(self, graph: Graph, updated_logs: list[BuildLog]) -> None:
     # first add all nodes
     for log in updated_logs:
-      # add conditional is_a_visual to the node if the buildinglogs says so
+      # add conditional is_visual to the node if the buildinglogs says so
 
       for node_ext in log.nodes:
-        is_a_visual = (
+        is_visual = (
           log.main_visual_entity_name
           and log.main_visual_entity_name.lower() == node_ext["name"].lower()
         )
@@ -204,7 +204,7 @@ class BuildPipeline:
           description=node_ext["description"],
           level=0,
           metadata=log.metadata,
-          is_a_visual=is_a_visual,
+          is_visual=is_visual,
         )
 
     # then loop again to add all edges and properties

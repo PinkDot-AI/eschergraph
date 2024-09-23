@@ -47,7 +47,6 @@ class Node(EscherBase):
   _child_nodes: Optional[list[Node]] = field(
     default=None, metadata={"group": LoadState.FULL}
   )
-  _is_a_visual: Optional[bool] = field(default=None, metadata={"group": LoadState.FULL})
 
   # Type annotations for the dynamically added properties
   name: str = field(init=False)
@@ -57,7 +56,8 @@ class Node(EscherBase):
   edges: set[Edge] = field(init=False)
   community: Community = field(init=False)
   child_nodes: list[Node] = field(init=False)
-  is_a_visual: bool = field(init=False)
+
+  is_visual: bool = field(default=False)
 
   @classmethod
   def create(
@@ -68,7 +68,7 @@ class Node(EscherBase):
     repository: Repository,
     metadata: Optional[set[Metadata]] = None,
     child_nodes: Optional[list[Node]] = None,
-    is_a_visual: bool = False,
+    is_visual: bool = False,
   ) -> Node:
     """The method that allows for the creation of a new node.
 
@@ -82,7 +82,7 @@ class Node(EscherBase):
       repository (Repository): The repository that will store the node.
       metadata (Optional[set[Metadata]]): The optional metadata for the node.
       child_nodes (Optional[list[UUID]]): The optional child nodes for the node
-      is_a_visual (bool): Bolean to indicate whether the node is a figure or a table
+      is_visual (bool): Bolean to indicate whether the node is a figure or a table
 
     Returns:
       The node that has been created.
@@ -115,7 +115,7 @@ class Node(EscherBase):
       edges=set(),
       child_nodes=child_nodes if child_nodes else [],
       loadstate=LoadState.FULL,
-      is_a_visual=is_a_visual,
+      is_visual=is_visual,
     )
 
   def add_property(self, description: str, metadata: Metadata) -> None:
@@ -152,7 +152,7 @@ class Node(EscherBase):
         and self.level == other.level
         and self.metadata == other.metadata
         and self.properties == other.properties
-        and self.is_a_visual == other.is_a_visual
+        and self.is_visual == other.is_visual
       )
 
     return False
@@ -178,7 +178,7 @@ class Node(EscherBase):
       The string representation of a node.
     """
     visual_str: str = ""
-    if self.is_a_visual is True:
+    if self.is_visual is True:
       item_metadata = list(self.metadata)[0]
       if item_metadata.visual_metadata:
         type = item_metadata.visual_metadata.type

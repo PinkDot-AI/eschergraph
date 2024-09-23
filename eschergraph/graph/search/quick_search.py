@@ -101,7 +101,7 @@ def choose_suitable_visuals(
       node: Node | None = graph.repository.get_node_by_name(
         p_node, document_id=item.document_id
       )
-      if node.is_a_visual:
+      if node.is_visual:
         unique_visual_nodes.add(node)
 
   print(unique_visual_nodes)
