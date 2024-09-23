@@ -1,12 +1,17 @@
 from __future__ import annotations
 
 from typing import Optional
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from attrs import define
 
-from eschergraph.builder.reader.multi_modal.data_structure import VisualDocumentElement
-from eschergraph.persistence.document import Document
+# Prevent circular import errors
+if TYPE_CHECKING:
+  from eschergraph.builder.reader.multi_modal.data_structure import (
+    VisualDocumentElement,
+  )
+  from eschergraph.persistence.document import Document
 
 
 @define

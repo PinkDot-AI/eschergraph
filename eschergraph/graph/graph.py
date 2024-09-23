@@ -265,6 +265,7 @@ class Graph:
       builder = BuildPipeline(model=self.model, reranker=self.reranker)
       builder.run(graph=self, processed_file=file)
 
+    # TODO: add in the build pipeline with filter fields (a schema)
     # Add the document data objects to the repository
     for doc_data in [file.document for file in processed_files]:
       self.repository.add_document(document=doc_data)

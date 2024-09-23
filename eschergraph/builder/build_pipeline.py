@@ -25,6 +25,7 @@ from eschergraph.config import JSON_FIGURE
 from eschergraph.config import JSON_KEYWORDS
 from eschergraph.config import JSON_PROPERTY
 from eschergraph.config import JSON_TABLE
+from eschergraph.config import SUMMARY
 from eschergraph.exceptions import ExternalProviderException
 from eschergraph.exceptions import ImageProcessingException
 from eschergraph.exceptions import NodeCreationException
@@ -54,15 +55,21 @@ class BuildPipeline:
     Returns:
       A list of build logs that can be used to add nodes and edges to the graph.
     """
+    # Step 1: extract the document keywords and summary
     self._extract_keywords(full_text=processed_file.full_text)
+    summary: str = self._get_summary(self.model, full_text=processed_file.full_text)
 
+    # Step 2: extract nodes and edges
     self._extract_node_edges(processed_file.chunks)
 
+    # Step 3: extract properties
     self._extract_properties()
 
     if processed_file.visual_elements:
       self._handle_multi_modal(processed_file.visual_elements)
 
+    # Step 4: use the node matcher to match duplicate nodes
+    # that refer to the same entity
     unique_entities: list[str] = self._get_unique_entities()
 
     updated_logs: list[BuildLog] = NodeMatcher(
@@ -72,14 +79,15 @@ class BuildPipeline:
       unique_node_names=unique_entities,
     )
 
-    # Step 4: remove unmatched nodes from the updated logs
+    # Step 5: convert the building logs into nodes and edges
     self._persist_to_graph(graph=graph, updated_logs=updated_logs)
 
+    # Step 6: build the community level
     CommunityBuilder.build(level=0, graph=graph)
 
-    graph.sync_vectordb()
+    # Step 7: add the document node
 
-    # self._save_logs()
+    graph.sync_vectordb()
 
     graph.repository.save()
 
@@ -104,6 +112,16 @@ class BuildPipeline:
       self.keywords = answer_json["keywords"]
     except:
       raise ExternalProviderException("keywords extraction not in correct format")
+
+  @staticmethod
+  def _get_summary(model: ModelProvider, full_text: str) -> str:
+    prompt_formatted: str = process_template(SUMMARY, {"full_text": full_text})
+    summary: str = model.get_plain_response(prompt=prompt_formatted)
+
+    if not summary:
+      raise ExternalProviderException("An empty summary was returned")
+
+    return summary
 
   def _handle_nodes_edges_chunk(self, chunk: Chunk) -> None:
     prompt_formatted: str = process_template(JSON_BUILD, {"input_text": chunk.text})

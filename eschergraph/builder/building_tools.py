@@ -1,15 +1,11 @@
 from __future__ import annotations
 
 from typing import Any
-from typing import TYPE_CHECKING
 
 from eschergraph.agents.llm import ModelProvider
 from eschergraph.builder.models import ProcessedFile
 from eschergraph.builder.reader.reader import Reader
 from eschergraph.tools.estimator import Estimator
-
-if TYPE_CHECKING:
-  pass
 
 
 class BuildingTools:
