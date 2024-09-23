@@ -62,7 +62,9 @@ def quick_search(
 
   answer: str | None = graph.model.get_plain_response(prompt)
 
-  visuals: list[MetadataVisual] = choose_suitable_visuals(graph, attributes)
+  # TODO: add the visuals in future PR
+  # visuals: list[MetadataVisual] = choose_suitable_visuals(graph, attributes)
+  visuals: list[MetadataVisual] = []
   # Create the RAGAnswer object
   rag_answer = RAGAnswer(
     answer=answer if answer else "Something went wrong with generating the answer",
@@ -92,6 +94,9 @@ def choose_suitable_visuals(
   unique_visual_nodes: set[Node] = set()
 
   for attr in attributes:
+    if not attr.metadata:
+      continue
+
     item = list(attr.metadata)[0]
     # Only handle attributes with visuals
     if not item.visual_metadata:
@@ -101,6 +106,8 @@ def choose_suitable_visuals(
       node: Node | None = graph.repository.get_node_by_name(
         p_node, document_id=item.document_id
       )
+      if not node:
+        continue
       if node.is_visual:
         unique_visual_nodes.add(node)
 

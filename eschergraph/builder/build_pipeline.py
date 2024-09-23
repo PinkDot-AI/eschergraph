@@ -269,7 +269,7 @@ class BuildPipeline:
       answer = self.model.get_json_response(prompt=prompt_formatted)
 
     elif visual_element.type == "FIGURE":
-      prompt_formatted: str = process_template(
+      prompt_formatted = process_template(
         JSON_FIGURE,
         {"figure_caption": caption, "keywords": ", ".join(self.keywords)},
       )
@@ -284,8 +284,7 @@ class BuildPipeline:
     json_nodes_edges: NodeEdgeExt = NodeEdgeExt(
       entities=entities, relationships=answer["relationships"]
     )
-    if not BuildingTools.check_node_edge_ext(json_nodes_edges):
-      print(json_nodes_edges)
+    if not BuildingTools.check_node_edge_ext(cast(dict[str, Any], json_nodes_edges)):
       raise NodeCreationException(
         f"{visual_element.type} extraction not in the right format"
       )
