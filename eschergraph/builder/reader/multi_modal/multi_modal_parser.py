@@ -269,12 +269,12 @@ def _crop_image_from_pdf_page(
   """Crop a region from a given page in a PDF and handle cases where the bounding box is outside the page.
 
   Args:
-      pdf_path (str): The path to the PDF file.
-      page_number (int): The page number to crop from (0-indexed).
-      bounding_box (tuple): The bounding box coordinates in the format (x0, y0, x1, y1).
+    pdf_path (str): The path to the PDF file.
+    page_number (int): The page number to crop from (0-indexed).
+    bounding_box (tuple): The bounding box coordinates in the format (x0, y0, x1, y1).
 
   Returns:
-      A PIL Image of the cropped area.
+    A PIL Image of the cropped area.
   """
   # Load the PDF and the page
   doc = fitz.open(pdf_path)

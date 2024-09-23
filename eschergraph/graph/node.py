@@ -38,6 +38,7 @@ class Node(EscherBase):
   _properties: Optional[list[Property]] = field(
     default=None, metadata={"group": LoadState.CORE}
   )
+  _is_visual: Optional[bool] = field(default=None, metadata={"group": LoadState.CORE})
   _edges: Optional[set[Edge]] = field(
     default=None, metadata={"group": LoadState.CONNECTED}
   )
@@ -56,9 +57,7 @@ class Node(EscherBase):
   edges: set[Edge] = field(init=False)
   community: Community = field(init=False)
   child_nodes: list[Node] = field(init=False)
-
-  # The fields that do not use lazy loading
-  is_visual: bool = field(default=False)
+  is_visual: bool = field(init=False)
 
   @classmethod
   def create(

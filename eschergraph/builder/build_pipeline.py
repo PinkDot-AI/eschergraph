@@ -191,12 +191,14 @@ class BuildPipeline:
     # first add all nodes
     for log in updated_logs:
       # add conditional is_visual to the node if the buildinglogs says so
-
       for node_ext in log.nodes:
-        is_visual = (
+        is_visual: bool = False
+        if (
           log.main_visual_entity_name
           and log.main_visual_entity_name.lower() == node_ext["name"].lower()
-        )
+        ):
+          is_visual = True
+
         if graph.repository.get_node_by_name(
           node_ext["name"].lower(), document_id=log.metadata.document_id
         ):
