@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import pickle
+from typing import Any
 from typing import cast
 from typing import Optional
 from typing import TYPE_CHECKING
@@ -11,7 +12,6 @@ from attrs import asdict
 from attrs import define
 from attrs import field
 
-from eschergraph.builder.build_log import BuildLog
 from eschergraph.config import DEFAULT_GRAPH_NAME
 from eschergraph.config import DEFAULT_SAVE_LOCATION
 from eschergraph.exceptions import DocumentDoesNotExistException
@@ -58,7 +58,6 @@ from eschergraph.persistence.repository import Repository
 
 if TYPE_CHECKING:
   from eschergraph.graph.base import EscherBase
-  from eschergraph.builder.build_log import BuildLog
 
 
 @define
@@ -73,7 +72,7 @@ class SimpleRepository(Repository):
   doc_node_name_index: dict[UUID, dict[str, UUID]] = field(init=False)
   change_log: list[ChangeLog] = field(init=False)
   documents: dict[UUID, Document] = field(init=False)
-  original_build_logs: dict[UUID, list[BuildLog]] = field(init=False)
+  doc_tags: dict[str, str] = field(init=False)
 
   def __init__(
     self, name: Optional[str] = None, save_location: Optional[str] = None
@@ -122,7 +121,7 @@ class SimpleRepository(Repository):
       self.properties = dict()
       self.doc_node_name_index = dict()
       self.documents = dict()
-      self.original_build_logs = dict()
+      self.doc_tags = dict()
       return
 
     # If some files are missing
@@ -622,6 +621,11 @@ class SimpleRepository(Repository):
     if not (doc_id := document.id) in self.doc_node_name_index:
       self.doc_node_name_index[doc_id] = {}
 
+    # Add the tags to the doc_tags
+    for tag, value in document.tags:
+      if not tag in self.doc_tags:
+        self.doc_tags[tag] = type(value).__name__
+
   def get_document_by_id(self, id: UUID) -> Optional[Document]:
     """Retrieves documents based on a list of document UUIDs.
 
@@ -655,6 +659,47 @@ class SimpleRepository(Repository):
       list[Document]: A list containing all the documents.
     """
     return list(self.documents.values())
+
+  def list_available_tags(self) -> dict[str, str]:
+    """List all tags that are available for document filtering.
+
+    Returns:
+      dict[str, str]: The name of the tag mapped to the name of the type.
+    """
+    return self.doc_tags
+
+  def filter_documents_by_tags(
+    self, filter_tags: dict[str, Any], ignore_missing_tags: bool = False
+  ) -> list[Document]:
+    """Filter documents by tags. Returns documents that match the filter.
+
+    Args:
+      filter_tags (dict[str, Any]): The tags to filter by.
+      ignore_missing_tags (bool): Whether to include documents that do not have the provided tag.
+        Defaults to false, which means that documents that do not have the tag are excluded.
+
+    Returns:
+      list[Document]: Documents that match the filter conditions.
+    """
+    docs: list[Document] = []
+    for doc in self.documents.values():
+      include: bool = True
+      for filter, value in filter_tags.items():
+        # In case a filter is missing
+        if not filter in doc.tags and not ignore_missing_tags:
+          include = False
+        elif filter in doc.tags:
+          if doc.tags[filter] != value:
+            include = False
+
+        # We can stop checking as soon as a filter is not met
+        if not include:
+          break
+
+      if include:
+        docs.append(doc)
+
+    return docs
 
   def remove_node_by_id(self, id: UUID) -> None:
     """Remove a node by id.

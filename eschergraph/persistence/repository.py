@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from abc import ABC
 from abc import abstractmethod
+from typing import Any
 from typing import Optional
 from typing import TYPE_CHECKING
 from uuid import UUID
@@ -224,5 +225,30 @@ class Repository(ABC):
 
     Returns:
       Optional[Document]: The document if a document with this name exists, and otherwise None.
+    """
+    raise NotImplementedError
+
+  @abstractmethod
+  def list_available_tags(self) -> dict[str, str]:
+    """List all tags that are available for document filtering.
+
+    Returns:
+      dict[str, str]: The name of the tag mapped to the name of the type.
+    """
+    raise NotImplementedError
+
+  @abstractmethod
+  def filter_documents_by_tags(
+    self, filter_tags: dict[str, Any], ignore_missing_tags: bool = False
+  ) -> list[Document]:
+    """Filter documents by tags. Returns documents that match the filter.
+
+    Args:
+      filter_tags (dict[str, Any]): The tags to filter by.
+      ignore_missing_tags (bool): Whether to include documents that do not have the provided tag.
+        Defaults to false, which means that documents that do not have the tag are excluded.
+
+    Returns:
+      list[Document]: Documents that match the filter conditions.
     """
     raise NotImplementedError

@@ -39,6 +39,7 @@ def test_filenames_function_default() -> None:
     "doc_node_name_index": base_filename + "-nnindex.pkl",
     "properties": base_filename + "-properties.pkl",
     "documents": base_filename + "-documents.pkl",
+    "doc_tags": base_filename + "-doctags.pkl",
   }
 
 
@@ -53,6 +54,7 @@ def test_filenames_function_specified() -> None:
     "doc_node_name_index": base_filename + "-nnindex.pkl",
     "properties": base_filename + "-properties.pkl",
     "documents": base_filename + "-documents.pkl",
+    "doc_tags": base_filename + "-doctags.pkl",
   }
 
 
