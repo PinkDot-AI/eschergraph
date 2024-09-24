@@ -1,0 +1,4 @@
+{
+  "type": "minor",
+  "description": "Add tags to a document for filtering based on structured metadata"
+}
