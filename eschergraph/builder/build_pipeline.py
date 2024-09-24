@@ -17,16 +17,22 @@ from eschergraph.builder.build_log import BuildLog
 from eschergraph.builder.build_log import NodeEdgeExt
 from eschergraph.builder.build_log import NodeExt
 from eschergraph.builder.building_tools import BuildingTools
+from eschergraph.builder.models import Chunk
+from eschergraph.builder.models import ProcessedFile
 from eschergraph.builder.reader.multi_modal.data_structure import VisualDocumentElement
-from eschergraph.builder.reader.reader import Chunk
 from eschergraph.config import JSON_BUILD
 from eschergraph.config import JSON_FIGURE
 from eschergraph.config import JSON_KEYWORDS
 from eschergraph.config import JSON_PROPERTY
 from eschergraph.config import JSON_TABLE
+from eschergraph.config import SUMMARY
 from eschergraph.exceptions import ExternalProviderException
 from eschergraph.exceptions import ImageProcessingException
 from eschergraph.exceptions import NodeCreationException
+from eschergraph.graph.community import Community
+from eschergraph.graph.node import Node
+from eschergraph.graph.property import Property
+from eschergraph.persistence.document import Document
 from eschergraph.persistence.metadata import Metadata
 from eschergraph.persistence.metadata import MetadataVisual
 from eschergraph.tools.community_builder import CommunityBuilder
@@ -34,7 +40,6 @@ from eschergraph.tools.node_matcher import NodeMatcher
 
 if TYPE_CHECKING:
   from eschergraph.graph.graph import Graph
-  from eschergraph.graph.node import Node
 
 
 @define
@@ -47,27 +52,27 @@ class BuildPipeline:
   unique_entities: list[str] = field(factory=list)
   keywords: list[str] = field(factory=list)
 
-  def run(
-    self,
-    chunks: list[Chunk],
-    graph: Graph,
-    full_text: str,
-    visual_elements: list[VisualDocumentElement] | None = None,
-  ) -> list[BuildLog]:
+  def run(self, graph: Graph, processed_file: ProcessedFile) -> list[BuildLog]:
     """Run the build pipeline.
 
     Returns:
       A list of build logs that can be used to add nodes and edges to the graph.
     """
-    self._extract_keywords(full_text=full_text)
+    # Step 1: extract the document keywords and summary
+    self._extract_keywords(full_text=processed_file.full_text)
+    summary: str = self._get_summary(self.model, full_text=processed_file.full_text)
 
-    self._extract_node_edges(chunks)
+    # Step 2: extract nodes and edges
+    self._extract_node_edges(processed_file.chunks)
 
+    # Step 3: extract properties
     self._extract_properties()
 
-    if visual_elements:
-      self._handle_multi_modal(visual_elements)
+    if processed_file.visual_elements:
+      self._handle_multi_modal(processed_file.visual_elements)
 
+    # Step 4: use the node matcher to match duplicate nodes
+    # that refer to the same entity
     unique_entities: list[str] = self._get_unique_entities()
 
     updated_logs: list[BuildLog] = NodeMatcher(
@@ -77,14 +82,18 @@ class BuildPipeline:
       unique_node_names=unique_entities,
     )
 
-    # Step 4: remove unmatched nodes from the updated logs
+    # Step 5: convert the building logs into nodes and edges
     self._persist_to_graph(graph=graph, updated_logs=updated_logs)
 
-    CommunityBuilder.build(level=0, graph=graph)
+    # Step 6: build the community level
+    comm_nodes: list[Node] = CommunityBuilder.build(level=0, graph=graph)
+
+    # Step 7: add the document node
+    self._create_document_node(
+      graph, comm_nodes, summary, processed_file.document, self.keywords
+    )
 
     graph.sync_vectordb()
-
-    # self._save_logs()
 
     graph.repository.save()
 
@@ -109,6 +118,56 @@ class BuildPipeline:
       self.keywords = answer_json["keywords"]
     except:
       raise ExternalProviderException("keywords extraction not in correct format")
+
+  @staticmethod
+  def _get_summary(model: ModelProvider, full_text: str) -> str:
+    prompt_formatted: str = process_template(SUMMARY, {"full_text": full_text})
+    summary: str | None = model.get_plain_response(prompt=prompt_formatted)
+
+    if not summary:
+      raise ExternalProviderException("An empty summary was returned")
+
+    return summary
+
+  @staticmethod
+  def _create_document_node(
+    graph: Graph,
+    comm_nodes: list[Node],
+    summary: str,
+    document: Document,
+    keywords: list[str],
+  ) -> Node:
+    """Create the document node.
+
+    Args:
+      graph (Graph): The graph to add the document node to.
+      comm_nodes (list[Node]): The community nodes for this document.
+      summary (str): The summary for the document.
+      document (Document): The document data object.
+      keywords (list[str]): A list of keywords.
+    """
+    doc_node: Node = Node.create(
+      name=document.name,
+      repository=graph.repository,
+      description=summary,
+      level=2,
+    )
+    doc_node.id = document.id
+    # Add all the keywords as properties
+    for keyword in keywords:
+      Property.create(node=doc_node, description=keyword)
+
+    # Set the community nodes as child nodes
+    doc_node.child_nodes = comm_nodes
+
+    graph.repository.add(doc_node)
+
+    # Set the doc node as parent node
+    for comm in comm_nodes:
+      comm.community = Community(node=doc_node)
+      graph.repository.add(comm)
+
+    return doc_node
 
   def _handle_nodes_edges_chunk(self, chunk: Chunk) -> None:
     prompt_formatted: str = process_template(JSON_BUILD, {"input_text": chunk.text})

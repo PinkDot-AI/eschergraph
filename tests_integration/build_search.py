@@ -53,6 +53,9 @@ def build_graph() -> None:
   Visualizer.visualize_graph(
     graph, level=1, save_location=temp_path.as_posix() + "/level_1.html"
   )
+  Visualizer.visualize_graph(
+    graph, level=2, save_location=temp_path.as_posix() + "/level_2.html"
+  )
 
   documents: list[Document] = graph.get_all_documents()
 

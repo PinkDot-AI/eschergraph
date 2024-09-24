@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from uuid import uuid4
 
+from eschergraph.builder.models import Chunk
 from eschergraph.builder.reader.fast_pdf_parser.models import PdfParsedSegment
 from eschergraph.builder.reader.multi_modal.data_structure import Paragraph
-from eschergraph.builder.reader.reader import Chunk
 from eschergraph.builder.reader.reader import Reader
 
 
