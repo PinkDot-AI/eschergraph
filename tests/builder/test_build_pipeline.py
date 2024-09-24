@@ -7,6 +7,7 @@ from uuid import UUID
 from uuid import uuid4
 
 import pytest
+from faker import Faker
 
 from eschergraph.agents.providers.jina import JinaReranker
 from eschergraph.agents.providers.openai import OpenAIProvider
@@ -19,9 +20,13 @@ from eschergraph.builder.reader.multi_modal.data_structure import VisualDocument
 from eschergraph.graph.node import Node
 from eschergraph.persistence import Metadata
 from eschergraph.persistence.adapters.simple_repository import SimpleRepository
+from eschergraph.persistence.document import Document
+from tests.graph.help import create_basic_node
 
 if TYPE_CHECKING:
   from eschergraph.graph import Graph
+
+faker: Faker = Faker()
 
 
 @pytest.fixture(scope="function")
@@ -138,3 +143,33 @@ def test_persist_to_graph(
       ), f"Expected no properties for 'node 2', but got {len(properties)}"
 
   # TODO: no method to test the edges yet.
+
+
+def test_create_document_node(graph_unit: Graph) -> None:
+  comm_nodes: list[Node] = [create_basic_node() for _ in range(10)]
+  for comm in comm_nodes:
+    comm.level = 1
+
+  summary: str = faker.text(max_nb_chars=120)
+  keywords: list[str] = faker.words(nb=25)
+  document: Document = Document(
+    id=uuid4(), name="test_file.pdf", chunk_num=12, token_num=1000
+  )
+
+  doc_node: Node = BuildPipeline._create_document_node(
+    graph_unit, comm_nodes, summary, document, keywords
+  )
+
+  assert doc_node.id == document.id
+  assert doc_node.child_nodes == comm_nodes
+  assert doc_node.description == summary
+  assert {prop.description for prop in doc_node.properties} == set(keywords)
+
+  # Unpack the repository.add calls
+  for idx, call in enumerate(graph_unit.repository.add.call_args_list):
+    if idx == 0:
+      assert call[0][0] == doc_node
+      continue
+
+    child_node: Node = call[0][0]
+    assert child_node.community.node == doc_node

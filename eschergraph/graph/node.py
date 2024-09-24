@@ -129,7 +129,7 @@ class Node(EscherBase):
       metadata (Optional[Metadata]): The property's metadata.
     """
     property: Property = Property.create(
-      node=self, description=description, metadata={metadata} if metadata else {}
+      node=self, description=description, metadata={metadata} if metadata else set()
     )
 
     self.repository.add(property)

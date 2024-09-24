@@ -17,9 +17,9 @@ from eschergraph.builder.build_log import BuildLog
 from eschergraph.builder.build_log import NodeEdgeExt
 from eschergraph.builder.build_log import NodeExt
 from eschergraph.builder.building_tools import BuildingTools
+from eschergraph.builder.models import Chunk
 from eschergraph.builder.models import ProcessedFile
 from eschergraph.builder.reader.multi_modal.data_structure import VisualDocumentElement
-from eschergraph.builder.reader.reader import Chunk
 from eschergraph.config import JSON_BUILD
 from eschergraph.config import JSON_FIGURE
 from eschergraph.config import JSON_KEYWORDS
@@ -32,6 +32,7 @@ from eschergraph.exceptions import NodeCreationException
 from eschergraph.graph.community import Community
 from eschergraph.graph.node import Node
 from eschergraph.graph.property import Property
+from eschergraph.persistence.document import Document
 from eschergraph.persistence.metadata import Metadata
 from eschergraph.persistence.metadata import MetadataVisual
 from eschergraph.tools.community_builder import CommunityBuilder
@@ -89,7 +90,7 @@ class BuildPipeline:
 
     # Step 7: add the document node
     self._create_document_node(
-      graph, comm_nodes, summary, processed_file, self.keywords
+      graph, comm_nodes, summary, processed_file.document, self.keywords
     )
 
     graph.sync_vectordb()
@@ -121,7 +122,7 @@ class BuildPipeline:
   @staticmethod
   def _get_summary(model: ModelProvider, full_text: str) -> str:
     prompt_formatted: str = process_template(SUMMARY, {"full_text": full_text})
-    summary: str = model.get_plain_response(prompt=prompt_formatted)
+    summary: str | None = model.get_plain_response(prompt=prompt_formatted)
 
     if not summary:
       raise ExternalProviderException("An empty summary was returned")
@@ -133,25 +134,25 @@ class BuildPipeline:
     graph: Graph,
     comm_nodes: list[Node],
     summary: str,
-    processed_file: ProcessedFile,
+    document: Document,
     keywords: list[str],
-  ) -> None:
+  ) -> Node:
     """Create the document node.
 
     Args:
       graph (Graph): The graph to add the document node to.
       comm_nodes (list[Node]): The community nodes for this document.
       summary (str): The summary for the document.
-      processed_file (ProcessedFile): The processed file result.
+      document (Document): The document data object.
       keywords (list[str]): A list of keywords.
     """
     doc_node: Node = Node.create(
-      name=processed_file.document.name,
+      name=document.name,
       repository=graph.repository,
       description=summary,
       level=2,
     )
-    doc_node.id = processed_file.document.id
+    doc_node.id = document.id
     # Add all the keywords as properties
     for keyword in keywords:
       Property.create(node=doc_node, description=keyword)
@@ -165,6 +166,8 @@ class BuildPipeline:
     for comm in comm_nodes:
       comm.community = Community(node=doc_node)
       graph.repository.add(comm)
+
+    return doc_node
 
   def _handle_nodes_edges_chunk(self, chunk: Chunk) -> None:
     prompt_formatted: str = process_template(JSON_BUILD, {"input_text": chunk.text})
