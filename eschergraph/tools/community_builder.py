@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-from typing import cast
 from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
@@ -62,11 +61,10 @@ def _extract_main_topics(graph: Graph, full_text: str) -> list[MainTopic]:
     TOPIC_EXTRACTION, data={"full_text": full_text}
   )
   try:
-    main_topics: list[dict[str, dict[str, str]]] = cast(
-      list[dict[str, dict[str, str]]],
-      graph.model.get_json_response(formatted_prompt)["topics"],
-    )
-    return [MainTopic(**topic) for topic in main_topics]
+    return [
+      MainTopic(**topic)
+      for topic in graph.model.get_json_response(formatted_prompt)["topics"]
+    ]
   except (KeyError, ValidationError):
     raise ExternalProviderException("Something went wrong parsing the main topics")
 
@@ -82,11 +80,10 @@ def _extract_topic_relations(
     TOPIC_RELATIONS, data={"main_topics": main_topics_str, "full_text": full_text}
   )
   try:
-    topic_relations: list[dict[str, str | list[dict[str, str]]]] = cast(
-      list[dict[str, str | list[dict[str, str]]]],
-      graph.model.get_json_response(prompt_formatted)["relations"],
-    )
-    return [TopicRelations(**relation) for relation in topic_relations]
+    return [
+      TopicRelations(**relation)
+      for relation in graph.model.get_json_response(prompt_formatted)["relations"]
+    ]
   except (KeyError, ValidationError):
     raise ExternalProviderException(
       "Something went wrong parsing the main topic relations"
