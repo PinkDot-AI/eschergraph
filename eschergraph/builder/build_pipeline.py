@@ -35,7 +35,7 @@ from eschergraph.graph.property import Property
 from eschergraph.persistence.document import Document
 from eschergraph.persistence.metadata import Metadata
 from eschergraph.persistence.metadata import MetadataVisual
-from eschergraph.tools.community_builder import CommunityBuilder
+from eschergraph.tools.community_builder import build_community_layer
 from eschergraph.tools.node_matcher import NodeMatcher
 
 if TYPE_CHECKING:
@@ -85,8 +85,8 @@ class BuildPipeline:
     # Step 5: convert the building logs into nodes and edges
     self._persist_to_graph(graph=graph, updated_logs=updated_logs)
 
-    # Step 6: build the community level
-    comm_nodes: list[Node] = CommunityBuilder.build(level=0, graph=graph)
+    # Step 6: build the community layer
+    comm_nodes: list[Node] = build_community_layer(graph, processed_file)
 
     # Step 7: add the document node
     self._create_document_node(

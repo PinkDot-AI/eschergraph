@@ -1,0 +1,16 @@
+Here is the document:
+{{ full_text }}
+
+Here are the main topics in the document:
+{{ main_topics }}
+
+Please identify all the relations between the topics.
+Provide them in the following JSON format:
+{"relations": [
+  {"name": "<TOPIC_NAME>", "relations": [
+    {"name": "<OTHER_TOPIC_NAME>", "description": "<RELATIONSHIP_DESCRIPTION>"},
+    {"name": "<OTHER_TOPIC_NAME>", "description": "<RELATIONSHIP_DESCRIPTION>"}
+  ]}
+]}
+
+Make sure to provide a list with relations for each of the provided main topics.
