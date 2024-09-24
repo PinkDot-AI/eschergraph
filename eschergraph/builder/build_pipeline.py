@@ -29,6 +29,9 @@ from eschergraph.config import SUMMARY
 from eschergraph.exceptions import ExternalProviderException
 from eschergraph.exceptions import ImageProcessingException
 from eschergraph.exceptions import NodeCreationException
+from eschergraph.graph.community import Community
+from eschergraph.graph.node import Node
+from eschergraph.graph.property import Property
 from eschergraph.persistence.metadata import Metadata
 from eschergraph.persistence.metadata import MetadataVisual
 from eschergraph.tools.community_builder import CommunityBuilder
@@ -36,7 +39,6 @@ from eschergraph.tools.node_matcher import NodeMatcher
 
 if TYPE_CHECKING:
   from eschergraph.graph.graph import Graph
-  from eschergraph.graph.node import Node
 
 
 @define
@@ -83,9 +85,12 @@ class BuildPipeline:
     self._persist_to_graph(graph=graph, updated_logs=updated_logs)
 
     # Step 6: build the community level
-    CommunityBuilder.build(level=0, graph=graph)
+    comm_nodes: list[Node] = CommunityBuilder.build(level=0, graph=graph)
 
     # Step 7: add the document node
+    self._create_document_node(
+      graph, comm_nodes, summary, processed_file, self.keywords
+    )
 
     graph.sync_vectordb()
 
@@ -122,6 +127,44 @@ class BuildPipeline:
       raise ExternalProviderException("An empty summary was returned")
 
     return summary
+
+  @staticmethod
+  def _create_document_node(
+    graph: Graph,
+    comm_nodes: list[Node],
+    summary: str,
+    processed_file: ProcessedFile,
+    keywords: list[str],
+  ) -> None:
+    """Create the document node.
+
+    Args:
+      graph (Graph): The graph to add the document node to.
+      comm_nodes (list[Node]): The community nodes for this document.
+      summary (str): The summary for the document.
+      processed_file (ProcessedFile): The processed file result.
+      keywords (list[str]): A list of keywords.
+    """
+    doc_node: Node = Node.create(
+      name=processed_file.document.name,
+      repository=graph.repository,
+      description=summary,
+      level=2,
+    )
+    doc_node.id = processed_file.document.id
+    # Add all the keywords as properties
+    for keyword in keywords:
+      Property.create(node=doc_node, description=keyword)
+
+    # Set the community nodes as child nodes
+    doc_node.child_nodes = comm_nodes
+
+    graph.repository.add(doc_node)
+
+    # Set the doc node as parent node
+    for comm in comm_nodes:
+      comm.community = Community(node=doc_node)
+      graph.repository.add(comm)
 
   def _handle_nodes_edges_chunk(self, chunk: Chunk) -> None:
     prompt_formatted: str = process_template(JSON_BUILD, {"input_text": chunk.text})

@@ -27,12 +27,15 @@ class CommunityBuilder:
   """
 
   @staticmethod
-  def build(level: int, graph: Graph) -> None:
+  def build(level: int, graph: Graph) -> list[Node]:
     """Build a community layer in a new level of the graph.
 
     Args:
       level (int): Which level to build on top of.
       graph (Graph): The graph to build a community layer for.
+
+    Returns:
+      A list of the generated community nodes.
     """
     nodes: list[Node] = graph.repository.get_all_at_level(level)
     comms: CommunityGraphResult = get_leidenalg_communities(nodes)
@@ -114,6 +117,8 @@ class CommunityBuilder:
       node: Node = node_lookup[nd_id]
       node.community = Community(node=nodes_tmp[comm_idx])
       graph.repository.add(node)
+
+    return list(nodes_tmp.values())
 
   @staticmethod
   def _create_empty_community_node(
