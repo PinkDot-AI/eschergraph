@@ -72,7 +72,7 @@ class SimpleRepository(Repository):
   doc_node_name_index: dict[UUID, dict[str, UUID]] = field(init=False)
   change_log: list[ChangeLog] = field(init=False)
   documents: dict[UUID, Document] = field(init=False)
-  doc_tags: dict[str, str] = field(init=False)
+  doc_tags: dict[str, tuple[str, int]] = field(init=False)
 
   def __init__(
     self, name: Optional[str] = None, save_location: Optional[str] = None
@@ -621,10 +621,12 @@ class SimpleRepository(Repository):
     if not (doc_id := document.id) in self.doc_node_name_index:
       self.doc_node_name_index[doc_id] = {}
 
-    # Add the tags to the doc_tags
+    # Update the doc_tags information
     for tag, value in document.tags:
       if not tag in self.doc_tags:
-        self.doc_tags[tag] = type(value).__name__
+        self.doc_tags[tag] = type(value).__name__, 1
+      else:
+        self.doc_tags[tag] = self.doc_tags[tag][0], self.doc_tags[tag][1] + 1
 
   def get_document_by_id(self, id: UUID) -> Optional[Document]:
     """Retrieves documents based on a list of document UUIDs.
@@ -760,6 +762,13 @@ class SimpleRepository(Repository):
       raise DocumentDoesNotExistException(
         f"The document cannot be deleted as it does not exist, id: {id}"
       )
+
+    # Update the doc_tags information
+    for tag in self.documents[id].tags.keys():
+      if self.doc_tags[tag][1] == 1:
+        del self.doc_tags[tag]
+      else:
+        self.doc_tags[tag] = self.doc_tags[tag][0], self.doc_tags[tag][1] - 1
 
     # Select all nodes that are impacted (= all attributes must be checked)
     doc_nodes: list[tuple[UUID, NodeModel]] = [
