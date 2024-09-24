@@ -30,7 +30,6 @@ def test_new_graph_init_default(tmp_path: Path) -> None:
   assert repository.edges == dict()
   assert repository.doc_node_name_index == dict()
   assert repository.documents == dict()
-  assert repository.original_build_logs == dict()
 
 
 def test_init_dir_does_not_exist() -> None:

@@ -33,6 +33,7 @@ def save_filenames(save_location: str, name: str) -> dict[str, str]:
     "properties": base_filename + "-properties.pkl",
     "doc_node_name_index": base_filename + "-nnindex.pkl",
     "documents": base_filename + "-documents.pkl",
+    "doc_tags": base_filename + "-doctags.pkl",
   }
 
 

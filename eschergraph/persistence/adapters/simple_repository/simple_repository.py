@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import copy
 import os
 import pickle
+from typing import Any
 from typing import cast
 from typing import Optional
 from typing import TYPE_CHECKING
@@ -11,7 +13,6 @@ from attrs import asdict
 from attrs import define
 from attrs import field
 
-from eschergraph.builder.build_log import BuildLog
 from eschergraph.config import DEFAULT_GRAPH_NAME
 from eschergraph.config import DEFAULT_SAVE_LOCATION
 from eschergraph.exceptions import DocumentDoesNotExistException
@@ -58,7 +59,6 @@ from eschergraph.persistence.repository import Repository
 
 if TYPE_CHECKING:
   from eschergraph.graph.base import EscherBase
-  from eschergraph.builder.build_log import BuildLog
 
 
 @define
@@ -73,7 +73,7 @@ class SimpleRepository(Repository):
   doc_node_name_index: dict[UUID, dict[str, UUID]] = field(init=False)
   change_log: list[ChangeLog] = field(init=False)
   documents: dict[UUID, Document] = field(init=False)
-  original_build_logs: dict[UUID, list[BuildLog]] = field(init=False)
+  doc_tags: dict[str, tuple[str, int]] = field(init=False)
 
   def __init__(
     self, name: Optional[str] = None, save_location: Optional[str] = None
@@ -122,7 +122,7 @@ class SimpleRepository(Repository):
       self.properties = dict()
       self.doc_node_name_index = dict()
       self.documents = dict()
-      self.original_build_logs = dict()
+      self.doc_tags = dict()
       return
 
     # If some files are missing
@@ -616,11 +616,36 @@ class SimpleRepository(Repository):
     Args:
       document (Document): The document data that needs to be added.
     """
-    self.documents[document.id] = document
+    already_exists: bool = document.id in self.documents
+    if already_exists:
+      old_tags: set[str] = set(self.documents[document.id].tags.keys())
+
+    self.documents[document.id] = copy.deepcopy(document)
 
     # If the document does not yet exist, add to document node name index
     if not (doc_id := document.id) in self.doc_node_name_index:
       self.doc_node_name_index[doc_id] = {}
+
+    # Update the doc_tags information
+    for tag, value in document.tags.items():
+      if not tag in self.doc_tags:
+        self.doc_tags[tag] = type(value).__name__, 1
+      elif already_exists and tag in old_tags:
+        continue
+      else:
+        self.doc_tags[tag] = self.doc_tags[tag][0], self.doc_tags[tag][1] + 1
+
+    if not already_exists:
+      return
+
+    # Handle the case where tags have been removed
+    for tag in old_tags:
+      if tag in document.tags:
+        continue
+      if self.doc_tags[tag][1] == 1:
+        del self.doc_tags[tag]
+      else:
+        self.doc_tags[tag] = self.doc_tags[tag][0], self.doc_tags[tag][1] - 1
 
   def get_document_by_id(self, id: UUID) -> Optional[Document]:
     """Retrieves documents based on a list of document UUIDs.
@@ -655,6 +680,47 @@ class SimpleRepository(Repository):
       list[Document]: A list containing all the documents.
     """
     return list(self.documents.values())
+
+  def list_available_tags(self) -> dict[str, str]:
+    """List all tags that are available for document filtering.
+
+    Returns:
+      dict[str, str]: The name of the tag mapped to the name of the type.
+    """
+    return {tag: value[0] for tag, value in self.doc_tags.items()}
+
+  def filter_documents_by_tags(
+    self, filter_tags: dict[str, Any], ignore_missing_tags: bool = False
+  ) -> list[Document]:
+    """Filter documents by tags. Returns documents that match the filter.
+
+    Args:
+      filter_tags (dict[str, Any]): The tags to filter by.
+      ignore_missing_tags (bool): Whether to include documents that do not have the provided tag.
+        Defaults to false, which means that documents that do not have the tag are excluded.
+
+    Returns:
+      list[Document]: Documents that match the filter conditions.
+    """
+    docs: list[Document] = []
+    for doc in self.documents.values():
+      include: bool = True
+      for filter, value in filter_tags.items():
+        # In case a filter is missing
+        if not filter in doc.tags and not ignore_missing_tags:
+          include = False
+        elif filter in doc.tags:
+          if doc.tags[filter] != value:
+            include = False
+
+        # We can stop checking as soon as a filter is not met
+        if not include:
+          break
+
+      if include:
+        docs.append(doc)
+
+    return docs
 
   def remove_node_by_id(self, id: UUID) -> None:
     """Remove a node by id.
@@ -715,6 +781,13 @@ class SimpleRepository(Repository):
       raise DocumentDoesNotExistException(
         f"The document cannot be deleted as it does not exist, id: {id}"
       )
+
+    # Update the doc_tags information
+    for tag in self.documents[id].tags.keys():
+      if self.doc_tags[tag][1] == 1:
+        del self.doc_tags[tag]
+      else:
+        self.doc_tags[tag] = self.doc_tags[tag][0], self.doc_tags[tag][1] - 1
 
     # Select all nodes that are impacted (= all attributes must be checked)
     doc_nodes: list[tuple[UUID, NodeModel]] = [
