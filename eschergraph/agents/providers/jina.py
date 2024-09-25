@@ -18,9 +18,9 @@ class JinaReranker(Reranker):
   """A reranker that uses Jina's API to rerank a list of documents based on their relevance to a query.
 
   Methods:
-      rerank(query: str, text_list: list[str], top_n: int) -> Optional[list[RerankerResult]]:
-          Sends a request to Jina's API to rerank the provided text list according to the query.
-      get_model_name() -> str: returns the string of the model name
+    rerank(query: str, text_list: list[str], top_n: int) -> Optional[list[RerankerResult]]:
+        Sends a request to Jina's API to rerank the provided text list according to the query.
+    get_model_name() -> str: returns the string of the model name
   """
 
   required_credentials: list[str] = ["JINA_API_KEY"]
@@ -36,13 +36,13 @@ class JinaReranker(Reranker):
     """Reranks a list of text documents based on their relevance to the query using Jina's API.
 
     Args:
-        query (str): The query string for which documents are being reranked.
-        text_list (list[str]): The list of documents (texts) to be reranked.
-        top_n (int): The number of top relevant documents to return.
+      query (str): The query string for which documents are being reranked.
+      text_list (list[str]): The list of documents (texts) to be reranked.
+      top_n (int): The number of top relevant documents to return.
 
     Returns:
-        Optional[list[RerankerResult]]: A list of reranked items with their relevance scores and text,
-        or None if the request fails.
+      Optional[list[RerankerResult]]: A list of reranked items with their relevance scores and text,
+      or None if the request fails.
     """
     if not text_list:
       return []

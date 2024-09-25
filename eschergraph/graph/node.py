@@ -118,7 +118,7 @@ class Node(EscherBase):
       is_visual=is_visual,
     )
 
-  def add_property(self, description: str, metadata: Optional[Metadata] = None) -> None:
+  def add_property(self, description: str, metadata: Metadata) -> None:
     """Add a property to a node.
 
     The property is also added the the list of a node's properties.
@@ -129,7 +129,7 @@ class Node(EscherBase):
       metadata (Optional[Metadata]): The property's metadata.
     """
     property: Property = Property.create(
-      node=self, description=description, metadata={metadata} if metadata else set()
+      node=self, description=description, metadata={metadata}
     )
 
     self.repository.add(property)

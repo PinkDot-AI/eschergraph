@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import json
+import time
 from typing import TYPE_CHECKING
+from uuid import UUID
 
 from pydantic import BaseModel
 from pydantic import ValidationError
@@ -11,7 +13,9 @@ from eschergraph.builder.models import ProcessedFile
 from eschergraph.config import TOPIC_EXTRACTION
 from eschergraph.config import TOPIC_RELATIONS
 from eschergraph.exceptions import ExternalProviderException
+from eschergraph.graph.community import Community
 from eschergraph.graph.node import Node
+from eschergraph.persistence.metadata import Metadata
 
 if TYPE_CHECKING:
   from eschergraph.graph import Graph
@@ -64,14 +68,42 @@ def build_community_layer(graph: Graph, processed_file: ProcessedFile) -> list[N
   )
 
   # Convert the main topics and topic relations into nodes and edges on the graph
-  _add_nodes_edges_to_graph(
-    graph, main_topics=main_topics, topics_relations=topics_relations
+  comm_nodes: list[Node] = _add_nodes_edges_to_graph(
+    graph,
+    main_topics=main_topics,
+    topics_relations=topics_relations,
+    document_id=processed_file.document.id,
   )
 
-  # Sync the vector db to make sure that all the level 1 nodes can be found for similarity search
-  graph.sync_vectordb()
-
   # Match the level 0 nodes to a topic / community node
+  level_0_nodes: list[Node] = graph.repository.get_all_at_level(
+    level=0, document_id=processed_file.document.id
+  )
+  topic_node_str: list[str] = [
+    node.name + ", " + node.description for node in comm_nodes
+  ]
+  num_reranker_requests: int = 0
+  for node in level_0_nodes:
+    if num_reranker_requests > 50:
+      print("Sleeping for 30 seconds to avoid Jina rate limits")
+      time.sleep(30)
+      num_reranker_requests -= 25
+
+    parent_node: Node = _match_closest_topic_node(
+      graph, topic_nodes=comm_nodes, topic_nodes_text=topic_node_str, node=node
+    )
+    num_reranker_requests += 1
+    node.community = Community(node=parent_node)
+    parent_node.child_nodes.append(node)
+
+  # Persist all the changes to the repository
+  for node in level_0_nodes:
+    graph.repository.add(node)
+
+  for node in comm_nodes:
+    graph.repository.add(node)
+
+  return comm_nodes
 
 
 def _extract_main_topics(graph: Graph, full_text: str) -> list[MainTopic]:
@@ -109,16 +141,24 @@ def _extract_topic_relations(
 
 
 def _add_nodes_edges_to_graph(
-  graph: Graph, main_topics: list[MainTopic], topics_relations: list[TopicRelations]
+  graph: Graph,
+  main_topics: list[MainTopic],
+  topics_relations: list[TopicRelations],
+  document_id: UUID,
 ) -> list[Node]:
   topic_nodes_name: dict[str, Node] = {}
   for topic in main_topics:
     topic_node: Node = graph.add_node(
-      name=topic.name, description=topic.description, level=1
+      name=topic.name,
+      description=topic.description,
+      level=1,
+      metadata=Metadata(document_id=document_id),
     )
 
     # Add the significance as a property to the topic node
-    topic_node.add_property(description=topic.significance)
+    topic_node.add_property(
+      description=topic.significance, metadata=Metadata(document_id=document_id)
+    )
 
     topic_nodes_name[topic.name] = topic_node
 
@@ -127,6 +167,22 @@ def _add_nodes_edges_to_graph(
     frm_topic: Node = topic_nodes_name[topic_relations.name]
     for to_relation in topic_relations.relations:
       to_topic: Node = topic_nodes_name[to_relation.name]
-      graph.add_edge(frm=frm_topic, to=to_topic, description=to_relation.description)
+      graph.add_edge(
+        frm=frm_topic,
+        to=to_topic,
+        description=to_relation.description,
+        metadata=Metadata(document_id=document_id),
+      )
 
   return list(topic_nodes_name.values())
+
+
+def _match_closest_topic_node(
+  graph: Graph, topic_nodes_text: list[str], topic_nodes: list[Node], node: Node
+) -> Node:
+  node_str: str = node.name + ", " + node.description
+
+  # Use the reranker to find the most similar topic node
+  return topic_nodes[
+    graph.reranker.rerank(query=node_str, text_list=topic_nodes_text, top_n=1)[0].index
+  ]

@@ -172,3 +172,6 @@ community_visual.html
 
 # Packaged binaries for the code
 **/bins/**
+
+# Generated visuals
+graph_visual.html

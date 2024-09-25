@@ -27,7 +27,7 @@ class Metadata:
   """The metadata that is attached to a part of the graph."""
 
   document_id: UUID
-  chunk_id: Optional[int]
+  chunk_id: Optional[int] = field(default=None)
   visual_metadata: Optional[MetadataVisual] = field(default=None)
 
   def __hash__(self) -> int:

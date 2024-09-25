@@ -3,6 +3,7 @@ from __future__ import annotations
 from eschergraph.agents import OpenAIModel
 from eschergraph.agents import OpenAIProvider
 from eschergraph.graph import Graph
+from eschergraph.visualization.visualizer import Visualizer
 
 TEST_DOCUMENT: str = "./test_files/Attention Is All You Need.pdf"
 
@@ -24,5 +25,6 @@ def get_or_create_graph() -> Graph:
 
 if __name__ == "__main__":
   graph: Graph = get_or_create_graph()
-  print(graph.global_search("What is the point of a transformer architecture?"))
+  Visualizer.visualize_graph(graph, level=2)
+  # print(graph.global_search("What is the point of a transformer architecture?"))
   # print(graph.search("How to measure proficiency in translation tasks?"))

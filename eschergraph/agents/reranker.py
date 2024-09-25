@@ -11,9 +11,9 @@ class RerankerResult:
   """Represents a reranked item with its index, relevance score, and associated text.
 
   Attributes:
-      index (int): The position of the item in the original list.
-      relevance_score (float): The relevance score assigned by the reranker.
-      text (str): The content of the item.
+    index (int): The position of the item in the original list.
+    relevance_score (float): The relevance score assigned by the reranker.
+    text (str): The content of the item.
   """
 
   index: int

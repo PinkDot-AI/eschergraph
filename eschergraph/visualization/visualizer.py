@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import webbrowser
 from typing import TYPE_CHECKING
 from uuid import UUID
 
@@ -7,7 +8,6 @@ import seaborn as sns
 from pyvis.network import Network
 
 from eschergraph.graph import Edge
-from eschergraph.graph.community_alg import get_leidenalg_communities
 
 if TYPE_CHECKING:
   from eschergraph.graph import Graph
@@ -29,19 +29,18 @@ class Visualizer:
       level (int): The level of the graph that needs to be visualized.
       save_location (str): The location to save the generated visual.
     """
-    nodes: list[Node] = graph.repository.get_all_at_level(level=level)
-    edges: list[Edge] = [edge for node in nodes for edge in node.edges]
-    node_ids: list[list[UUID]] = get_leidenalg_communities(nodes).partitions
-    node_dict: dict[UUID, Node] = {node.id: node for node in nodes}
-
     # Transform the list of node_ids into a list of nodes
-    comms: list[list[Node]] = []
-    for comm in node_ids:
-      comm_nodes: list[Node] = []
-      for id in comm:
-        comm_nodes.append(node_dict[id])
+    if level < 2:
+      comms: list[list[Node]] = [
+        comm.child_nodes for comm in graph.repository.get_all_at_level(level + 1)
+      ]
+    else:
+      comms: list[list[Node]] = [
+        [node] for node in graph.repository.get_all_at_level(2)
+      ]
 
-      comms.append(comm_nodes)
+    print(comms)
+    edges: list[Edge] = [edge for comm in comms for node in comm for edge in node.edges]
 
     Visualizer.visualize_community_graph(
       comms=comms, edges=edges, save_location=save_location
@@ -94,4 +93,8 @@ class Visualizer:
     net.force_atlas_2based(central_gravity=0.015, gravity=-31)
     net.show_buttons(filter_=["physics"])
 
-    net.show(name=save_location, notebook=False)
+    html_content = net.generate_html()
+    with open(save_location, "w", encoding="utf-8") as f:
+      f.write(html_content)
+
+    webbrowser.open(save_location)
