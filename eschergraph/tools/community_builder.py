@@ -68,6 +68,11 @@ def build_community_layer(graph: Graph, processed_file: ProcessedFile) -> list[N
     graph, main_topics=main_topics, topics_relations=topics_relations
   )
 
+  # Sync the vector db to make sure that all the level 1 nodes can be found for similarity search
+  graph.sync_vectordb()
+
+  # Match the level 0 nodes to a topic / community node
+
 
 def _extract_main_topics(graph: Graph, full_text: str) -> list[MainTopic]:
   formatted_prompt: str = process_template(

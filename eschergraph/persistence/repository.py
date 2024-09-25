@@ -126,7 +126,9 @@ class Repository(ABC):
     raise NotImplementedError
 
   @abstractmethod
-  def get_all_at_level(self, level: int) -> list[Node]:
+  def get_all_at_level(
+    self, level: int, document_id: Optional[UUID] = None
+  ) -> list[Node]:
     """Get all nodes at a certain level.
 
     Note that level 0 corresponds to nodes that are directly extracted
@@ -135,6 +137,7 @@ class Repository(ABC):
 
     Args:
       level (int): The level at which the nodes should occur.
+      document_id (Optional[UUID]): Optionally filter for a document.
 
     Returns:
       A list with all the nodes at the specified level.

@@ -548,7 +548,9 @@ class SimpleRepository(Repository):
         id=id, node=Node(id=property_model["node"], repository=self), repository=self
       )
 
-  def get_all_at_level(self, level: int) -> list[Node]:
+  def get_all_at_level(
+    self, level: int, document_id: Optional[UUID] = None
+  ) -> list[Node]:
     """Get all nodes at a certain level.
 
     Note that level 0 corresponds to nodes that are directly extracted
@@ -557,14 +559,27 @@ class SimpleRepository(Repository):
 
     Args:
       level (int): The level at which the nodes should occur.
+      document_id (Optional[UUID]): Optionally filter for a document.
 
     Returns:
       A list with all the nodes at the specified level.
     """
+    if not document_id:
+      return [
+        Node(id=id, repository=self)
+        for id, nm in self.nodes.items()
+        if nm["level"] == level
+      ]
+
+    if not document_id in self.doc_node_name_index:
+      return []
+
+    # Get all the node_id's in a document
+    doc_node_ids: list[UUID] = list(self.doc_node_name_index[document_id].values())
     return [
       Node(id=id, repository=self)
-      for id, nm in self.nodes.items()
-      if nm["level"] == level
+      for id in doc_node_ids
+      if self.nodes[id]["level"] == level
     ]
 
   def get_max_level(self) -> int:
