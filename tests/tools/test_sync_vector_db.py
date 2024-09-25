@@ -195,3 +195,13 @@ def test_get_node_document_id_level_4() -> None:
   document_id: UUID = next(iter(n0.metadata)).document_id
 
   assert _get_node_document_id(n4) == str(document_id)
+
+
+def test_get_node_document_id_level1_no_child_nodes() -> None:
+  node: Node = create_basic_node()
+  node.level = 1
+
+  document_id: UUID = next(iter(node.metadata)).document_id
+
+  assert node.child_nodes == []
+  assert _get_node_document_id(node) == str(document_id)

@@ -53,7 +53,20 @@ def build_community_layer(graph: Graph, processed_file: ProcessedFile) -> list[N
   Returns:
     list[Node]: A list of community nodes.
   """
-  ...
+  # Extract the main topics for the community nodes
+  main_topics: list[MainTopic] = _extract_main_topics(
+    graph, full_text=processed_file.full_text
+  )
+
+  # Extract the relations between the main topics
+  topics_relations: list[TopicRelations] = _extract_topic_relations(
+    graph, main_topics=main_topics, full_text=processed_file.full_text
+  )
+
+  # Convert the main topics and topic relations into nodes and edges on the graph
+  _add_nodes_edges_to_graph(
+    graph, main_topics=main_topics, topics_relations=topics_relations
+  )
 
 
 def _extract_main_topics(graph: Graph, full_text: str) -> list[MainTopic]:
@@ -88,3 +101,27 @@ def _extract_topic_relations(
     raise ExternalProviderException(
       "Something went wrong parsing the main topic relations"
     )
+
+
+def _add_nodes_edges_to_graph(
+  graph: Graph, main_topics: list[MainTopic], topics_relations: list[TopicRelations]
+) -> list[Node]:
+  topic_nodes_name: dict[str, Node] = {}
+  for topic in main_topics:
+    topic_node: Node = graph.add_node(
+      name=topic.name, description=topic.description, level=1
+    )
+
+    # Add the significance as a property to the topic node
+    topic_node.add_property(description=topic.significance)
+
+    topic_nodes_name[topic.name] = topic_node
+
+  # Add all the edges to the community layer
+  for topic_relations in topics_relations:
+    frm_topic: Node = topic_nodes_name[topic_relations.name]
+    for to_relation in topic_relations.relations:
+      to_topic: Node = topic_nodes_name[to_relation.name]
+      graph.add_edge(frm=frm_topic, to=to_topic, description=to_relation.description)
+
+  return list(topic_nodes_name.values())

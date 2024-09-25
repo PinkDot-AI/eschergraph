@@ -110,7 +110,7 @@ def _get_node_document_id(node: Node) -> str:
   cur_node: Node = node
 
   # Get the metadata on a level 0 child node
-  while cur_level > 0:
+  while cur_level > 0 and cur_node.child_nodes:
     cur_node = cur_node.child_nodes[0]
     cur_level -= 1
 

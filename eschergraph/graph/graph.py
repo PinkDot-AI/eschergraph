@@ -111,7 +111,7 @@ class Graph:
     name: str,
     description: str,
     level: int,
-    metadata: Metadata,
+    metadata: Optional[Metadata] = None,
     is_visual: bool = False,
   ) -> Node:
     """Add a node to the graph.
@@ -123,7 +123,7 @@ class Graph:
       name (str): The name of the node.
       description (str): A description of the node.
       level (int): The level of the node.
-      metadata (Metadata): The metadata of the node.
+      metadata (Optional[Metadata]): The (optional) metadata of the node.
       is_visual (bool): bolean variable to indicate whether the node is a visual
     Returns:
       The node that has been created.
@@ -133,7 +133,7 @@ class Graph:
       description=description,
       level=level,
       repository=self.repository,
-      metadata={metadata},
+      metadata={metadata} if metadata else set(),
       is_visual=is_visual,
     )
 
@@ -142,7 +142,9 @@ class Graph:
 
     return node
 
-  def add_edge(self, frm: Node, to: Node, description: str, metadata: Metadata) -> Edge:
+  def add_edge(
+    self, frm: Node, to: Node, description: str, metadata: Optional[Metadata] = None
+  ) -> Edge:
     """Add an edge to the graph.
 
     The edge is persisted to the repository straight away.
@@ -151,7 +153,7 @@ class Graph:
       frm (Node): The from node in the edge.
       to (Node): The to node in the edge.
       description (str): A rich description of the relation.
-      metadata (Metadata): The metadata of the edge.
+      metadata (Optional[Metadata]): The (optional) metadata of the edge.
 
     Returns:
       The edge that has been added to the graph.
@@ -160,7 +162,7 @@ class Graph:
       frm=frm,
       to=to,
       description=description,
-      metadata={metadata},
+      metadata={metadata} if metadata else set(),
     )
 
     # Persist the edge
