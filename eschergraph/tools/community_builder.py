@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 import time
 from typing import TYPE_CHECKING
 from uuid import UUID
@@ -45,7 +46,9 @@ class TopicRelations(BaseModel):
 
 
 # TODO: add the community building as a purely functional module
-def build_community_layer(graph: Graph, processed_file: ProcessedFile) -> list[Node]:
+def build_community_layer(
+  graph: Graph, processed_file: ProcessedFile, num_nodes: int
+) -> list[Node]:
   """Build the community layer in the graph.
 
   The community layer corresponds to the nodes at level 1 of the graph.
@@ -53,13 +56,14 @@ def build_community_layer(graph: Graph, processed_file: ProcessedFile) -> list[N
   Args:
     graph (Graph): The graph to build the community layer for.
     processed_file (ProcessedFile): The file to extract the main topics for as communities.
+    num_nodes (int): The number of nodes that need to be matched to communities.
 
   Returns:
     list[Node]: A list of community nodes.
   """
   # Extract the main topics for the community nodes
   main_topics: list[MainTopic] = _extract_main_topics(
-    graph, full_text=processed_file.full_text
+    graph, full_text=processed_file.full_text, num_nodes=num_nodes
   )
 
   # Extract the relations between the main topics
@@ -106,9 +110,20 @@ def build_community_layer(graph: Graph, processed_file: ProcessedFile) -> list[N
   return comm_nodes
 
 
-def _extract_main_topics(graph: Graph, full_text: str) -> list[MainTopic]:
+def _extract_main_topics(
+  graph: Graph, full_text: str, num_nodes: int
+) -> list[MainTopic]:
+  # Calculate the number of main topics that should be extracted
+  # Prevent a community layer from having more nodes than level 0
+  topic_lower: int = max(num_nodes // 4, 10)
+  topic_upper: int = max(math.ceil(num_nodes / 3), 15)
   formatted_prompt: str = process_template(
-    TOPIC_EXTRACTION, data={"full_text": full_text}
+    TOPIC_EXTRACTION,
+    data={
+      "full_text": full_text,
+      "topic_lower": topic_lower,
+      "topic_upper": topic_upper,
+    },
   )
   try:
     return [

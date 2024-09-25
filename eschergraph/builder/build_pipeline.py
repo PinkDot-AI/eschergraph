@@ -83,10 +83,10 @@ class BuildPipeline:
     )
 
     # Step 5: convert the building logs into nodes and edges
-    self._persist_to_graph(graph=graph, updated_logs=updated_logs)
+    num_nodes: int = self._persist_to_graph(graph=graph, updated_logs=updated_logs)
 
     # Step 6: build the community layer
-    comm_nodes: list[Node] = build_community_layer(graph, processed_file)
+    comm_nodes: list[Node] = build_community_layer(graph, processed_file, num_nodes)
 
     # Step 7: add the document node
     self._create_document_node(
@@ -246,7 +246,13 @@ class BuildPipeline:
 
     return list(unique_entities)
 
-  def _persist_to_graph(self, graph: Graph, updated_logs: list[BuildLog]) -> None:
+  def _persist_to_graph(self, graph: Graph, updated_logs: list[BuildLog]) -> int:
+    """Add nodes, edges, and properties to the graph at level 0.
+
+    Returns:
+      int: The number of nodes at level 0.
+    """
+    num_nodes: int = 0
     # first add all nodes
     for log in updated_logs:
       # add conditional is_visual to the node if the buildinglogs says so
@@ -269,6 +275,7 @@ class BuildPipeline:
           metadata=log.metadata,
           is_visual=is_visual,
         )
+        num_nodes += 1
 
     # then loop again to add all edges and properties
     for log in updated_logs:
@@ -306,6 +313,8 @@ class BuildPipeline:
           continue
         for property_item in prop_ext["properties"]:
           node.add_property(description=property_item, metadata=log.metadata)
+
+    return num_nodes
 
   def _handle_multi_modal(self, visual_elements: list[VisualDocumentElement]) -> None:
     with ThreadPoolExecutor() as executor:
