@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 from concurrent.futures import as_completed
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
@@ -53,49 +54,98 @@ class BuildPipeline:
   keywords: list[str] = field(factory=list)
 
   def run(self, graph: Graph, processed_file: ProcessedFile) -> list[BuildLog]:
-    """Run the build pipeline.
+    """Run the build pipeline with time tracking.
 
     Returns:
       A list of build logs that can be used to add nodes and edges to the graph.
     """
+    total_start_time = time.time()  # Track the total time
+
     # Step 1: extract the document keywords and summary
+    step_1_start_time = time.time()
     self._extract_keywords(full_text=processed_file.full_text)
     summary: str = self._get_summary(self.model, full_text=processed_file.full_text)
+    step_1_end_time = time.time()
+    print(
+      f"Step 1: Extracting keywords and summary took {step_1_end_time - step_1_start_time:.4f} seconds"
+    )
 
     # Step 2: extract nodes and edges
+    step_2_start_time = time.time()
     self._extract_node_edges(processed_file.chunks)
+    step_2_end_time = time.time()
+    print(
+      f"Step 2: Extracting nodes and edges took {step_2_end_time - step_2_start_time:.4f} seconds"
+    )
 
     # Step 3: extract properties
+    step_3_start_time = time.time()
     self._extract_properties()
+    step_3_end_time = time.time()
+    print(
+      f"Step 3: Extracting properties took {step_3_end_time - step_3_start_time:.4f} seconds"
+    )
 
+    # Step 4: Handle multi-modal content if present
     if processed_file.visual_elements:
+      step_4a_start_time = time.time()
       self._handle_multi_modal(processed_file.visual_elements)
+      step_4a_end_time = time.time()
+      print(
+        f"Step 4a: Handling multi-modal elements took {step_4a_end_time - step_4a_start_time:.4f} seconds"
+      )
 
-    # Step 4: use the node matcher to match duplicate nodes
-    # that refer to the same entity
+    # Step 5: Use the node matcher to match duplicate nodes
+    step_4_start_time = time.time()
     unique_entities: list[str] = self._get_unique_entities()
-
     updated_logs: list[BuildLog] = NodeMatcher(
       model=self.model, reranker=self.reranker
     ).match(
       building_logs=self.building_logs,
       unique_node_names=unique_entities,
     )
+    step_4_end_time = time.time()
+    print(
+      f"Step 4: Node matching took {step_4_end_time - step_4_start_time:.4f} seconds"
+    )
 
-    # Step 5: convert the building logs into nodes and edges
+    # Step 6: Convert building logs into nodes and edges
+    step_5_start_time = time.time()
     num_nodes: int = self._persist_to_graph(graph=graph, updated_logs=updated_logs)
+    step_5_end_time = time.time()
+    print(
+      f"Step 5: Persisting to graph took {step_5_end_time - step_5_start_time:.4f} seconds"
+    )
 
-    # Step 6: build the community layer
+    # Step 7: Build the community layer
+    step_6_start_time = time.time()
     comm_nodes: list[Node] = build_community_layer(graph, processed_file, num_nodes)
+    step_6_end_time = time.time()
+    print(
+      f"Step 6: Building community layer took {step_6_end_time - step_6_start_time:.4f} seconds"
+    )
 
-    # Step 7: add the document node
+    # Step 8: Add the document node
+    step_7_start_time = time.time()
     self._create_document_node(
       graph, comm_nodes, summary, processed_file.document, self.keywords
     )
+    step_7_end_time = time.time()
+    print(
+      f"Step 7: Adding document node took {step_7_end_time - step_7_start_time:.4f} seconds"
+    )
 
+    # Step 9: Sync the graph and save to repository
+    step_8_start_time = time.time()
     graph.sync_vectordb()
-
     graph.repository.save()
+    step_8_end_time = time.time()
+    print(
+      f"Step 8: Syncing graph and saving took {step_8_end_time - step_8_start_time:.4f} seconds"
+    )
+
+    total_end_time = time.time()
+    print(f"Total time taken: {total_end_time - total_start_time:.4f} seconds")
 
     return updated_logs
 

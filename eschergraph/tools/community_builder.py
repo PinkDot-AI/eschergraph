@@ -115,8 +115,8 @@ def _extract_main_topics(
 ) -> list[MainTopic]:
   # Calculate the number of main topics that should be extracted
   # Prevent a community layer from having more nodes than level 0
-  topic_lower: int = max(num_nodes // 4, 10)
-  topic_upper: int = max(math.ceil(num_nodes / 3), 15)
+  topic_lower: int = min(num_nodes // 4, 10)
+  topic_upper: int = min(math.ceil(num_nodes / 3), 15)
   formatted_prompt: str = process_template(
     TOPIC_EXTRACTION,
     data={

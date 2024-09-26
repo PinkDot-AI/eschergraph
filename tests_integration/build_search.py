@@ -16,7 +16,7 @@ from eschergraph.persistence.vector_db import VectorDB
 from eschergraph.persistence.vector_db.adapters.chromadb import ChromaDB
 from eschergraph.visualization import Visualizer
 
-TEST_FILE: str = "./test_files/test_file.pdf"
+TEST_FILE: str = "./test_files/Attention Is All You Need.pdf"
 
 # Load all the credentials
 load_dotenv()

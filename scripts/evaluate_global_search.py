@@ -25,6 +25,9 @@ def get_or_create_graph() -> Graph:
 
 if __name__ == "__main__":
   graph: Graph = get_or_create_graph()
-  Visualizer.visualize_graph(graph, level=2)
+  Visualizer.visualize_graph(graph, level=1)
+  print([
+    prop.description for prop in graph.repository.get_all_at_level(2)[0].properties
+  ])
   # print(graph.global_search("What is the point of a transformer architecture?"))
   # print(graph.search("How to measure proficiency in translation tasks?"))
